@@ -1,7 +1,7 @@
 # Laravel Web Analytics
 
 <p align="center">
-  <img src="https://raw.githubusercontent.com/nafiur/laravel-web-analytics/main/art/banner.png" alt="Laravel Web Analytics Banner" width="100%" onerror="this.style.display='none'">
+  <img src="art/banner.png" alt="Laravel Web Analytics Banner" width="100%">
 </p>
 
 <p align="center">
