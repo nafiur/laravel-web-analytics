@@ -205,25 +205,37 @@ class WebAnalyticsController extends Controller
 
         $columns = ['ID', 'IP Address', 'Method', 'URL / Path', 'Status Code', 'Response Time (ms)', 'Browser', 'Device', 'OS', 'Country', 'City', 'User ID', 'Date Time'];
 
-        $callback = function () use ($query, $columns) {
+        $sanitize = function ($value) {
+            if ($value === null || $value === '') {
+                return '';
+            }
+            $str = (string) $value;
+            // Prevent CSV / Excel formula injection (CWE-1236)
+            if (isset($str[0]) && in_array($str[0], ['=', '+', '-', '@', "\t", "\r"])) {
+                return "'" . $str;
+            }
+            return $str;
+        };
+
+        $callback = function () use ($query, $columns, $sanitize) {
             $file = fopen('php://output', 'w');
             fputcsv($file, $columns);
 
-            $query->chunk(500, function ($logs) use ($file) {
+            $query->chunk(500, function ($logs) use ($file, $sanitize) {
                 foreach ($logs as $log) {
                     fputcsv($file, [
                         $log->id,
-                        $log->ip_address,
-                        $log->method,
-                        $log->path,
-                        $log->status_code,
-                        $log->response_time_ms,
-                        $log->browser,
-                        $log->device,
-                        $log->os,
-                        $log->country ?: 'Unknown',
-                        $log->city,
-                        $log->user_id ? "User #{$log->user_id}" : 'Guest',
+                        $sanitize($log->ip_address),
+                        $sanitize($log->method),
+                        $sanitize($log->path),
+                        (int) $log->status_code,
+                        (float) $log->response_time_ms,
+                        $sanitize($log->browser),
+                        $sanitize($log->device),
+                        $sanitize($log->os),
+                        $sanitize($log->country ?: 'Unknown'),
+                        $sanitize($log->city),
+                        $sanitize($log->user_id ? "User #{$log->user_id}" : 'Guest'),
                         $log->created_at,
                     ]);
                 }

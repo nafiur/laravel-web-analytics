@@ -885,6 +885,16 @@
 
             startSSE();
 
+            function escapeHtml(str) {
+                if (str === null || str === undefined) return '';
+                return String(str)
+                    .replace(/&/g, '&amp;')
+                    .replace(/</g, '&lt;')
+                    .replace(/>/g, '&gt;')
+                    .replace(/"/g, '&quot;')
+                    .replace(/'/g, '&#039;');
+            }
+
             function prependLiveFeedRow(log) {
                 let tbody = document.getElementById('tableLiveFeed');
                 if (!tbody) return;
@@ -898,18 +908,25 @@
                             : (st >= 300 ? 'bg-cyan-50 text-cyan-700 dark:bg-cyan-950/50 dark:text-cyan-400'
                             : 'bg-emerald-50 text-emerald-700 dark:bg-emerald-950/50 dark:text-emerald-400'));
 
+                let cleanMethod = escapeHtml(log.method || 'GET');
+                let cleanUser = escapeHtml(log.user_name || 'Guest');
+                let cleanPath = escapeHtml(log.path || '/');
+                let cleanIp = escapeHtml(log.ip_address || '-');
+                let cleanBytes = escapeHtml(log.bytes_sent_fmt || '-');
+                let cleanClient = escapeHtml((log.browser || 'Other') + ' on ' + (log.os || 'Other'));
+
                 let tr = document.createElement('tr');
                 tr.id = rowId;
                 tr.className = 'bg-blue-50/50 dark:bg-blue-950/20 transition-all duration-1000';
                 tr.innerHTML = `
-                    <td class="py-2.5 px-4"><span class="px-2 py-0.5 rounded font-mono font-bold ${stBadge}">${log.status_code || 200}</span></td>
-                    <td class="py-2.5 px-4 font-mono font-semibold ${log.method === 'POST' ? 'text-sky-600' : 'text-emerald-600'}">${log.method}</td>
-                    <td class="py-2.5 px-4"><span class="inline-flex items-center gap-1 px-2 py-0.5 rounded text-[11px] ${log.is_auth ? 'bg-sky-50 text-sky-700 dark:bg-sky-950/50 dark:text-sky-400 font-medium' : 'bg-slate-100 text-slate-500 dark:bg-slate-800 dark:text-slate-400'}">${log.user_name}</span></td>
-                    <td class="py-2.5 px-4 font-mono text-slate-700 dark:text-slate-200 truncate max-w-[220px]" title="${log.path}">${log.path}</td>
-                    <td class="py-2.5 px-4 font-mono text-slate-500">${log.ip_address}</td>
-                    <td class="py-2.5 px-4 font-mono text-slate-600 dark:text-slate-300">${log.response_time_ms || 0} ms</td>
-                    <td class="py-2.5 px-4 text-slate-500">${log.bytes_sent_fmt || '-'}</td>
-                    <td class="py-2.5 px-4 text-slate-500 dark:text-slate-400 truncate max-w-[140px]">${log.browser || 'Other'} on ${log.os || 'Other'}</td>
+                    <td class="py-2.5 px-4"><span class="px-2 py-0.5 rounded font-mono font-bold ${stBadge}">${st}</span></td>
+                    <td class="py-2.5 px-4 font-mono font-semibold ${log.method === 'POST' ? 'text-sky-600' : 'text-emerald-600'}">${cleanMethod}</td>
+                    <td class="py-2.5 px-4"><span class="inline-flex items-center gap-1 px-2 py-0.5 rounded text-[11px] ${log.is_auth ? 'bg-sky-50 text-sky-700 dark:bg-sky-950/50 dark:text-sky-400 font-medium' : 'bg-slate-100 text-slate-500 dark:bg-slate-800 dark:text-slate-400'}">${cleanUser}</span></td>
+                    <td class="py-2.5 px-4 font-mono text-slate-700 dark:text-slate-200 truncate max-w-[220px]" title="${cleanPath}">${cleanPath}</td>
+                    <td class="py-2.5 px-4 font-mono text-slate-500">${cleanIp}</td>
+                    <td class="py-2.5 px-4 font-mono text-slate-600 dark:text-slate-300">${parseFloat(log.response_time_ms || 0)} ms</td>
+                    <td class="py-2.5 px-4 text-slate-500">${cleanBytes}</td>
+                    <td class="py-2.5 px-4 text-slate-500 dark:text-slate-400 truncate max-w-[140px]">${cleanClient}</td>
                     <td class="py-2.5 px-4 text-right text-slate-400">just now</td>
                 `;
 

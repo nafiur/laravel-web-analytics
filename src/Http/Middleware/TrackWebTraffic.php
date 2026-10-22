@@ -182,17 +182,24 @@ class TrackWebTraffic
      */
     protected function resolveClientIp(Request $request): string
     {
-        if ($cfIp = $request->server('HTTP_CF_CONNECTING_IP')) {
-            return $cfIp;
+        $headers = ['HTTP_CF_CONNECTING_IP', 'HTTP_X_REAL_IP'];
+        foreach ($headers as $header) {
+            $candidate = $request->server($header);
+            if ($candidate && filter_var($candidate, FILTER_VALIDATE_IP)) {
+                return $candidate;
+            }
         }
-        if ($xRealIp = $request->server('HTTP_X_REAL_IP')) {
-            return $xRealIp;
-        }
+
         if ($forwarded = $request->server('HTTP_X_FORWARDED_FOR')) {
             $parts = explode(',', $forwarded);
-            return trim($parts[0]);
+            $candidate = trim($parts[0]);
+            if (filter_var($candidate, FILTER_VALIDATE_IP)) {
+                return $candidate;
+            }
         }
-        return $request->ip() ?? '127.0.0.1';
+
+        $ip = $request->ip();
+        return ($ip && filter_var($ip, FILTER_VALIDATE_IP)) ? $ip : '127.0.0.1';
     }
 
     /**
