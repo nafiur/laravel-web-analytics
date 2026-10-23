@@ -75,7 +75,7 @@ php artisan migrate
 
 To start capturing web traffic, register the `TrackWebTraffic` middleware.
 
-### For Laravel 11 and Laravel 12 (`bootstrap/app.php`):
+### For Laravel 11, 12, and 13 (`bootstrap/app.php`):
 
 ```php
 use Nafiur\WebAnalytics\Http\Middleware\TrackWebTraffic;
@@ -232,6 +232,15 @@ return [
      * Number of days to retain logs
      */
     'retention_days' => env('WEB_ANALYTICS_RETENTION_DAYS', 30),
+
+    /*
+     * Multi-Tenancy Support
+     */
+    'multi_tenancy' => [
+        'enabled'         => env('WEB_ANALYTICS_MULTI_TENANCY', false),
+        'tenant_column'   => 'tenant_id',
+        'tenant_resolver' => null, // Auto-detects stancl, spatie, or auth user
+    ],
 ];
 ```
 
