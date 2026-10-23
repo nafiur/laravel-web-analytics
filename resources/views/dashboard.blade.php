@@ -135,6 +135,11 @@
                         <span class="px-2 py-0.5 text-[11px] font-semibold rounded bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 border border-slate-200 dark:border-slate-700 flex items-center gap-1">
                             free <i class="bx bx-chevron-down text-xs text-slate-400"></i>
                         </span>
+                        @if(!empty($tenantId))
+                            <span class="px-2 py-0.5 text-[11px] font-semibold rounded bg-indigo-50 dark:bg-indigo-950/60 text-indigo-600 dark:text-indigo-400 border border-indigo-200 dark:border-indigo-800 flex items-center gap-1 shadow-sm" title="Scoped to Tenant">
+                                <i class="bx bx-buildings text-xs"></i> Tenant: {{ $tenantId }}
+                            </span>
+                        @endif
                     </div>
                 </div>
 
@@ -145,7 +150,7 @@
                     </div>
 
                     <!-- Export to CSV -->
-                    <a href="{{ route('lwa_export', ['range' => $timeRange ?? '24h']) }}" 
+                    <a href="{{ route('lwa_export', array_filter(['range' => $timeRange ?? '24h', 'tenant_id' => $tenantId ?? null])) }}" 
                        class="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium text-slate-700 dark:text-slate-300 bg-white dark:bg-slate-800 hover:bg-slate-50 dark:hover:bg-slate-700 border border-slate-200 dark:border-slate-700 rounded-md shadow-sm transition"
                        title="Export filtered logs to CSV">
                         <i class="bx bx-download text-sm"></i> Export
@@ -842,14 +847,20 @@
 
         // ============ REAL-TIME SSE STREAM ============
         (function() {
-            let lastTrafficId = {{ \Nafiur\WebAnalytics\Models\LwaLogs::max('id') ?? 0 }};
+            let lastTrafficId = {{ \Nafiur\WebAnalytics\Models\LwaLogs::forTenant($tenantId ?? null)->max('id') ?? 0 }};
             let sseSource = null;
+            let currentTenantId = "{{ $tenantId ?? '' }}";
 
             function startSSE() {
                 if (!window.EventSource) return;
                 if (sseSource) sseSource.close();
 
-                sseSource = new EventSource("{{ route('lwa_stream') }}?last_id=" + lastTrafficId);
+                let streamUrl = "{{ route('lwa_stream') }}?last_id=" + lastTrafficId;
+                if (currentTenantId) {
+                    streamUrl += "&tenant_id=" + encodeURIComponent(currentTenantId);
+                }
+
+                sseSource = new EventSource(streamUrl);
 
                 sseSource.addEventListener('traffic', function(e) {
                     try {

@@ -173,4 +173,27 @@ return [
         'telegram_chat_id'                => env('WEB_ANALYTICS_TELEGRAM_CHAT_ID', null),
         'error_rate_threshold_percentage' => env('WEB_ANALYTICS_ERROR_THRESHOLD', 10), // e.g. 10% errors
     ],
+
+    /*
+    |--------------------------------------------------------------------------
+    | Multi-Tenancy Support
+    |--------------------------------------------------------------------------
+    |
+    | Enable multi-tenant tracking and dashboard data isolation.
+    | Compatible with stancl/tenancy, spatie/laravel-multitenancy, or custom tenancy setups.
+    |
+    | 'enabled': Set to true to store and scope telemetry by tenant.
+    | 'tenant_resolver': A custom closure or class to retrieve the current tenant ID.
+    |                    When null, it automatically detects:
+    |                    - stancl/tenancy: tenant('id')
+    |                    - spatie/laravel-multitenancy: Tenant::current()?->id
+    |                    - auth user: auth()->user()?->tenant_id
+    |                    - request header: request()->header('X-Tenant-ID')
+    |
+    */
+    'multi_tenancy' => [
+        'enabled'         => env('WEB_ANALYTICS_MULTI_TENANCY', false),
+        'tenant_column'   => 'tenant_id',
+        'tenant_resolver' => null,
+    ],
 ];

@@ -25,6 +25,7 @@ A modern, fast, and self-hosted Web Traffic & Visitor Analytics Dashboard for La
 - 🧹 **Automatic Log Pruning**: Includes an Artisan command (`php artisan lwa:prune`) to maintain a clean database and prevent disk bloat.
 - ⚡ **Zero Latency Impact**: Non-blocking telemetry tracking using Laravel's `terminate()` hook, recording traffic *after* the HTTP response has been sent to the user.
 - 🗄️ **Lightweight & Decoupled Storage**: Stores telemetry in the `lwa_logs` table without coupling to any specific User model, with GDPR-compliant IP anonymization options.
+- 🏢 **Multi-Tenancy Ready**: Native support for single-database multi-tenant applications (`stancl/tenancy`, `spatie/laravel-multitenancy`, or custom resolvers) with tenant-scoped dashboards and streams.
 
 ---
 
@@ -279,6 +280,45 @@ To restrict dashboard access to specific user roles or permissions, update `conf
     'prefix'     => 'web-analytics',
     'middleware' => ['web', 'auth', 'can:view-analytics'],
 ],
+```
+
+---
+
+## 🏢 Multi-Tenancy Support
+
+Laravel Web Analytics supports multi-tenant applications (both Single-Database with `tenant_id` and Multi-Database setups).
+
+### 1. Enable in `.env` or `config/laravel-web-analytics.php`
+
+```env
+WEB_ANALYTICS_MULTI_TENANCY=true
+```
+
+### 2. Auto-Detection Out of the Box
+When enabled, the package automatically detects active tenants from:
+- **[stancl/tenancy](https://tenancyforlaravel.com/)**: `tenant('id')`
+- **[spatie/laravel-multitenancy](https://spatie.be/docs/laravel-multitenancy)**: `Tenant::current()?->id`
+- **Authenticated User**: `auth()->user()?->tenant_id` or `auth()->user()?->tenant?->id`
+- **Request Headers / Route**: `X-Tenant-ID` header or `{tenant}` route parameter
+
+### 3. Custom Tenant Resolver
+You can define a custom resolver callback in `config/laravel-web-analytics.php`:
+
+```php
+'multi_tenancy' => [
+    'enabled'         => env('WEB_ANALYTICS_MULTI_TENANCY', false),
+    'tenant_column'   => 'tenant_id',
+    'tenant_resolver' => function ($request) {
+        return session('current_tenant_uuid');
+    },
+],
+```
+
+### 4. Tenant-Scoped Pruning
+Prune logs for a specific tenant:
+
+```bash
+php artisan lwa:prune --days=30 --tenant=tenant-uuid
 ```
 
 ---

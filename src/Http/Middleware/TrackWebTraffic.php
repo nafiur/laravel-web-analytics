@@ -8,6 +8,7 @@ use Illuminate\Support\Str;
 use Nafiur\WebAnalytics\Models\LwaLogs;
 use Nafiur\WebAnalytics\Services\AlertService;
 use Nafiur\WebAnalytics\Services\GeoIpService;
+use Nafiur\WebAnalytics\Services\TenantResolver;
 use Symfony\Component\HttpFoundation\Response;
 
 class TrackWebTraffic
@@ -120,7 +121,11 @@ class TrackWebTraffic
                 AlertService::notifyErrorSpike($response->getStatusCode(), $request->fullUrl(), $ip);
             }
 
+            // Resolve tenant identifier if multi-tenancy is enabled
+            $tenantId = TenantResolver::resolve($request);
+
             LwaLogs::create([
+                'tenant_id'        => $tenantId ? substr($tenantId, 0, 100) : null,
                 'session_id'       => substr($sessionId, 0, 100),
                 'ip_address'       => substr($ip, 0, 45),
                 'method'           => strtoupper($request->method()),

@@ -27,4 +27,16 @@ class LwaLogs extends Model
     {
         return config('laravel-web-analytics.table_name', 'lwa_logs');
     }
+
+    /**
+     * Scope query by tenant ID if multi-tenancy is active.
+     */
+    public function scopeForTenant($query, ?string $tenantId = null)
+    {
+        if ($tenantId !== null && $tenantId !== '') {
+            return $query->where('tenant_id', $tenantId);
+        }
+
+        return $query;
+    }
 }

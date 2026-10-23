@@ -7,6 +7,7 @@ use Illuminate\Routing\Controller;
 use Illuminate\Support\Facades\DB;
 use Nafiur\WebAnalytics\Models\LwaLogs;
 use Nafiur\WebAnalytics\Services\DatabaseTrafficAnalytics;
+use Nafiur\WebAnalytics\Services\TenantResolver;
 use Nafiur\WebAnalytics\Services\WebAnalyticsLogParser;
 
 class WebAnalyticsController extends Controller
@@ -29,6 +30,7 @@ class WebAnalyticsController extends Controller
         $customStart = $request->input('start_date');
         $customEnd = $request->input('end_date');
         $source = $request->input('source', 'database'); // 'database' or 'file'
+        $tenantId = $request->input('tenant_id') ?: TenantResolver::resolve($request);
 
         if ($source === 'file') {
             $analytics = $this->logParser->getDashboardData($timeRange, $customStart, $customEnd);
@@ -36,8 +38,8 @@ class WebAnalyticsController extends Controller
             $logExists = $this->logParser->logFileExists();
             $logSize = $this->logParser->getLogFileSizeFormatted();
         } else {
-            $analytics = $this->dbAnalytics->getDashboardData($timeRange, $customStart, $customEnd);
-            $totalCount = LwaLogs::count();
+            $analytics = $this->dbAnalytics->getDashboardData($timeRange, $customStart, $customEnd, $tenantId);
+            $totalCount = LwaLogs::forTenant($tenantId)->count();
             $logPath = 'Database Table (' . config('laravel-web-analytics.table_name', 'lwa_logs') . ')';
             $logExists = true;
             $logSize = number_format($totalCount) . ' records';
@@ -56,7 +58,8 @@ class WebAnalyticsController extends Controller
             'logSize',
             'serverSoftware',
             'serverOs',
-            'source'
+            'source',
+            'tenantId'
         ));
     }
 
@@ -69,11 +72,12 @@ class WebAnalyticsController extends Controller
         $customStart = $request->input('start_date');
         $customEnd = $request->input('end_date');
         $source = $request->input('source', 'database');
+        $tenantId = $request->input('tenant_id') ?: TenantResolver::resolve($request);
 
         if ($source === 'file') {
             $analytics = $this->logParser->getDashboardData($timeRange, $customStart, $customEnd);
         } else {
-            $analytics = $this->dbAnalytics->getDashboardData($timeRange, $customStart, $customEnd);
+            $analytics = $this->dbAnalytics->getDashboardData($timeRange, $customStart, $customEnd, $tenantId);
         }
 
         return response()->json([
@@ -92,12 +96,14 @@ class WebAnalyticsController extends Controller
             session_write_close();
         }
 
+        $tenantId = $request->input('tenant_id') ?: TenantResolver::resolve($request);
+
         $lastId = (int) $request->input('last_id', 0);
         if ($lastId <= 0) {
-            $lastId = (int) (LwaLogs::max('id') ?? 0);
+            $lastId = (int) (LwaLogs::forTenant($tenantId)->max('id') ?? 0);
         }
 
-        return response()->stream(function () use ($lastId) {
+        return response()->stream(function () use ($lastId, $tenantId) {
             $currentLastId = $lastId;
             $iterations = 0;
             $maxIterations = 25; // Stream for ~25s, then EventSource reconnects cleanly
@@ -107,8 +113,9 @@ class WebAnalyticsController extends Controller
                     break;
                 }
 
-                // Check for new incoming requests - no User model query
-                $newLogs = LwaLogs::where('id', '>', $currentLastId)
+                // Check for new incoming requests scoped by tenant
+                $newLogs = LwaLogs::forTenant($tenantId)
+                    ->where('id', '>', $currentLastId)
                     ->orderBy('id', 'asc')
                     ->limit(20)
                     ->get();
@@ -119,6 +126,7 @@ class WebAnalyticsController extends Controller
                         $userName = $isAuth ? "User #{$log->user_id}" : 'Guest';
                         return [
                             'id'               => $log->id,
+                            'tenant_id'        => $log->tenant_id,
                             'method'           => $log->method,
                             'path'             => $log->path,
                             'status_code'      => $log->status_code,
@@ -145,11 +153,12 @@ class WebAnalyticsController extends Controller
                         'last_id' => $currentLastId,
                     ]) . "\n\n";
 
-                    // Send updated live stats (Hybrid Session-based)
-                    $liveVisitors = LwaLogs::where('created_at', '>=', now()->subMinutes(config('laravel-web-analytics.active_visitor_window', 5)))
+                    // Send updated live stats scoped by tenant
+                    $liveVisitors = LwaLogs::forTenant($tenantId)
+                        ->where('created_at', '>=', now()->subMinutes(config('laravel-web-analytics.active_visitor_window', 5)))
                         ->distinct()
                         ->count(DB::raw('COALESCE(session_id, ip_address)'));
-                    $totalCount = LwaLogs::count();
+                    $totalCount = LwaLogs::forTenant($tenantId)->count();
 
                     echo "event: stats\n";
                     echo "data: " . json_encode([
@@ -185,9 +194,10 @@ class WebAnalyticsController extends Controller
     {
         $timeRange = $request->input('range', '24h');
         $fileName = 'web_analytics_report_' . date('Y-m-d_His') . '.csv';
+        $tenantId = $request->input('tenant_id') ?: TenantResolver::resolve($request);
 
         $cutoff = (new DatabaseTrafficAnalytics())->resolveCutoffTime($timeRange, $request->input('start_date'), $request->input('end_date'));
-        $query = LwaLogs::query();
+        $query = LwaLogs::forTenant($tenantId);
         if ($cutoff['start']) {
             $query->where('created_at', '>=', $cutoff['start']);
         }
@@ -203,7 +213,7 @@ class WebAnalyticsController extends Controller
             'Expires'             => '0',
         ];
 
-        $columns = ['ID', 'IP Address', 'Method', 'URL / Path', 'Status Code', 'Response Time (ms)', 'Browser', 'Device', 'OS', 'Country', 'City', 'User ID', 'Date Time'];
+        $columns = ['ID', 'Tenant ID', 'IP Address', 'Method', 'URL / Path', 'Status Code', 'Response Time (ms)', 'Browser', 'Device', 'OS', 'Country', 'City', 'User ID', 'Date Time'];
 
         $sanitize = function ($value) {
             if ($value === null || $value === '') {
@@ -225,6 +235,7 @@ class WebAnalyticsController extends Controller
                 foreach ($logs as $log) {
                     fputcsv($file, [
                         $log->id,
+                        $sanitize($log->tenant_id ?: '-'),
                         $sanitize($log->ip_address),
                         $sanitize($log->method),
                         $sanitize($log->path),

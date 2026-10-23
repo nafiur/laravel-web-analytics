@@ -3,6 +3,7 @@
 namespace Nafiur\WebAnalytics\Services;
 
 use Nafiur\WebAnalytics\Models\LwaLogs;
+use Nafiur\WebAnalytics\Services\TenantResolver;
 use Carbon\Carbon;
 use Illuminate\Support\Facades\DB;
 
@@ -11,13 +12,20 @@ class DatabaseTrafficAnalytics
     /**
      * Compute full dashboard analytics data from database table.
      */
-    public function getDashboardData(string $timeRange = '24h', ?string $customStart = null, ?string $customEnd = null): array
+    public function getDashboardData(string $timeRange = '24h', ?string $customStart = null, ?string $customEnd = null, ?string $tenantId = null): array
     {
+        if ($tenantId === null && TenantResolver::isEnabled()) {
+            $tenantId = TenantResolver::resolve();
+        }
+
         $cutoff = $this->resolveCutoffTime($timeRange, $customStart, $customEnd);
         $start = $cutoff['start'];
         $end = $cutoff['end'];
 
         $baseQuery = LwaLogs::query();
+        if ($tenantId !== null && $tenantId !== '') {
+            $baseQuery->where('tenant_id', $tenantId);
+        }
         if ($start) {
             $baseQuery->where('created_at', '>=', $start);
         }
@@ -56,17 +64,18 @@ class DatabaseTrafficAnalytics
         $errorRate = $totalRequests > 0 ? round(($errorCount / $totalRequests) * 100, 2) : 0.0;
         $successRate = $totalRequests > 0 ? round(($statusCounts['2xx'] / $totalRequests) * 100, 2) : 0.0;
 
-        $totalTableRecords = LwaLogs::count();
+        $totalTableRecords = LwaLogs::forTenant($tenantId)->count();
 
         // Active Live Visitors in the last 5 minutes (Hybrid Session / User / IP)
         $fiveMinutesAgo = now()->subMinutes(5);
-        $liveActiveVisitors = LwaLogs::where('created_at', '>=', $fiveMinutesAgo)
+        $liveQuery = LwaLogs::forTenant($tenantId)->where('created_at', '>=', $fiveMinutesAgo);
+        $liveActiveVisitors = (clone $liveQuery)
             ->distinct()
             ->count(DB::raw('COALESCE(session_id, ip_address)'));
-        $liveActiveRequests5m = LwaLogs::where('created_at', '>=', $fiveMinutesAgo)->count();
+        $liveActiveRequests5m = (clone $liveQuery)->count();
 
         // Time Series
-        $timeSeries = $this->buildTimeSeries($timeRange, $start, $end);
+        $timeSeries = $this->buildTimeSeries($timeRange, $start, $end, $tenantId);
 
         // Breakdowns
         $breakdowns = [
@@ -189,6 +198,8 @@ class DatabaseTrafficAnalytics
                 'log_file'            => 'Database Table (' . config('laravel-web-analytics.table_name', 'lwa_logs') . ')',
                 'log_size'            => $this->formatNumber($totalTableRecords) . ' Rows',
                 'storage_type'        => 'Database',
+                'tenant_id'           => $tenantId,
+                'is_multi_tenant'     => TenantResolver::isEnabled(),
             ],
             'time_series' => $timeSeries,
             'sparklines' => [
@@ -205,10 +216,13 @@ class DatabaseTrafficAnalytics
     /**
      * Build Time Series Buckets (Hourly or Daily) with multi-database SQL support.
      */
-    protected function buildTimeSeries(string $timeRange, ?Carbon $start, ?Carbon $end): array
+    protected function buildTimeSeries(string $timeRange, ?Carbon $start, ?Carbon $end, ?string $tenantId = null): array
     {
         $isHourly = in_array($timeRange, ['6h', '12h', '24h', 'today']);
         $query = LwaLogs::query();
+        if ($tenantId !== null && $tenantId !== '') {
+            $query->where('tenant_id', $tenantId);
+        }
         if ($start) {
             $query->where('created_at', '>=', $start);
         }

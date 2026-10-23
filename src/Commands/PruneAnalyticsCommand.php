@@ -10,7 +10,7 @@ class PruneAnalyticsCommand extends Command
     /**
      * The name and signature of the console command.
      */
-    protected $signature = 'lwa:prune {--days= : The number of days to retain logs}';
+    protected $signature = 'lwa:prune {--days= : The number of days to retain logs} {--tenant= : Optional tenant ID to prune logs for a specific tenant}';
 
     /**
      * The console command description.
@@ -23,10 +23,20 @@ class PruneAnalyticsCommand extends Command
     public function handle(): int
     {
         $days = (int) ($this->option('days') ?: config('laravel-web-analytics.retention_days', 30));
+        $tenantId = $this->option('tenant');
 
-        $this->info("Pruning web analytics logs older than {$days} days...");
+        $msg = "Pruning web analytics logs older than {$days} days";
+        if ($tenantId) {
+            $msg .= " for tenant [{$tenantId}]";
+        }
+        $this->info($msg . '...');
 
-        $count = LwaLogs::where('created_at', '<', now()->subDays($days))->delete();
+        $query = LwaLogs::where('created_at', '<', now()->subDays($days));
+        if ($tenantId) {
+            $query->where('tenant_id', $tenantId);
+        }
+
+        $count = $query->delete();
 
         $this->info("Successfully deleted {$count} outdated log record(s).");
 
