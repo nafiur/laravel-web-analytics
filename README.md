@@ -31,7 +31,7 @@ A modern, fast, and self-hosted Web Traffic & Visitor Analytics Dashboard for La
 
 ## 📋 Requirements
 
-- PHP `^8.1 | ^8.2 | ^8.3 | ^8.4`
+- PHP `^8.1 | ^8.2 | ^8.3 | ^8.4 | ^8.5`
 - Laravel `^9.0 | ^10.0 | ^11.0 | ^12.0 | ^13.0`
 
 ---
