@@ -17,8 +17,10 @@ A modern, fast, and self-hosted Web Traffic & Visitor Analytics Dashboard for La
 ## ⚡ Highlights & Key Features
 
 - 🚀 **Real-Time Live Stream (SSE)**: Live active visitor count and instant real-time traffic feed without WebSockets, Node.js, or Pusher.
+- 🧭 **Cloudflare-Style Segmented Navigation**: 5 focused analytical views — Requests, Visitors, Performance, Security, and Live Stream.
 - 🎨 **Tailwind CSS UI with Dark Mode**: Modern, responsive dashboard powered by Tailwind CSS Play CDN (zero build step / zero npm dependencies). Includes a 1-click persistent Dark/Light mode toggle.
-- 📊 **Comprehensive Metrics**: Total Requests, Unique Visitors, Bandwidth (Data Transferred), Avg Response Time, Error Rate.
+- 📊 **Comprehensive Metrics**: Total Requests, Unique Visitors, Bandwidth (Data Transferred in GB/MB), Avg Response Time, Error Rate.
+- 🧪 **Built-In Live Traffic Simulator**: Easily generate realistic live traffic every second with `php artisan lwa:live` to demo and test live streaming.
 - 🌍 **GeoIP & Location Provider**: Automatic country/city resolution with fallback support for Cloudflare headers and `ip-api`.
 - 🚨 **Instant Error Alerts**: Automatic Telegram, Slack, or Discord webhook alerts when 5xx server errors or traffic spikes occur.
 - 📥 **Export to CSV**: Download filtered analytics logs into structured CSV format via high-performance chunked streams.
@@ -138,6 +140,54 @@ route('lwa_data', ['range' => '24h']);
 route('lwa_stream');
 route('lwa_export', ['range' => '24h']);
 ```
+
+---
+
+## 🧭 Dashboard Views & Cloudflare-Style Navigation
+
+The dashboard features a clean, tabbed Cloudflare-style layout with segmented controls:
+
+| Tab | Key Insights & Visualizations |
+|-----|-------------------------------|
+| **📈 Requests** | Total requests volume over time, bandwidth data transfer (GB/MB), status codes (2xx, 3xx, 4xx, 5xx), HTTP methods (GET, POST, PUT, DELETE), top paths, and top IP addresses. |
+| **👥 Visitors** | Unique visitors, active live visitors (5m window), geographic breakdowns (top countries & cities), devices (Desktop, Mobile, Tablet), operating systems, browsers, and top referrers. |
+| **⚡ Performance** | Latency time series, average response times (ms), bandwidth consumption by path, and slowest application endpoints. |
+| **🛡️ Security** | 4xx & 5xx error spike rates, status code distribution, top error paths, and recent error requests telemetry. |
+| **🟢 Live Stream** | Instant Server-Sent Events (SSE) feed updating live requests second-by-second with real-time row animations without refreshing the page. |
+
+### Time Range Filtering
+Select from predefined or custom time ranges via the segmented dropdown:
+- **`24h`** (Default): Last 24 hours with clean hourly breakdown.
+- **`today`**: Today from midnight to current time.
+- **`7d`**: Last 7 days with daily trends.
+- **`30d`**: Last 30 days historical telemetry.
+- **`all`**: Complete all-time records.
+- **`custom`**: Choose custom `start_date` and `end_date` for arbitrary historical or forecasted periods.
+
+---
+
+## 🧪 Live Traffic Simulation & Demo Testing
+
+Laravel Web Analytics includes a built-in Artisan simulator to generate realistic live web traffic every second. This allows you to demo and test the real-time SSE stream, live counters, and dashboard charts immediately:
+
+```bash
+# Start simulating live traffic (2 requests/sec, runs continuously)
+php artisan lwa:live
+
+# Custom requests per second (e.g. 5 req/sec)
+php artisan lwa:live --rps=5
+
+# Custom delay interval between batches (e.g. every 2 seconds)
+php artisan lwa:live --interval=2
+
+# Run for a specific number of seconds then exit (e.g. 60 seconds)
+php artisan lwa:live --count=60
+
+# Tag traffic with a specific tenant ID for multi-tenant testing
+php artisan lwa:live --tenant=company-xyz
+```
+
+> **Tip:** Open the dashboard in your browser (`/web-analytics`), switch to the **Live Stream** tab, and run `php artisan lwa:live` in your terminal to watch requests flow in live second by second!
 
 ---
 

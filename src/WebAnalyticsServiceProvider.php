@@ -26,6 +26,7 @@ class WebAnalyticsServiceProvider extends ServiceProvider
         if ($this->app->runningInConsole()) {
             $this->commands([
                 \Nafiur\WebAnalytics\Commands\PruneAnalyticsCommand::class,
+                \Nafiur\WebAnalytics\Commands\SimulateLiveTrafficCommand::class,
             ]);
 
             $this->publishes([
