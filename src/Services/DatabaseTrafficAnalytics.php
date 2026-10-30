@@ -376,21 +376,27 @@ class DatabaseTrafficAnalytics
         switch ($range) {
             case '6h':
                 $start = $now->copy()->subHours(6);
+                $end = $now->copy();
                 break;
             case '12h':
                 $start = $now->copy()->subHours(12);
+                $end = $now->copy();
                 break;
             case '24h':
                 $start = $now->copy()->subHours(24);
+                $end = $now->copy();
                 break;
             case 'today':
                 $start = $now->copy()->startOfDay();
+                $end = $now->copy()->endOfDay();
                 break;
             case '7d':
                 $start = $now->copy()->subDays(7)->startOfDay();
+                $end = $now->copy();
                 break;
             case '30d':
                 $start = $now->copy()->subDays(30)->startOfDay();
+                $end = $now->copy();
                 break;
             case 'custom':
                 if ($customStart) {
