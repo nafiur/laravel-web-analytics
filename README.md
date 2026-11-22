@@ -162,6 +162,20 @@ The package defines routes with the `lwa_` prefix to avoid conflicts with your a
 | `POST /web-analytics/settings/empty` | `lwa_settings_empty` | Empty the telemetry table (requires `confirm=DELETE`) |
 | `POST /web-analytics/settings/test-alert` | `lwa_settings_test_alert` | Send a test alert through the configured channel |
 
+Every sidebar section also has its own bookmarkable URL:
+
+| URL | Name | URL | Name |
+|-----|------|-----|------|
+| `/web-analytics/overview` | `lwa_overview` | `/web-analytics/campaigns` | `lwa_campaigns` |
+| `/web-analytics/realtime` | `lwa_realtime` | `/web-analytics/events` | `lwa_events` |
+| `/web-analytics/visitors` | `lwa_visitors` | `/web-analytics/conversions` | `lwa_conversions` |
+| `/web-analytics/sources` | `lwa_sources` | `/web-analytics/performance` | `lwa_performance` |
+| `/web-analytics/pages` | `lwa_pages` | `/web-analytics/errors` | `lwa_errors` |
+| `/web-analytics/geography` | `lwa_geography` | `/web-analytics/settings` | `lwa_settings` |
+| `/web-analytics/devices` | `lwa_devices` | | |
+
+The legacy `/web-analytics` (`lwa_dashboard`) URL still works and shows the Overview pane. The Events and Conversions URLs render an explicit “not available yet” pane rather than fabricated numbers.
+
 Generate URLs in your Blade templates or code:
 
 ```php

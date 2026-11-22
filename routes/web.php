@@ -11,3 +11,29 @@ Route::get('/export', [WebAnalyticsController::class, 'export'])->name('lwa_expo
 Route::post('/settings/prune', [WebAnalyticsController::class, 'prune'])->name('lwa_settings_prune');
 Route::post('/settings/empty', [WebAnalyticsController::class, 'emptyTable'])->name('lwa_settings_empty');
 Route::post('/settings/test-alert', [WebAnalyticsController::class, 'testAlert'])->name('lwa_settings_test_alert');
+
+/*
+ * One bookmarkable URL per sidebar section. All of them render the same
+ * dashboard shell with the matching report pane active.
+ */
+$sections = [
+    'overview'    => 'lwa_overview',
+    'realtime'    => 'lwa_realtime',
+    'visitors'    => 'lwa_visitors',
+    'sources'     => 'lwa_sources',
+    'pages'       => 'lwa_pages',
+    'geography'   => 'lwa_geography',
+    'devices'     => 'lwa_devices',
+    'campaigns'   => 'lwa_campaigns',
+    'events'      => 'lwa_events',
+    'conversions' => 'lwa_conversions',
+    'performance' => 'lwa_performance',
+    'errors'      => 'lwa_errors',
+    'settings'    => 'lwa_settings',
+];
+
+foreach ($sections as $slug => $name) {
+    Route::get('/' . $slug, [WebAnalyticsController::class, 'section'])
+        ->defaults('section', $slug)
+        ->name($name);
+}

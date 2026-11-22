@@ -118,9 +118,9 @@ class AnalyticsTest extends TestCase
     {
         $content = $this->get('/web-analytics')->getContent();
 
-        $this->assertStringContainsString('id="sidebarOverview"', $content);
-        $this->assertSame(10, substr_count($content, 'data-sidebar-tab='));
-        $this->assertSame(2, substr_count($content, 'sidebar-unavailable'));
+        $this->assertStringContainsString('href="' . route('lwa_overview') . '"', $content);
+        $this->assertSame(13, substr_count($content, 'class="sidebar-link'));
+        $this->assertStringContainsString('id="tab-unavailable"', $content);
 
         foreach (['Overview', 'Real-time', 'Visitors', 'Traffic Sources', 'Pages &amp; Screens', 'Geography',
                   'Devices &amp; Browsers', 'Campaigns', 'Events &amp; Goals', 'Conversions',
@@ -174,6 +174,31 @@ class AnalyticsTest extends TestCase
         $content = $this->get('/web-analytics')->getContent();
         foreach (['chartOverviewTraffic', 'Total Visitors', 'Avg Engagement', 'Live Now'] as $needle) {
             $this->assertStringContainsString($needle, $content);
+        }
+    }
+
+    public function test_every_sidebar_section_has_its_own_route_and_pane(): void
+    {
+        $sections = [
+            'lwa_overview' => '#tab-overview',
+            'lwa_realtime' => '#tab-live',
+            'lwa_visitors' => '#tab-visitors',
+            'lwa_sources' => '#tab-requests',
+            'lwa_pages' => '#tab-requests',
+            'lwa_geography' => '#tab-visitors',
+            'lwa_devices' => '#tab-visitors',
+            'lwa_campaigns' => '#tab-visitors',
+            'lwa_events' => '#tab-unavailable',
+            'lwa_conversions' => '#tab-unavailable',
+            'lwa_performance' => '#tab-performance',
+            'lwa_errors' => '#tab-security',
+            'lwa_settings' => '#tab-settings',
+        ];
+
+        foreach ($sections as $name => $pane) {
+            $response = $this->get(route($name));
+            $response->assertOk();
+            $response->assertSee(json_encode($pane), false);
         }
     }
 

@@ -1,5 +1,8 @@
     <!-- ============ SCRIPTS ============ -->
     <script>
+        const lwaInitialPane = {!! json_encode($activePane ?? '#tab-overview') !!};
+        const lwaInitialScroll = {!! json_encode($activeScroll ?? null) !!};
+
         // 1. Dark Mode Toggle (synced with Settings > Appearance)
         (function() {
             const toggle = document.getElementById('themeToggle');
@@ -86,8 +89,6 @@
         // 3. Tab Switching (segmented controls + sidebar links)
         (function() {
             const tabs = document.querySelectorAll('.cf-tab-btn');
-            const sidebarLinks = document.querySelectorAll('.sidebar-link');
-            const overviewLink = document.getElementById('sidebarOverview');
             const panes = document.querySelectorAll('.tab-pane');
 
             function activateTab(target, scrollTarget) {
@@ -99,8 +100,6 @@
                 pane.classList.add('active');
 
                 tabs.forEach(t => t.classList.toggle('active', t.getAttribute('data-target') === effective));
-                sidebarLinks.forEach(l => l.classList.toggle('active', l.getAttribute('data-sidebar-tab') === target));
-                if (overviewLink) overviewLink.classList.toggle('active', target === '#overview');
 
                 // Settings is a full settings screen, not another analytics view.
                 const segmented = document.getElementById('segmentedTabs');
@@ -116,11 +115,11 @@
                 }
             }
 
-            function activateFromHash(hash) {
+            function activateFromHash(hash, scrollHint) {
                 const target = hash || '#overview';
                 const el = document.querySelector(target);
                 if (el && el.classList.contains('tab-pane')) {
-                    activateTab(target);
+                    activateTab(target, scrollHint);
                     return;
                 }
                 if (el) {
@@ -130,7 +129,7 @@
                         return;
                     }
                 }
-                activateTab(target);
+                activateTab(target, scrollHint);
             }
 
             tabs.forEach(btn => {
@@ -141,21 +140,16 @@
                 });
             });
 
-            sidebarLinks.forEach(link => {
-                link.addEventListener('click', (e) => {
-                    const target = link.getAttribute('data-sidebar-tab');
-                    if (!target || !document.querySelector(target)) return;
-                    e.preventDefault();
-                    const scrollTarget = link.getAttribute('data-sidebar-scroll');
-                    activateTab(target, scrollTarget);
-                    history.replaceState(null, '', scrollTarget || target);
+            // Sidebar links are real routes; close the mobile drawer on click.
+            document.querySelectorAll('.sidebar-link').forEach(link => {
+                link.addEventListener('click', () => {
                     document.getElementById('appSidebar')?.classList.add('-translate-x-full');
                     document.getElementById('sidebarBackdrop')?.classList.add('hidden');
                 });
             });
 
             window.addEventListener('hashchange', () => activateFromHash(window.location.hash));
-            activateFromHash(window.location.hash);
+            activateFromHash(window.location.hash || lwaInitialPane, lwaInitialScroll);
         })();
 
         // 4. Quick filter input on tables

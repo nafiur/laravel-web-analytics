@@ -67,10 +67,59 @@ class WebAnalyticsController extends Controller
     }
 
     /**
-     * Display the Web Analytics Dashboard.
+     * Display the Web Analytics Dashboard (legacy root URL).
      */
     public function index(Request $request)
     {
+        return $this->renderDashboard($request, 'overview');
+    }
+
+    /**
+     * Render the dashboard for a named sidebar section (bookmarkable URL).
+     */
+    public function section(Request $request)
+    {
+        return $this->renderDashboard($request, (string) $request->route('section', 'overview'));
+    }
+
+    /**
+     * Map a sidebar section to its report pane and optional scroll target.
+     *
+     * @return array{0: string, 1: string|null, 2: string|null}
+     */
+    protected function sectionView(string $section): array
+    {
+        $panes = [
+            'overview'    => ['#tab-overview', null],
+            'realtime'    => ['#tab-live', null],
+            'visitors'    => ['#tab-visitors', null],
+            'sources'     => ['#tab-requests', '#section-traffic-sources'],
+            'pages'       => ['#tab-requests', '#section-top-pages'],
+            'geography'   => ['#tab-visitors', '#section-countries'],
+            'devices'     => ['#tab-visitors', '#section-devices'],
+            'campaigns'   => ['#tab-visitors', '#section-campaigns'],
+            'events'      => ['#tab-unavailable', null],
+            'conversions' => ['#tab-unavailable', null],
+            'performance' => ['#tab-performance', null],
+            'errors'      => ['#tab-security', null],
+            'settings'    => ['#tab-settings', null],
+        ];
+
+        [$pane, $scroll] = $panes[$section] ?? $panes['overview'];
+        $unavailable = in_array($section, ['events', 'conversions'], true)
+            ? ($section === 'events' ? 'Events & Goals' : 'Conversions')
+            : null;
+
+        return [$pane, $scroll, $unavailable];
+    }
+
+    /**
+     * Build and render the dashboard shell.
+     */
+    protected function renderDashboard(Request $request, string $section = 'overview')
+    {
+        [$activePane, $activeScroll, $unavailableTitle] = $this->sectionView($section);
+
         $timeRange = $request->input('range', '24h');
         $customStart = $request->input('start_date');
         $customEnd = $request->input('end_date');
@@ -117,7 +166,11 @@ class WebAnalyticsController extends Controller
             'source',
             'tenantId',
             'tableStats',
-            'timezones'
+            'timezones',
+            'section',
+            'activePane',
+            'activeScroll',
+            'unavailableTitle'
         ));
     }
 
