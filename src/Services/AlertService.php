@@ -116,6 +116,30 @@ class AlertService
     }
 
     /**
+     * Send a short periodic traffic summary through the configured channel.
+     *
+     * @param array<string, mixed> $summary
+     */
+    public static function sendSummary(array $summary): bool
+    {
+        if (!config('laravel-web-analytics.alerts.enabled')) {
+            return false;
+        }
+
+        $message = "📊 *Laravel Web Analytics — Weekly Summary*\n"
+            . "🔹 Requests: `" . ($summary['total_requests_fmt'] ?? $summary['total_requests'] ?? 0) . "`\n"
+            . "🔹 Visitors: `" . ($summary['unique_visitors_fmt'] ?? $summary['unique_visitors'] ?? 0) . "`\n"
+            . "🔹 Bandwidth: `" . ($summary['total_bytes_fmt'] ?? '0 B') . "`\n"
+            . "🔹 Avg response: `" . ($summary['avg_response_time'] ?? 0) . " ms`\n"
+            . "🔹 Error rate: `" . ($summary['error_rate'] ?? 0) . "%`\n"
+            . "⏰ " . now()->toDateTimeString();
+
+        self::send($message);
+
+        return true;
+    }
+
+    /**
      * Deliver the message through the configured channel.
      */
     private static function send(string $message): void

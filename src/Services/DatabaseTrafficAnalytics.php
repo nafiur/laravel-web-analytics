@@ -90,6 +90,9 @@ class DatabaseTrafficAnalytics
             'top_devices'         => $this->getTopBreakdown($baseQuery, 'device', $totalRequests, 5),
             'top_status_codes'    => $this->getTopBreakdown($baseQuery, 'status_code', $totalRequests, 8),
             'top_referrers'       => $this->getTopBreakdown($baseQuery, 'referrer', $totalRequests, 8),
+            'top_utm_sources'     => $this->getTopBreakdown($baseQuery, 'utm_source', $totalRequests, 8),
+            'top_utm_mediums'     => $this->getTopBreakdown($baseQuery, 'utm_medium', $totalRequests, 8),
+            'top_utm_campaigns'   => $this->getTopBreakdown($baseQuery, 'utm_campaign', $totalRequests, 8),
             'top_methods'         => $this->getTopBreakdown($baseQuery, 'method', $totalRequests, 6),
         ];
 

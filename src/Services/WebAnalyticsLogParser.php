@@ -184,6 +184,9 @@ class WebAnalyticsLogParser
                 $cleanPath = '/';
             }
 
+            $utm = [];
+            parse_str($parsedUrl['query'] ?? '', $utm);
+
             $uaInfo = $this->parseUserAgent($userAgent);
 
             $records[] = [
@@ -199,6 +202,9 @@ class WebAnalyticsLogParser
                 'status_group'=> (string) (floor($statusCode / 100) . 'xx'),
                 'bytes'       => $bytes,
                 'referrer'    => ($referrer && $referrer !== '-') ? $referrer : 'Direct',
+                'utm_source'  => $utm['utm_source'] ?? null,
+                'utm_medium'  => $utm['utm_medium'] ?? null,
+                'utm_campaign'=> $utm['utm_campaign'] ?? null,
                 'user_agent'  => $userAgent,
                 'browser'     => $uaInfo['browser'],
                 'os'          => $uaInfo['os'],
@@ -234,6 +240,9 @@ class WebAnalyticsLogParser
         $userAgentsCount = [];
         $referrersCount = [];
         $methodsCount = [];
+        $utmSourcesCount = [];
+        $utmMediumsCount = [];
+        $utmCampaignsCount = [];
 
         // Time Series Buckets (by hour or by day depending on range)
         $isHourly = in_array($timeRange, ['1h', '6h', '12h', '24h', 'today'], true);
@@ -280,6 +289,16 @@ class WebAnalyticsLogParser
 
             // Method
             $methodsCount[$r['method']] = ($methodsCount[$r['method']] ?? 0) + 1;
+
+            if (!empty($r['utm_source'])) {
+                $utmSourcesCount[$r['utm_source']] = ($utmSourcesCount[$r['utm_source']] ?? 0) + 1;
+            }
+            if (!empty($r['utm_medium'])) {
+                $utmMediumsCount[$r['utm_medium']] = ($utmMediumsCount[$r['utm_medium']] ?? 0) + 1;
+            }
+            if (!empty($r['utm_campaign'])) {
+                $utmCampaignsCount[$r['utm_campaign']] = ($utmCampaignsCount[$r['utm_campaign']] ?? 0) + 1;
+            }
 
             // Time Bucket
             $bucketKey = $isHourly ? $r['datetime']->format('Y-m-d H:00') : $r['datetime']->format('Y-m-d');
@@ -504,6 +523,9 @@ class WebAnalyticsLogParser
                 'top_devices'       => $this->formatBreakdownList($devicesCount, $totalRequests, 5),
                 'top_status_codes'  => $this->formatBreakdownList($detailedStatusCodes, $totalRequests, 8),
                 'top_referrers'     => $this->formatBreakdownList($referrersCount, $totalRequests, 8),
+                'top_utm_sources'   => $this->formatBreakdownList($utmSourcesCount, $totalRequests, 8),
+                'top_utm_mediums'   => $this->formatBreakdownList($utmMediumsCount, $totalRequests, 8),
+                'top_utm_campaigns' => $this->formatBreakdownList($utmCampaignsCount, $totalRequests, 8),
                 'top_user_agents'   => $this->formatBreakdownList($userAgentsCount, $totalRequests, 8),
             ],
             'recent_logs'       => $recentLogs,
@@ -741,6 +763,9 @@ class WebAnalyticsLogParser
                 'top_devices'      => [],
                 'top_status_codes' => [],
                 'top_referrers'    => [],
+                'top_utm_sources'  => [],
+                'top_utm_mediums'  => [],
+                'top_utm_campaigns'=> [],
                 'top_user_agents'  => [],
             ],
             'recent_logs'       => [],

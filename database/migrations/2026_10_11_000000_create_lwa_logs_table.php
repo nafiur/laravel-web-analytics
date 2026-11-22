@@ -33,6 +33,9 @@ return new class extends Migration
                 $table->string('browser', 50)->nullable()->index();
                 $table->text('user_agent')->nullable();
                 $table->text('referrer')->nullable();
+                $table->string('utm_source', 100)->nullable()->index();
+                $table->string('utm_medium', 100)->nullable()->index();
+                $table->string('utm_campaign', 100)->nullable()->index();
                 $table->timestamps();
 
                 $table->index('created_at');

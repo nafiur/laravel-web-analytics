@@ -7,6 +7,9 @@ use Nafiur\WebAnalytics\Services\PruneService;
 
 class PruneAnalyticsCommand extends Command
 {
+    /** @var string[] */
+    protected $aliases = ['analytics:prune'];
+
     /**
      * The name and signature of the console command.
      */

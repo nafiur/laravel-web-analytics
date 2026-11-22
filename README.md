@@ -27,6 +27,8 @@ A modern, fast, and self-hosted Web Traffic & Visitor Analytics Dashboard for La
 - 🧹 **Automatic Log Pruning**: Includes an Artisan command (`php artisan lwa:prune`) to maintain a clean database and prevent disk bloat.
 - ⚡ **Post-Response Telemetry**: Tracking runs in Laravel's `terminate()` hook, after the HTTP response is sent. Optional GeoIP lookups and webhook alerts still occupy the worker for up to their configured timeouts (1s / 3s by default); keep alerts disabled unless needed.
 - 🗄️ **Lightweight & Decoupled Storage**: Stores telemetry in the `lwa_logs` table without coupling to any specific User model, with GDPR-compliant IP anonymization options.
+- 🔐 **Privacy-First Tracking**: Do Not Track support and an optional cookieless, daily-salted visitor fingerprint — no cookie banner required.
+- 🎯 **UTM Campaigns**: `utm_source`, `utm_medium` and `utm_campaign` are captured automatically and shown in the Visitors tab.
 - 🏢 **Multi-Tenancy Ready**: Native support for single-database multi-tenant applications (`stancl/tenancy`, `spatie/laravel-multitenancy`, or custom resolvers) with tenant-scoped dashboards and streams.
 
 ---
@@ -263,8 +265,14 @@ return [
         'web'                     => env('WEB_ANALYTICS_CAPTURE_WEB', true),
         'api'                     => env('WEB_ANALYTICS_CAPTURE_API', true),
         'ajax'                    => env('WEB_ANALYTICS_CAPTURE_AJAX', true),
-        'bots'                    => env('WEB_ANALYTICS_CAPTURE_BOTS', false),
+        'bots'                    => env('WEB_ANALYTICS_CAPTURE_BOTS', false), // false | true | 'known'
         'trust_forwarded_headers' => env('WEB_ANALYTICS_TRUST_FORWARDED_HEADERS', false),
+    ],
+
+    'privacy' => [
+        'respect_dnt'         => env('WEB_ANALYTICS_RESPECT_DNT', true),
+        'visitor_id_strategy' => env('WEB_ANALYTICS_VISITOR_ID_STRATEGY', 'session'), // 'session' | 'fingerprint'
+        'fingerprint_salt'    => env('WEB_ANALYTICS_FINGERPRINT_SALT', ''),
     ],
 
     /*
@@ -334,9 +342,15 @@ return [
 
 ---
 
+## 🔐 Privacy & bot filtering
+
+- **Do Not Track:** with `WEB_ANALYTICS_RESPECT_DNT=true` (default), requests carrying `DNT: 1` are never logged.
+- **Cookieless visitors:** set `WEB_ANALYTICS_VISITOR_ID_STRATEGY=fingerprint` to identify guests with `sha256(IP|User-Agent|date|salt)` instead of the Laravel session id. Always set `WEB_ANALYTICS_FINGERPRINT_SALT` to a stable random value; otherwise the app key is used as a fallback.
+- **Bot filtering:** `WEB_ANALYTICS_CAPTURE_BOTS` accepts `false` (skip all bots — default), `true` (capture everything), or `known` (capture recognised search-engine/social crawlers but skip scrapers and CLI tooling).
+
 ## 🧹 Database Maintenance (Pruning)
 
-> Upgrading from an earlier release: `user_id` is now a nullable string column (up to 64 chars) so UUID / string user keys are supported. Existing installs must alter the column manually if they store non-integer identifiers.
+> Upgrading from an earlier release: `user_id` is now a nullable string column (up to 64 chars) so UUID / string user keys are supported. Existing installs must alter the column manually if they store non-integer identifiers. A migration also adds `utm_source`, `utm_medium` and `utm_campaign`.
 
 To keep your database lean, run the included prune command:
 
@@ -354,6 +368,16 @@ Schedule it in your `routes/console.php` (Laravel 11+) or `app/Console/Kernel.ph
 use Illuminate\Support\Facades\Schedule;
 
 Schedule::command('lwa:prune')->daily();
+Schedule::command('lwa:summary')->weekly(); // sends a digest if alerts are enabled
+```
+
+Every command also has an `analytics:` alias (`analytics:prune`, `analytics:export`, `analytics:summary`).
+
+### CLI export
+
+```bash
+php artisan lwa:export --range=7d --output=storage/app/analytics.csv
+php artisan analytics:export --range=all --tenant=company-xyz
 ```
 
 ---

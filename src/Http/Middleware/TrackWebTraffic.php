@@ -7,6 +7,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Str;
 use Nafiur\WebAnalytics\Models\LwaLogs;
 use Nafiur\WebAnalytics\Services\AlertService;
+use Nafiur\WebAnalytics\Services\BotDetector;
 use Nafiur\WebAnalytics\Services\GeoIpService;
 use Nafiur\WebAnalytics\Services\IpAddress;
 use Nafiur\WebAnalytics\Services\TenantResolver;
@@ -36,6 +37,12 @@ class TrackWebTraffic
         }
 
         try {
+            // Respect Do Not Track before doing any other work.
+            if (config('laravel-web-analytics.privacy.respect_dnt', true)
+                && ($request->header('DNT') === '1' || $request->server('HTTP_DNT') === '1')) {
+                return;
+            }
+
             $path = '/' . ltrim($request->path(), '/');
 
             // Skip ignored paths or static assets
@@ -53,9 +60,8 @@ class TrackWebTraffic
             $userAgent = $request->userAgent() ?? '';
             $uaInfo = $this->parseUserAgent($userAgent);
 
-            // Check capture bots setting
-            $isBot = ($uaInfo['device'] === 'Bot' || $uaInfo['browser'] === 'Bot / Crawler');
-            if ($isBot && !config('laravel-web-analytics.capture.bots', false)) {
+            // Bot / crawler filtering (false | true | 'known')
+            if (!BotDetector::shouldCapture($userAgent)) {
                 return;
             }
 
@@ -95,31 +101,42 @@ class TrackWebTraffic
                 // Ignore auth inspection errors
             }
 
-            // Hybrid Session Identifier:
-            // 1. Authenticated: 'u_' . $userId
-            // 2. Guest with Laravel session: 's_' . sessionId
-            // 3. Stateless: 'f_' . md5(ip|ua)
+            // Visitor identifier:
+            //   authenticated -> 'u_' . user id
+            //   fingerprint   -> 'f_' . daily salted hash (cookieless)
+            //   session       -> 's_' . Laravel session id, with stateless fallback
             $sessionId = null;
-            try {
-                if ($userId) {
-                    $sessionId = 'u_' . $userId;
-                } elseif ($request->hasSession()) {
-                    $laravelSessionId = $request->session()->getId();
-                    if ($laravelSessionId) {
-                        $sessionId = 's_' . substr($laravelSessionId, 0, 40);
-                    }
-                }
-            } catch (\Throwable $e) {
-                // Ignore session retrieval issues
-            }
+            $strategy = config('laravel-web-analytics.privacy.visitor_id_strategy', 'session');
 
-            if (!$sessionId) {
-                $sessionId = 'f_' . substr(md5($ip . '|' . $userAgent), 0, 24);
+            if ($userId) {
+                $sessionId = 'u_' . $userId;
+            } elseif ($strategy === 'fingerprint') {
+                $salt = config('laravel-web-analytics.privacy.fingerprint_salt') ?: config('app.key', 'lwa');
+                $sessionId = 'f_' . substr(hash('sha256', $ip . '|' . $userAgent . '|' . now()->toDateString() . '|' . $salt), 0, 32);
+            } else {
+                try {
+                    if ($request->hasSession()) {
+                        $laravelSessionId = $request->session()->getId();
+                        if ($laravelSessionId) {
+                            $sessionId = 's_' . substr($laravelSessionId, 0, 40);
+                        }
+                    }
+                } catch (\Throwable $e) {
+                    // Ignore session retrieval issues
+                }
+                if (!$sessionId) {
+                    $sessionId = 'f_' . substr(md5($ip . '|' . $userAgent), 0, 24);
+                }
             }
 
             // Referrer
             $rawReferrer = $request->headers->get('referer');
             $referrer = $rawReferrer ? substr($rawReferrer, 0, 490) : 'Direct';
+
+            // UTM campaign parameters
+            $utmSource = $request->query('utm_source');
+            $utmMedium = $request->query('utm_medium');
+            $utmCampaign = $request->query('utm_campaign');
 
             // Alerts (disabled by default). Counters and dedupe keep webhook
             // traffic bounded even during an outage.
@@ -150,6 +167,9 @@ class TrackWebTraffic
                 'os'               => $uaInfo['os'],
                 'device'           => $uaInfo['device'],
                 'referrer'         => $referrer,
+                'utm_source'       => $utmSource !== null ? substr((string) $utmSource, 0, 100) : null,
+                'utm_medium'       => $utmMedium !== null ? substr((string) $utmMedium, 0, 100) : null,
+                'utm_campaign'     => $utmCampaign !== null ? substr((string) $utmCampaign, 0, 100) : null,
                 'user_agent'       => substr($userAgent, 0, 500),
                 'user_id'          => $userId,
             ]);

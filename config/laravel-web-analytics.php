@@ -71,7 +71,12 @@ return [
         'web'       => env('WEB_ANALYTICS_CAPTURE_WEB', true),
         'api'       => env('WEB_ANALYTICS_CAPTURE_API', true),
         'ajax'      => env('WEB_ANALYTICS_CAPTURE_AJAX', true),
-        'bots'      => env('WEB_ANALYTICS_CAPTURE_BOTS', false), // Set to false to avoid crawler noise
+        /*
+         | false  -> skip all detected bots/crawlers (recommended)
+         | true   -> capture everything, including scrapers and CLI tooling
+         | 'known'-> capture only recognised search-engine/social crawlers
+         */
+        'bots'      => env('WEB_ANALYTICS_CAPTURE_BOTS', false),
 
         /*
          | Only enable when you are certain the immediate peer is a trusted
@@ -80,6 +85,23 @@ return [
          | Prefer configuring Laravel's trusted proxies instead.
          */
         'trust_forwarded_headers' => env('WEB_ANALYTICS_TRUST_FORWARDED_HEADERS', false),
+    ],
+
+    /*
+    |--------------------------------------------------------------------------
+    | Privacy-First Tracking
+    |--------------------------------------------------------------------------
+    |
+    | respect_dnt: skip tracking when the browser sends DNT: 1.
+    | visitor_id_strategy:
+    |   'session'     -> use Laravel session id (existing behaviour)
+    |   'fingerprint' -> cookieless daily hash of IP + UA + date + salt
+    |
+    */
+    'privacy' => [
+        'respect_dnt'         => env('WEB_ANALYTICS_RESPECT_DNT', true),
+        'visitor_id_strategy' => env('WEB_ANALYTICS_VISITOR_ID_STRATEGY', 'session'),
+        'fingerprint_salt'    => env('WEB_ANALYTICS_FINGERPRINT_SALT', ''),
     ],
 
     /*

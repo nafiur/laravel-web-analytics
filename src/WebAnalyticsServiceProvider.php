@@ -27,6 +27,8 @@ class WebAnalyticsServiceProvider extends ServiceProvider
         $this->commands([
             \Nafiur\WebAnalytics\Commands\PruneAnalyticsCommand::class,
             \Nafiur\WebAnalytics\Commands\SimulateLiveTrafficCommand::class,
+            \Nafiur\WebAnalytics\Commands\ExportAnalyticsCommand::class,
+            \Nafiur\WebAnalytics\Commands\WeeklySummaryCommand::class,
         ]);
 
         // Publish Configuration
