@@ -79,6 +79,12 @@ class PhaseOneTest extends TestCase
         $this->assertSame('google', $sources[0]['name']);
     }
 
+    public function test_export_command_rejects_unsupported_format(): void
+    {
+        $this->artisan('lwa:export', ['--format' => 'pdf', '--range' => 'all'])
+            ->assertExitCode(1);
+    }
+
     public function test_command_aliases_are_registered(): void
     {
         $this->artisan('analytics:prune', ['--days' => 30])->assertExitCode(0);

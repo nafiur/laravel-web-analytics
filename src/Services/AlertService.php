@@ -5,6 +5,8 @@ namespace Nafiur\WebAnalytics\Services;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Mail;
+use Nafiur\WebAnalytics\Mail\WeeklySummaryMail;
 
 class AlertService
 {
@@ -135,6 +137,15 @@ class AlertService
             . "⏰ " . now()->toDateTimeString();
 
         self::send($message);
+
+        $email = config('laravel-web-analytics.alerts.email');
+        if ($email) {
+            try {
+                Mail::to($email)->send(new WeeklySummaryMail(str_replace(['*', '`'], '', $message)));
+            } catch (\Throwable $e) {
+                Log::warning('LWA weekly summary email failed: ' . $e->getMessage());
+            }
+        }
 
         return true;
     }

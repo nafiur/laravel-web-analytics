@@ -311,6 +311,12 @@ return [
      */
     'stream_interval' => env('WEB_ANALYTICS_STREAM_INTERVAL', 2),
 
+    'stream' => [
+        'mode'               => env('WEB_ANALYTICS_STREAM_MODE', 'sse'), // 'sse' | 'polling'
+        'polling_interval'   => env('WEB_ANALYTICS_POLLING_INTERVAL', 5),
+        'max_execution_time' => env('WEB_ANALYTICS_STREAM_MAX_EXECUTION_TIME', 0),
+    ],
+
     /*
      * Active visitor calculation window in minutes
      */
@@ -338,8 +344,9 @@ return [
      */
     'geoip' => [
         'enabled'  => env('WEB_ANALYTICS_GEOIP_ENABLED', true),
-        'provider' => env('WEB_ANALYTICS_GEOIP_PROVIDER', ''), // '', 'ip-api'
-        'timeout'  => env('WEB_ANALYTICS_GEOIP_TIMEOUT', 1),
+        'provider'        => env('WEB_ANALYTICS_GEOIP_PROVIDER', ''), // '', 'ip-api', 'maxmind'
+        'timeout'         => env('WEB_ANALYTICS_GEOIP_TIMEOUT', 1),
+        'maxmind_db_path' => env('WEB_ANALYTICS_MAXMIND_DB', storage_path('app/GeoLite2-City.mmdb')),
     ],
 
     /*
@@ -351,6 +358,7 @@ return [
         'channel'                         => env('WEB_ANALYTICS_ALERT_CHANNEL', 'telegram'), // 'telegram', 'slack', 'discord'
         'telegram_bot_token'              => env('WEB_ANALYTICS_TELEGRAM_BOT_TOKEN', null),
         'telegram_chat_id'                => env('WEB_ANALYTICS_TELEGRAM_CHAT_ID', null),
+        'email'                           => env('WEB_ANALYTICS_ALERT_EMAIL', null), // weekly summary recipient
         'error_rate_threshold_percentage' => env('WEB_ANALYTICS_ERROR_THRESHOLD', 10),
     ],
 
@@ -406,6 +414,30 @@ return [
 - **Cookieless visitors:** set `WEB_ANALYTICS_VISITOR_ID_STRATEGY=fingerprint` to identify guests with `sha256(IP|User-Agent|date|salt)` instead of the Laravel session id. Always set `WEB_ANALYTICS_FINGERPRINT_SALT` to a stable random value; otherwise the app key is used as a fallback.
 - **Bot filtering:** `WEB_ANALYTICS_CAPTURE_BOTS` accepts `false` (skip all bots — default), `true` (capture everything), or `known` (capture recognised search-engine/social crawlers but skip scrapers and CLI tooling).
 
+## 🗺️ Offline GeoIP & live map
+
+The Real-time page includes a vector world map. Set:
+
+```env
+WEB_ANALYTICS_GEOIP_PROVIDER=maxmind
+WEB_ANALYTICS_MAXMIND_DB=/absolute/path/to/GeoLite2-City.mmdb
+composer require maxmind-db/reader
+```
+
+Lookups then happen **locally** with no external API call; country, city and coordinates are cached per IP and plotted on the live map. Without the optional reader/database, the package degrades gracefully and the map explains what is missing. The map library ships its own world shape data, so no map tile API is called either.
+
+## 📡 SSE limits & polling fallback
+
+Each stream response is short-lived and paced by EventSource `retry` plus `Last-Event-ID`. For shared hosting with very few PHP workers:
+
+```env
+WEB_ANALYTICS_STREAM_MODE=polling
+WEB_ANALYTICS_POLLING_INTERVAL=5
+WEB_ANALYTICS_STREAM_MAX_EXECUTION_TIME=15
+```
+
+`polling` uses ordinary `fetch()` calls instead of a persistent connection; `max_execution_time` caps a single stream response with `set_time_limit()` (0 leaves PHP's setting untouched). The connection badge reports Connected / Reconnecting / Disconnected / Polling and offers a manual retry.
+
 ## 🧹 Database Maintenance (Pruning)
 
 > Upgrading from an earlier release: `user_id` is now a nullable string column (up to 64 chars) so UUID / string user keys are supported. Existing installs must alter the column manually if they store non-integer identifiers. A migration also adds `utm_source`, `utm_medium` and `utm_campaign`.
@@ -434,7 +466,7 @@ Every command also has an `analytics:` alias (`analytics:prune`, `analytics:expo
 ### CLI export
 
 ```bash
-php artisan lwa:export --range=7d --output=storage/app/analytics.csv
+php artisan lwa:export --format=csv --range=7d --output=storage/app/analytics.csv
 php artisan analytics:export --range=all --tenant=company-xyz
 ```
 

@@ -2,6 +2,9 @@
     <script>
         const lwaInitialPane = {!! json_encode($activePane ?? '#tab-overview') !!};
         const lwaInitialScroll = {!! json_encode($activeScroll ?? null) !!};
+        const lwaStreamMode = {!! json_encode(config('laravel-web-analytics.stream.mode', 'sse')) !!};
+        const lwaPollingInterval = {!! json_encode(config('laravel-web-analytics.stream.polling_interval', 5)) !!};
+        const lwaDataUrl = "{{ route('lwa_data') }}";
 
         // 1. Dark Mode Toggle (synced with Settings > Appearance)
         (function() {
@@ -573,6 +576,41 @@
         // Charts whose x-axis is the shared time series (used by timezone settings)
         window.lwaTimeCharts = [chartOverviewTraffic, chartRequests, chartBandwidth, chartStatus, chartLatency].filter(Boolean);
 
+        // ============ OFFLINE GEOIP LIVE MAP ============
+        (function() {
+            let map = null;
+            let located = 0;
+
+            window.lwaInitLiveMap = function() {
+                if (!window.jsVectorMap || !document.getElementById('lwaLiveMap') || map) return;
+                try {
+                    map = new jsVectorMap({
+                        selector: '#lwaLiveMap',
+                        map: 'world',
+                        zoomButtons: true,
+                        regionStyle: {
+                            initial: { fill: '#cbd5e1', stroke: '#ffffff', strokeWidth: 0.5 },
+                            hover: { fill: '#94a3b8' }
+                        },
+                        markerStyle: { initial: { fill: '#4f46e5', stroke: '#ffffff', strokeWidth: 1, r: 5 } },
+                        markers: []
+                    });
+                } catch (err) { /* map library unavailable */ }
+            };
+
+            window.lwaAddMapMarker = function(lat, lng, label) {
+                if (!map || !lat || !lng) return;
+                try {
+                    map.addMarker({ latLng: [Number(lat), Number(lng)], name: label || 'Visitor' });
+                    located++;
+                    const count = document.getElementById('lwaMapCount');
+                    const empty = document.getElementById('lwaMapEmpty');
+                    if (count) count.textContent = located + ' located';
+                    if (empty) empty.classList.add('hidden');
+                } catch (err) { /* ignore bad coordinates */ }
+            };
+        })();
+
         // ============ REAL-TIME SSE STREAM ============
         (function() {
             let lastTrafficId = {{ \Nafiur\WebAnalytics\Models\LwaLogs::forTenant($tenantId ?? null)->max('id') ?? 0 }};
@@ -587,7 +625,8 @@
                 const styles = {
                     connected:    ['bg-emerald-500', 'text-emerald-600 dark:text-emerald-400', 'Connected'],
                     reconnecting: ['bg-amber-500', 'text-amber-600 dark:text-amber-400', 'Reconnecting…'],
-                    disconnected: ['bg-rose-500', 'text-rose-600 dark:text-rose-400', 'Disconnected']
+                    disconnected: ['bg-rose-500', 'text-rose-600 dark:text-rose-400', 'Disconnected'],
+                    polling:      ['bg-sky-500', 'text-sky-600 dark:text-sky-400', 'Polling']
                 };
                 const [dotClass, textClass, label] = styles[state];
                 if (dot) dot.className = 'w-2 h-2 rounded-full ' + dotClass;
@@ -604,6 +643,40 @@
             };
 
             function startSSE() {
+                // Polling fallback: no persistent EventSource connection, safe
+                // for shared hosting with a very small PHP-FPM worker pool.
+                if (lwaStreamMode === 'polling') {
+                    if (sseSource) { sseSource.close(); sseSource = null; }
+                    setConnectionState('polling');
+                    if (!window.lwaPollingStarted) {
+                        window.lwaPollingStarted = true;
+                        setInterval(async function() {
+                            try {
+                                const url = new URL(lwaDataUrl, window.location.origin);
+                                const current = new URLSearchParams(window.location.search);
+                                current.forEach(function(value, key) { url.searchParams.set(key, value); });
+                                const response = await fetch(url, { headers: { 'Accept': 'application/json', 'X-Requested-With': 'XMLHttpRequest' } });
+                                if (!response.ok) throw new Error('HTTP ' + response.status);
+                                const payload = await response.json();
+                                const logs = (payload.analytics && payload.analytics.recent_logs) || [];
+                                logs.forEach(function(log) {
+                                    if (log.id > lastTrafficId) {
+                                        prependLiveFeedRow(log);
+                                        if (log.latitude && log.longitude && window.lwaAddMapMarker) {
+                                            window.lwaAddMapMarker(log.latitude, log.longitude, log.city || log.country || log.ip_address);
+                                        }
+                                        lastTrafficId = log.id;
+                                    }
+                                });
+                                setConnectionState('polling');
+                            } catch (err) {
+                                setConnectionState('reconnecting');
+                            }
+                        }, Math.max(2, Number(lwaPollingInterval) || 5) * 1000);
+                    }
+                    return;
+                }
+
                 if (!window.EventSource) {
                     setConnectionState('disconnected');
                     return;
@@ -623,7 +696,12 @@
                         let parsed = JSON.parse(e.data);
                         if (parsed.last_id) lastTrafficId = parsed.last_id;
                         if (parsed.logs && parsed.logs.length > 0) {
-                            parsed.logs.forEach(prependLiveFeedRow);
+                            parsed.logs.forEach(function(log) {
+                                prependLiveFeedRow(log);
+                                if (log.latitude && log.longitude && window.lwaAddMapMarker) {
+                                    window.lwaAddMapMarker(log.latitude, log.longitude, log.city || log.country || log.ip_address);
+                                }
+                            });
                         }
                     } catch (err) {}
                 });
@@ -1398,6 +1476,7 @@
         // 10. Render Lucide icons / clear chart skeletons after the DOM is ready
         function lwaFinishLoading() {
             window.lwaRenderIcons();
+            if (window.lwaInitLiveMap) window.lwaInitLiveMap();
             setTimeout(function() {
                 document.querySelectorAll('.lwa-skeleton').forEach(function(el) { el.remove(); });
             }, 350);

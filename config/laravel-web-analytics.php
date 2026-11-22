@@ -50,6 +50,23 @@ return [
 
     /*
     |--------------------------------------------------------------------------
+    | Live Stream Mode & Limits
+    |--------------------------------------------------------------------------
+    |
+    | mode: 'sse' (EventSource) or 'polling' (plain fetch, safer on shared
+    | hosting with very few PHP workers).
+    | max_execution_time: 0 leaves the PHP setting untouched; a positive value
+    | caps a single stream response with set_time_limit().
+    |
+    */
+    'stream' => [
+        'mode'               => env('WEB_ANALYTICS_STREAM_MODE', 'sse'),
+        'polling_interval'   => env('WEB_ANALYTICS_POLLING_INTERVAL', 5),
+        'max_execution_time' => env('WEB_ANALYTICS_STREAM_MAX_EXECUTION_TIME', 0),
+    ],
+
+    /*
+    |--------------------------------------------------------------------------
     | Active Visitor Timeout (Minutes)
     |--------------------------------------------------------------------------
     |
@@ -191,13 +208,17 @@ return [
     | GeoIP / City Lookup Provider
     |--------------------------------------------------------------------------
     |
-    | Supported: '' (header-based, no HTTP call), 'ip-api'
+    | Supported: '' (header-based, no HTTP call), 'ip-api', 'maxmind'
+    |
+    | MaxMind runs fully offline using a local GeoLite2-City.mmdb file and the
+    | optional composer package maxmind-db/reader.
     |
     */
     'geoip'                 => [
-        'enabled'  => env('WEB_ANALYTICS_GEOIP_ENABLED', true),
-        'provider' => env('WEB_ANALYTICS_GEOIP_PROVIDER', ''), // '', 'ip-api'
-        'timeout'  => env('WEB_ANALYTICS_GEOIP_TIMEOUT', 1),
+        'enabled'         => env('WEB_ANALYTICS_GEOIP_ENABLED', true),
+        'provider'        => env('WEB_ANALYTICS_GEOIP_PROVIDER', ''), // '', 'ip-api', 'maxmind'
+        'timeout'         => env('WEB_ANALYTICS_GEOIP_TIMEOUT', 1),
+        'maxmind_db_path' => env('WEB_ANALYTICS_MAXMIND_DB', function_exists('storage_path') ? storage_path('app/GeoLite2-City.mmdb') : null),
     ],
 
     /*
@@ -215,6 +236,7 @@ return [
         'channel'                         => env('WEB_ANALYTICS_ALERT_CHANNEL', 'telegram'), // 'telegram', 'slack', 'discord'
         'telegram_bot_token'              => env('WEB_ANALYTICS_TELEGRAM_BOT_TOKEN', null),
         'telegram_chat_id'                => env('WEB_ANALYTICS_TELEGRAM_CHAT_ID', null),
+        'email'                           => env('WEB_ANALYTICS_ALERT_EMAIL', null), // weekly summary recipient
         'error_rate_threshold_percentage' => env('WEB_ANALYTICS_ERROR_THRESHOLD', 10), // e.g. 10% errors
     ],
 

@@ -4,6 +4,7 @@ namespace Nafiur\WebAnalytics\Services;
 
 use Nafiur\WebAnalytics\Models\LwaLogs;
 use Nafiur\WebAnalytics\Services\CountryFlag;
+use Nafiur\WebAnalytics\Services\GeoIpService;
 use Nafiur\WebAnalytics\Services\TenantResolver;
 use Carbon\Carbon;
 use Illuminate\Support\Facades\DB;
@@ -139,6 +140,7 @@ class DatabaseTrafficAnalytics
             ->limit(20)
             ->get()
             ->map(function ($log) {
+                $geo = GeoIpService::resolve((string) $log->ip_address);
                 $isAuth = !empty($log->user_id);
                 $userName = $isAuth ? "User #{$log->user_id}" : 'Guest';
                 return [
@@ -160,6 +162,8 @@ class DatabaseTrafficAnalytics
                     'time_ago'         => $log->created_at ? $log->created_at->diffForHumans() : 'just now',
                     'time_clock'       => $log->created_at ? $log->created_at->format('H:i:s') : '',
                     'created_at_iso'   => $log->created_at?->toIso8601String(),
+                    'latitude'         => $geo['latitude'] ?? null,
+                    'longitude'        => $geo['longitude'] ?? null,
                 ];
             })
             ->toArray();
@@ -192,6 +196,7 @@ class DatabaseTrafficAnalytics
             ->limit(30)
             ->get()
             ->map(function ($log) {
+                $geo = GeoIpService::resolve((string) $log->ip_address);
                 $isAuth = !empty($log->user_id);
                 $userName = $isAuth ? "User #{$log->user_id}" : 'Guest';
                 return [
@@ -213,6 +218,8 @@ class DatabaseTrafficAnalytics
                     'time_ago'         => $log->created_at ? $log->created_at->diffForHumans() : 'just now',
                     'time_clock'       => $log->created_at ? $log->created_at->format('H:i:s') : '',
                     'created_at_iso'   => $log->created_at?->toIso8601String(),
+                    'latitude'         => $geo['latitude'] ?? null,
+                    'longitude'        => $geo['longitude'] ?? null,
                 ];
             })
             ->toArray();

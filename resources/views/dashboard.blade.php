@@ -47,6 +47,11 @@
     <!-- ApexCharts -->
     <script src="https://cdn.jsdelivr.net/npm/apexcharts"></script>
 
+    <!-- Vector world map for the offline GeoIP live view (map data is bundled, no tile API calls) -->
+    <link rel="stylesheet" href="https://unpkg.com/jsvectormap@1.5.3/dist/css/jsvectormap.min.css">
+    <script src="https://unpkg.com/jsvectormap@1.5.3/dist/js/jsvectormap.min.js"></script>
+    <script src="https://unpkg.com/jsvectormap@1.5.3/dist/maps/world.js"></script>
+
     <style>
         /* ---------- Design tokens ---------- */
         :root {

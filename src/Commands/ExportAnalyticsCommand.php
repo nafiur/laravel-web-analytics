@@ -21,6 +21,12 @@ class ExportAnalyticsCommand extends Command
 
     public function handle(): int
     {
+        $format = strtolower((string) $this->option('format'));
+        if ($format !== 'csv') {
+            $this->error("Unsupported format [{$format}]. Only 'csv' is available.");
+            return self::FAILURE;
+        }
+
         $range = (string) $this->option('range');
         $tenantId = $this->option('tenant') ?: null;
         $cutoff = (new DatabaseTrafficAnalytics())->resolveCutoffTime($range, null, null);

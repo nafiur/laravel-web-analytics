@@ -4,6 +4,8 @@ namespace Nafiur\WebAnalytics\Tests\Feature;
 
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Http;
+use Illuminate\Support\Facades\Mail;
+use Nafiur\WebAnalytics\Mail\WeeklySummaryMail;
 use Nafiur\WebAnalytics\Models\LwaLogs;
 use Nafiur\WebAnalytics\Services\AlertService;
 use Nafiur\WebAnalytics\Services\GeoIpService;
@@ -60,6 +62,8 @@ class ServicesTest extends TestCase
             'country_code' => null,
             'country_name' => null,
             'city'         => null,
+            'latitude'     => null,
+            'longitude'    => null,
         ], GeoIpService::resolve('192.168.1.10'));
         Http::assertNothingSent();
     }
@@ -111,6 +115,37 @@ class ServicesTest extends TestCase
         $this->assertStringNotContainsString('`_*[x]', $text);
         $this->assertStringContainsString('https://example.test/ax', $text);
         $this->assertStringContainsString('`1.2.3.4`', $text);
+    }
+
+    public function test_maxmind_provider_falls_back_safely_without_reader(): void
+    {
+        config()->set('laravel-web-analytics.geoip.provider', 'maxmind');
+        config()->set('laravel-web-analytics.geoip.maxmind_db_path', '/nonexistent/GeoLite2-City.mmdb');
+
+        $result = GeoIpService::resolve('8.8.8.8');
+
+        $this->assertNull($result['country_code']);
+        $this->assertNull($result['latitude']);
+        $this->assertNull($result['longitude']);
+    }
+
+    public function test_weekly_summary_can_be_emailed(): void
+    {
+        config()->set('laravel-web-analytics.alerts.enabled', true);
+        config()->set('laravel-web-analytics.alerts.email', 'owner@example.test');
+        config()->set('laravel-web-analytics.alerts.channel', 'slack');
+        config()->set('laravel-web-analytics.alerts.webhook_url', null);
+        Http::fake();
+        Mail::fake();
+        AlertService::sendSummary([
+            'total_requests_fmt'  => '1.2K',
+            'unique_visitors_fmt' => '900',
+            'total_bytes_fmt'     => '40 MB',
+            'avg_response_time'   => 120,
+            'error_rate'          => 1.5,
+        ]);
+
+        Mail::assertSent(WeeklySummaryMail::class);
     }
 
     public function test_prune_service_scopes_deletion_to_tenant(): void

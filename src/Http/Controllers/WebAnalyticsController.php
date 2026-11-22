@@ -9,6 +9,7 @@ use Nafiur\WebAnalytics\Models\LwaLogs;
 use Nafiur\WebAnalytics\Services\AlertService;
 use Nafiur\WebAnalytics\Services\CountryFlag;
 use Nafiur\WebAnalytics\Services\DatabaseTrafficAnalytics;
+use Nafiur\WebAnalytics\Services\GeoIpService;
 use Nafiur\WebAnalytics\Services\PruneService;
 use Nafiur\WebAnalytics\Services\TenantResolver;
 use Nafiur\WebAnalytics\Services\WebAnalyticsLogParser;
@@ -207,6 +208,12 @@ class WebAnalyticsController extends Controller
             session_write_close();
         }
 
+        // Optional hard cap for shared hosting with strict PHP limits.
+        $maxExecution = (int) config('laravel-web-analytics.stream.max_execution_time', 0);
+        if ($maxExecution > 0 && function_exists('set_time_limit')) {
+            @set_time_limit($maxExecution);
+        }
+
         $tenantId = $this->resolveDashboardTenant($request);
 
         // On reconnect EventSource sends Last-Event-ID; the query string only
@@ -238,6 +245,7 @@ class WebAnalyticsController extends Controller
 
             if ($newLogs->isNotEmpty()) {
                 $formattedLogs = $newLogs->map(function ($log) use ($formatter) {
+                    $geo = GeoIpService::resolve((string) $log->ip_address);
                     $isAuth = !empty($log->user_id);
                     $userName = $isAuth ? "User #{$log->user_id}" : 'Guest';
                     return [
@@ -254,6 +262,9 @@ class WebAnalyticsController extends Controller
                         'device'           => $log->device,
                         'country'          => $log->country ?: 'Unknown',
                         'flag'             => CountryFlag::emoji($log->country),
+                        'latitude'         => $geo['latitude'] ?? null,
+                        'longitude'        => $geo['longitude'] ?? null,
+                        'geo_city'         => $geo['city'] ?? $log->city,
                         'user_id'          => $log->user_id,
                         'user_name'        => $userName,
                         'is_auth'          => $isAuth,

@@ -45,6 +45,9 @@
             ]
         }
     },
+    "suggest": {
+        "maxmind-db/reader": "Required only when using the offline 'maxmind' GeoIP provider (WEB_ANALYTICS_GEOIP_PROVIDER=maxmind)."
+    },
     "minimum-stability": "stable",
     "prefer-stable": true,
     "require-dev": {
