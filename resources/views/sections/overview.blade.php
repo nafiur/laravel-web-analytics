@@ -1,7 +1,3 @@
-                <!-- ============================================== -->
-                <!-- TAB 0: OVERVIEW                                -->
-                <!-- ============================================== -->
-                <div id="tab-overview" class="tab-pane active space-y-5">
                     @if(($analytics['summary']['total_requests'] ?? 0) === 0)
                         <div class="lwa-surface border lwa-border rounded-lg p-8 text-center">
                             <div class="mx-auto w-10 h-10 rounded-full bg-slate-100 dark:bg-slate-800 flex items-center justify-center mb-3">
@@ -42,7 +38,7 @@
                     <div class="grid grid-cols-1 lg:grid-cols-2 gap-4">
                         <div class="lwa-surface border lwa-border rounded-lg p-4 shadow-sm">
                             <div class="text-xs font-semibold text-slate-800 dark:text-slate-200">Traffic Overview</div>
-                            <p class="text-[11px] text-slate-400 mt-0.5">Requests over the selected period — {{ $timeRange ?? '24h' }}</p>
+                            <p class="text-[11px] text-slate-400 mt-0.5">Requests over the selected period â€” {{ $timeRange ?? '24h' }}</p>
                             <div class="relative mt-3">
                                 <div id="chartOverviewTraffic" class="h-64 w-full"></div>
                                 <div id="chartOverviewTrafficSkel" class="lwa-skeleton absolute inset-0 h-64 w-full"></div>
@@ -69,4 +65,3 @@
                             @include('web-analytics::partials.breakdown-list', ['items' => $analytics['breakdowns']['top_devices'] ?? []])
                         </div>
                     </div>
-                </div>

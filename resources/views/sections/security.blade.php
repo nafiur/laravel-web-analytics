@@ -1,7 +1,3 @@
-                <!-- ============================================== -->
-                <!-- TAB 4: SECURITY & ERRORS                       -->
-                <!-- ============================================== -->
-                <div id="tab-security" class="tab-pane space-y-5">
                     <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
                         <div class="lwa-surface border lwa-border rounded-lg p-4 shadow-sm">
                             <div class="text-xs font-medium text-slate-500 dark:text-slate-400">Total Error Requests</div>
@@ -60,4 +56,3 @@
                             </table>
                         </div>
                     </div>
-                </div>

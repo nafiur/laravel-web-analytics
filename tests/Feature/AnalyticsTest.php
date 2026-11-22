@@ -119,8 +119,8 @@ class AnalyticsTest extends TestCase
         $content = $this->get('/web-analytics')->getContent();
 
         $this->assertStringContainsString('href="' . route('lwa_overview') . '"', $content);
+        $this->assertStringContainsString('href="' . route('lwa_events') . '"', $content);
         $this->assertSame(13, substr_count($content, 'class="sidebar-link'));
-        $this->assertStringContainsString('id="tab-unavailable"', $content);
 
         foreach (['Overview', 'Real-time', 'Visitors', 'Traffic Sources', 'Pages &amp; Screens', 'Geography',
                   'Devices &amp; Browsers', 'Campaigns', 'Events &amp; Goals', 'Conversions',
@@ -128,16 +128,8 @@ class AnalyticsTest extends TestCase
             $this->assertStringContainsString($label, $content);
         }
 
-        foreach (['tab-overview', 'tab-requests', 'tab-visitors', 'tab-performance', 'tab-security', 'tab-live', 'tab-settings'] as $pane) {
-            $this->assertStringContainsString('id="' . $pane . '"', $content);
-        }
-
-        foreach (['AI Crawl Control', 'Web3', 'Manage account', 'Back to Domains', 'section-top-pages', 'section-campaigns'] as $needle) {
-            if (str_starts_with($needle, 'section-')) {
-                $this->assertStringContainsString($needle, $content);
-            } else {
-                $this->assertStringNotContainsString($needle, $content);
-            }
+        foreach (['AI Crawl Control', 'Web3', 'Manage account', 'Back to Domains'] as $removed) {
+            $this->assertStringNotContainsString($removed, $content);
         }
     }
 
@@ -180,31 +172,31 @@ class AnalyticsTest extends TestCase
     public function test_every_sidebar_section_has_its_own_route_and_pane(): void
     {
         $sections = [
-            'lwa_overview' => '#tab-overview',
-            'lwa_realtime' => '#tab-live',
-            'lwa_visitors' => '#tab-visitors',
-            'lwa_sources' => '#tab-requests',
-            'lwa_pages' => '#tab-requests',
-            'lwa_geography' => '#tab-visitors',
-            'lwa_devices' => '#tab-visitors',
-            'lwa_campaigns' => '#tab-visitors',
-            'lwa_events' => '#tab-unavailable',
-            'lwa_conversions' => '#tab-unavailable',
-            'lwa_performance' => '#tab-performance',
-            'lwa_errors' => '#tab-security',
-            'lwa_settings' => '#tab-settings',
+            'lwa_overview'    => 'chartOverviewTraffic',
+            'lwa_realtime'    => 'lwaLiveMap',
+            'lwa_visitors'    => 'Top Client IPs',
+            'lwa_sources'     => 'Top Referrers',
+            'lwa_pages'       => 'Top Paths by Bandwidth',
+            'lwa_geography'   => 'GeoIP location is approximate',
+            'lwa_devices'     => 'Device Types',
+            'lwa_campaigns'   => 'UTM Campaigns',
+            'lwa_events'      => 'not available yet',
+            'lwa_conversions' => 'not available yet',
+            'lwa_performance' => 'Origin response',
+            'lwa_errors'      => 'Total Error Requests',
+            'lwa_settings'    => 'settings-general',
         ];
 
-        foreach ($sections as $name => $pane) {
+        foreach ($sections as $name => $needle) {
             $response = $this->get(route($name));
             $response->assertOk();
-            $response->assertSee(json_encode($pane), false);
+            $response->assertSee($needle, false);
         }
     }
 
     public function test_settings_page_renders_all_sections(): void
     {
-        $content = $this->get('/web-analytics')->getContent();
+        $content = $this->get(route('lwa_settings'))->getContent();
 
         foreach ([
             'settings-general', 'settings-dashboard', 'settings-collection',
@@ -239,13 +231,15 @@ class AnalyticsTest extends TestCase
 
         foreach ([
             '--lwa-bg:', '[data-theme="dark"]', 'data-lucide="activity"',
-            'lwaConnectionBadge', 'lwa-skeleton', 'lwaErrorToast',
+            'lwa-skeleton', 'lwaErrorToast',
             'lwaRefreshBtn', 'themeToggle', 'sidebarCollapseToggle',
             'sidebar-label', 'panel-left-close', 'lwa-sidebar-collapsed',
             'family=Inter', 'ApexCharts', 'lucide@latest',
         ] as $needle) {
             $this->assertStringContainsString($needle, $content);
         }
+
+        $this->assertStringContainsString('lwaConnectionBadge', $this->get(route('lwa_realtime'))->getContent());
     }
 
     public function test_ip_breakdown_and_stream_include_country_flags(): void
@@ -273,7 +267,7 @@ class AnalyticsTest extends TestCase
 
     public function test_settings_page_includes_alerts_and_export_sections(): void
     {
-        $content = $this->get('/web-analytics')->getContent();
+        $content = $this->get(route('lwa_settings'))->getContent();
 
         $this->assertStringContainsString('settings-alerts', $content);
         $this->assertStringContainsString('settings-export', $content);

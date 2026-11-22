@@ -1,7 +1,3 @@
-                <!-- ============================================== -->
-                <!-- TAB 1: REQUESTS (Exact  Matching)    -->
-                <!-- ============================================== -->
-                <div id="tab-requests" class="tab-pane space-y-5">
                     <!-- 5 KPI Cards Row (Total requests, Data transfer, Visits, Cache/Success rate, 5xx rate) -->
                     <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-3.5">
                         <!-- Total requests -->
@@ -227,4 +223,3 @@
                             ])
                         </div>
                     </div>
-                </div>

@@ -1,7 +1,3 @@
-                <!-- ============================================== -->
-                <!-- TAB 3: PERFORMANCE                             -->
-                <!-- ============================================== -->
-                <div id="tab-performance" class="tab-pane space-y-5">
                     <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
                         <div class="lwa-surface border lwa-border rounded-lg p-4 shadow-sm">
                             <div class="text-xs font-medium text-slate-500 dark:text-slate-400">Origin response (Avg)</div>
@@ -30,4 +26,3 @@
                             @include('web-analytics::partials.breakdown-list', ['items' => $analytics['breakdowns']['top_paths_bandwidth'] ?? []])
                         </div>
                     </div>
-                </div>

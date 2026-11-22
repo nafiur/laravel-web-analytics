@@ -209,6 +209,25 @@ Client IP resolution uses Laravel's trusted-proxy configuration. Only enable `WE
 
 ---
 
+## 🧩 View structure
+
+Each sidebar route renders its own Blade page; no section is a hidden tab inside another page:
+
+```text
+resources/views/
+├── layouts/app.blade.php          # shared shell (head, header, sidebar, subheader, scripts)
+├── pages/                         # one Blade file per route
+│   ├── overview.blade.php         ├── sources.blade.php      ├── devices.blade.php
+│   ├── realtime.blade.php         ├── pages.blade.php        ├── campaigns.blade.php
+│   ├── visitors.blade.php         ├── geography.blade.php    ├── performance.blade.php
+│   ├── events.blade.php           ├── conversions.blade.php  ├── errors.blade.php
+│   └── settings.blade.php
+├── sections/                      # content-only partials included by the pages
+└── partials/                      # header, sidebar, subheader, scripts, breakdown list
+```
+
+The legacy `dashboard.blade.php` simply extends the shared layout and renders the Overview section.
+
 ## 🧭 Dashboard Navigation
 
 The sidebar exposes 13 sections. Items map to report panes (or scroll to a specific report on the same page) — no extra routes are required:

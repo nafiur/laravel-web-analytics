@@ -1,23 +1,21 @@
             <!-- Subheader Bar: Segmented Tabs & Filters -->
             <div class="lwa-surface border-b lwa-border px-4 sm:px-6 py-2.5 sticky top-14 z-30">
                 <div class="flex flex-wrap items-center justify-between gap-3">
-                    <!--  Segmented Sub-Tabs -->
+                    <!-- Segmented Sub-Tabs (hidden on the full Settings screen) -->
+                    @if(($section ?? '') !== 'settings')
                     <div id="segmentedTabs"
                         class="flex items-center p-1 bg-slate-100 dark:bg-slate-800/80 rounded-lg overflow-x-auto no-scrollbar">
-                        <button type="button" class="cf-tab-btn active" data-target="#tab-requests"
-                            data-i18n="requests">Requests</button>
-                        <button type="button" class="cf-tab-btn" data-target="#tab-visitors"
-                            data-i18n="visitors">Visitors</button>
-                        <button type="button" class="cf-tab-btn" data-target="#tab-performance"
-                            data-i18n="performance">Performance</button>
-                        <button type="button" class="cf-tab-btn" data-target="#tab-security"
-                            data-i18n="security">Security</button>
-                        <button type="button" class="cf-tab-btn" data-target="#tab-live">
+                        <a href="{{ route('lwa_overview') }}" class="cf-tab-btn {{ ($section ?? 'overview') === 'overview' ? 'active' : '' }}" data-i18n="overview">Overview</a>
+                        <a href="{{ route('lwa_visitors') }}" class="cf-tab-btn {{ ($section ?? '') === 'visitors' ? 'active' : '' }}" data-i18n="visitors">Visitors</a>
+                        <a href="{{ route('lwa_performance') }}" class="cf-tab-btn {{ ($section ?? '') === 'performance' ? 'active' : '' }}" data-i18n="performance">Performance</a>
+                        <a href="{{ route('lwa_errors') }}" class="cf-tab-btn {{ ($section ?? '') === 'errors' ? 'active' : '' }}" data-i18n="errors">Error Monitoring</a>
+                        <a href="{{ route('lwa_realtime') }}" class="cf-tab-btn {{ ($section ?? '') === 'realtime' ? 'active' : '' }}">
                             <span class="flex items-center gap-1.5">
-                                <span class="live-dot"></span> <span data-i18n="liveStream">Live Stream</span>
+                                <span class="live-dot"></span> <span data-i18n="realtime">Real-time</span>
                             </span>
-                        </button>
+                        </a>
                     </div>
+                    @endif
 
                     <!-- Right Controls: Add Filter, Range Dropdown, Export -->
                     <div class="flex items-center gap-2">

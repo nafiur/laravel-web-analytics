@@ -154,7 +154,7 @@ class WebAnalyticsController extends Controller
         $timezones = \DateTimeZone::listIdentifiers(\DateTimeZone::ALL);
         sort($timezones);
 
-        return view('web-analytics::dashboard', compact(
+        return view('web-analytics::pages.' . $section, compact(
             'analytics',
             'timeRange',
             'customStart',

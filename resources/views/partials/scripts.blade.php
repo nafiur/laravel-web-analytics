@@ -1,10 +1,16 @@
     <!-- ============ SCRIPTS ============ -->
     <script>
-        const lwaInitialPane = {!! json_encode($activePane ?? '#tab-overview') !!};
-        const lwaInitialScroll = {!! json_encode($activeScroll ?? null) !!};
         const lwaStreamMode = {!! json_encode(config('laravel-web-analytics.stream.mode', 'sse')) !!};
         const lwaPollingInterval = {!! json_encode(config('laravel-web-analytics.stream.polling_interval', 5)) !!};
         const lwaDataUrl = "{{ route('lwa_data') }}";
+
+        function lwaChart(selector, options) {
+            const el = document.querySelector(selector);
+            if (!el || !window.ApexCharts) return null;
+            const chart = new ApexCharts(el, options);
+            chart.render();
+            return chart;
+        }
 
         // 1. Dark Mode Toggle (synced with Settings > Appearance)
         (function() {
@@ -89,70 +95,24 @@
             }
         })();
 
-        // 3. Tab Switching (segmented controls + sidebar links)
+        // 3. Navigation helpers (each section is its own route/page)
         (function() {
-            const tabs = document.querySelectorAll('.cf-tab-btn');
-            const panes = document.querySelectorAll('.tab-pane');
-
-            function activateTab(target, scrollTarget) {
-                const effective = target === '#overview' ? '#tab-overview' : target;
-                const pane = document.querySelector(effective);
-                if (!pane) return;
-
-                panes.forEach(p => p.classList.remove('active'));
-                pane.classList.add('active');
-
-                tabs.forEach(t => t.classList.toggle('active', t.getAttribute('data-target') === effective));
-
-                // Settings is a full settings screen, not another analytics view.
-                const segmented = document.getElementById('segmentedTabs');
-                if (segmented) segmented.classList.toggle('hidden', effective === '#tab-settings');
-
-                // Trigger resize for ApexCharts inside newly visible tab
-                window.dispatchEvent(new Event('resize'));
-
-                if (scrollTarget) {
-                    requestAnimationFrame(() => {
-                        document.querySelector(scrollTarget)?.scrollIntoView({ behavior: 'smooth', block: 'start' });
-                    });
-                }
+            function scrollToHash() {
+                if (!window.location.hash) return;
+                try {
+                    document.querySelector(window.location.hash)?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                } catch (e) { /* invalid hash */ }
             }
+            window.addEventListener('hashchange', scrollToHash);
+            scrollToHash();
 
-            function activateFromHash(hash, scrollHint) {
-                const target = hash || '#overview';
-                const el = document.querySelector(target);
-                if (el && el.classList.contains('tab-pane')) {
-                    activateTab(target, scrollHint);
-                    return;
-                }
-                if (el) {
-                    const pane = el.closest('.tab-pane');
-                    if (pane) {
-                        activateTab('#' + pane.id, target);
-                        return;
-                    }
-                }
-                activateTab(target, scrollHint);
-            }
-
-            tabs.forEach(btn => {
-                btn.addEventListener('click', () => {
-                    const target = btn.getAttribute('data-target');
-                    activateTab(target);
-                    history.replaceState(null, '', target);
-                });
-            });
-
-            // Sidebar links are real routes; close the mobile drawer on click.
-            document.querySelectorAll('.sidebar-link').forEach(link => {
+            // Close the mobile drawer after any navigation click.
+            document.querySelectorAll('.sidebar-link, .cf-tab-btn').forEach(link => {
                 link.addEventListener('click', () => {
                     document.getElementById('appSidebar')?.classList.add('-translate-x-full');
                     document.getElementById('sidebarBackdrop')?.classList.add('hidden');
                 });
             });
-
-            window.addEventListener('hashchange', () => activateFromHash(window.location.hash));
-            activateFromHash(window.location.hash || lwaInitialPane, lwaInitialScroll);
         })();
 
         // 4. Quick filter input on tables
@@ -210,7 +170,7 @@
         });
 
         // 1. Requests Over Time (Area Chart matching )
-        let chartRequests = new ApexCharts(document.querySelector("#chartRequestsOverTime"), {
+        let chartRequests = lwaChart("#chartRequestsOverTime", {
             series: [{
                 name: 'Requests',
                 data: requestsData
@@ -276,7 +236,7 @@
                 }
             }
         });
-        chartRequests.render();
+
 
         // Overview traffic chart (same series, separate container)
         let chartOverviewTraffic = null;
@@ -298,7 +258,7 @@
         }
 
         // 2. Data Transfer (Area Chart matching )
-        let chartBandwidth = new ApexCharts(document.querySelector("#chartDataTransfer"), {
+        let chartBandwidth = lwaChart("#chartDataTransfer", {
             series: [{
                 name: 'Data Transfer (MB)',
                 data: bandwidthData
@@ -365,10 +325,10 @@
                 }
             }
         });
-        chartBandwidth.render();
+
 
         // 3. Status Code Stacked Column Chart
-        let chartStatus = new ApexCharts(document.querySelector("#chartStatusCodeBars"), {
+        let chartStatus = lwaChart("#chartStatusCodeBars", {
             series: [{
                     name: '2xx Success',
                     data: status2xx
@@ -435,10 +395,10 @@
                 theme: isDarkMode() ? 'dark' : 'light'
             }
         });
-        chartStatus.render();
+
 
         // 4. Method Breakdown Bar Chart
-        let chartMethod = new ApexCharts(document.querySelector("#chartMethodBars"), {
+        let chartMethod = lwaChart("#chartMethodBars", {
             series: [{
                 name: 'Requests',
                 data: methodBreakdown.map(m => m.count)
@@ -486,7 +446,7 @@
                 theme: isDarkMode() ? 'dark' : 'light'
             }
         });
-        chartMethod.render();
+
 
         // 5. Origin Latency Chart
         let chartLatency = null;
@@ -1487,6 +1447,3 @@
             lwaFinishLoading();
         }
     </script>
-    </body>
-
-    </html>

@@ -1,7 +1,3 @@
-                <!-- ============================================== -->
-                <!-- TAB 5: REAL-TIME LIVE STREAM (SSE)             -->
-                <!-- ============================================== -->
-                <div id="tab-live" class="tab-pane space-y-4">
                     <div class="lwa-surface border lwa-border rounded-lg p-3.5 shadow-sm flex items-center justify-between">
                         <div class="flex items-center gap-3">
                             <span class="live-dot"></span>
@@ -13,7 +9,7 @@
                         <div class="flex flex-col items-end gap-1">
                             <div class="flex items-center gap-1.5 text-[11px]" id="lwaConnectionBadge" role="status" aria-live="polite">
                                 <span class="w-2 h-2 rounded-full bg-amber-500" id="lwaConnectionDot"></span>
-                                <span id="lwaConnectionText" class="text-amber-600 dark:text-amber-400">Connecting…</span>
+                                <span id="lwaConnectionText" class="text-amber-600 dark:text-amber-400">Connectingâ€¦</span>
                             </div>
                             <button type="button" id="lwaReconnectBtn"
                                 class="hidden text-[11px] text-blue-600 dark:text-blue-400 hover:underline"
@@ -27,7 +23,7 @@
                         <div class="flex items-center justify-between mb-2">
                             <div>
                                 <div class="text-xs font-semibold text-slate-800 dark:text-slate-200">Live Visitors Map</div>
-                                <p class="text-[11px] text-slate-400">Approximate location from local GeoIP data — no external API calls at lookup time</p>
+                                <p class="text-[11px] text-slate-400">Approximate location from local GeoIP data â€” no external API calls at lookup time</p>
                             </div>
                             <span id="lwaMapCount" class="text-[11px] font-mono text-slate-500">0 located</span>
                         </div>
@@ -86,4 +82,3 @@
                             </table>
                         </div>
                     </div>
-                </div>
