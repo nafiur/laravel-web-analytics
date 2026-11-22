@@ -4,6 +4,7 @@ namespace Nafiur\WebAnalytics\Tests\Feature;
 
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Nafiur\WebAnalytics\Models\LwaLogs;
+use Nafiur\WebAnalytics\Services\CountryFlag;
 use Nafiur\WebAnalytics\Tests\TestCase;
 
 class AnalyticsTest extends TestCase
@@ -79,6 +80,23 @@ class AnalyticsTest extends TestCase
         $content = $this->get('/web-analytics/export?range=all')->streamedContent();
 
         $this->assertStringContainsString("'=SUM(A1:A9)", $content);
+    }
+
+    public function test_country_breakdown_includes_flag_emoji(): void
+    {
+        LwaLogs::create($this->log(['country' => 'Bangladesh']));
+        LwaLogs::create($this->log(['country' => 'Unknown']));
+
+        $countries = collect($this->getJson('/web-analytics/data?range=all')
+            ->json('analytics.breakdowns.top_countries'));
+
+        $bd = $countries->firstWhere('name', 'Bangladesh');
+        $unknown = $countries->firstWhere('name', 'Unknown');
+
+        $this->assertSame('BD', CountryFlag::code('Bangladesh'));
+        $this->assertSame(CountryFlag::emoji('Bangladesh'), $bd['flag']);
+        $this->assertNotSame('', $bd['flag']);
+        $this->assertSame('', $unknown['flag']);
     }
 
     public function test_dashboard_has_only_the_requested_sidebar_links(): void

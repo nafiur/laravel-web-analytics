@@ -3,6 +3,7 @@
 namespace Nafiur\WebAnalytics\Services;
 
 use Nafiur\WebAnalytics\Models\LwaLogs;
+use Nafiur\WebAnalytics\Services\CountryFlag;
 use Nafiur\WebAnalytics\Services\TenantResolver;
 use Carbon\Carbon;
 use Illuminate\Support\Facades\DB;
@@ -419,6 +420,7 @@ class DatabaseTrafficAnalytics
                 'count'      => $cnt,
                 'count_fmt'  => $this->formatNumber($cnt),
                 'percentage' => $pct,
+                'flag'       => $column === 'country' ? CountryFlag::emoji($val) : '',
             ];
         }
 
