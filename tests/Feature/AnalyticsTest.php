@@ -82,6 +82,20 @@ class AnalyticsTest extends TestCase
         $this->assertStringContainsString("'=SUM(A1:A9)", $content);
     }
 
+    public function test_stream_response_is_short_lived_and_paced_by_eventsource(): void
+    {
+        LwaLogs::create($this->log(['path' => '/stream-check']));
+
+        $started = microtime(true);
+        $content = $this->get('/web-analytics/stream?last_id=0')->streamedContent();
+        $elapsed = microtime(true) - $started;
+
+        $this->assertLessThan(2, $elapsed);
+        $this->assertStringContainsString('retry: ', $content);
+        $this->assertStringContainsString('event: stats', $content);
+        $this->assertStringContainsString('id: ', $content);
+    }
+
     public function test_country_breakdown_includes_flag_emoji(): void
     {
         LwaLogs::create($this->log(['country' => 'Bangladesh']));

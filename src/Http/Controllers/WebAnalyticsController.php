@@ -140,90 +140,94 @@ class WebAnalyticsController extends Controller
 
         $tenantId = $this->resolveDashboardTenant($request);
 
-        $lastId = (int) $request->input('last_id', 0);
+        // On reconnect EventSource sends Last-Event-ID; the query string only
+        // carries the initial cursor rendered with the page.
+        $lastId = (int) ($request->header('Last-Event-ID') ?: 0);
         if ($lastId <= 0) {
-            $lastId = (int) ($request->header('Last-Event-ID') ?: 0);
+            $lastId = (int) $request->input('last_id', 0);
         }
         if ($lastId <= 0) {
             $lastId = (int) (LwaLogs::forTenant($tenantId)->max('id') ?? 0);
         }
 
-        return response()->stream(function () use ($lastId, $tenantId) {
-            $currentLastId = $lastId;
-            $streamStartedAt = microtime(true);
-            $maxDuration = 50; // seconds; EventSource reconnects cleanly afterwards
+        $interval = max(1, (int) config('laravel-web-analytics.stream_interval', 2));
+
+        return response()->stream(function () use ($lastId, $tenantId, $interval) {
             $formatter = new DatabaseTrafficAnalytics();
             $activeWindow = max(1, (int) config('laravel-web-analytics.active_visitor_window', 5));
+            $currentLastId = $lastId;
 
-            while (!connection_aborted() && (microtime(true) - $streamStartedAt) < $maxDuration) {
+            // Each response is short-lived. EventSource handles pacing through
+            // this retry value, so no PHP worker sleeps for tens of seconds.
+            echo "retry: " . ($interval * 1000) . "\n\n";
 
-                // Check for new incoming requests scoped by tenant
-                $newLogs = LwaLogs::forTenant($tenantId)
-                    ->where('id', '>', $currentLastId)
-                    ->orderBy('id', 'asc')
-                    ->limit(20)
-                    ->get();
+            $newLogs = LwaLogs::forTenant($tenantId)
+                ->where('id', '>', $currentLastId)
+                ->orderBy('id', 'asc')
+                ->limit(20)
+                ->get();
 
-                if ($newLogs->isNotEmpty()) {
-                    $formattedLogs = $newLogs->map(function ($log) {
-                        $isAuth = !empty($log->user_id);
-                        $userName = $isAuth ? "User #{$log->user_id}" : 'Guest';
-                        return [
-                            'id'               => $log->id,
-                            'tenant_id'        => $log->tenant_id,
-                            'method'           => $log->method,
-                            'path'             => $log->path,
-                            'status_code'      => $log->status_code,
-                            'response_time_ms' => $log->response_time_ms,
-                            'bytes_sent_fmt'   => $formatter->formatBytes($log->bytes_sent),
-                            'ip_address'       => $log->ip_address,
-                            'browser'          => $log->browser,
-                            'os'               => $log->os,
-                            'device'           => $log->device,
-                            'country'          => $log->country ?: 'Unknown',
-                            'user_id'          => $log->user_id,
-                            'user_name'        => $userName,
-                            'is_auth'          => $isAuth,
-                            'time_ago'         => $log->created_at ? $log->created_at->diffForHumans() : 'just now',
-                            'time_clock'       => $log->created_at ? $log->created_at->format('H:i:s') : '',
-                        ];
-                    });
+            if ($newLogs->isNotEmpty()) {
+                $formattedLogs = $newLogs->map(function ($log) use ($formatter) {
+                    $isAuth = !empty($log->user_id);
+                    $userName = $isAuth ? "User #{$log->user_id}" : 'Guest';
+                    return [
+                        'id'               => $log->id,
+                        'tenant_id'        => $log->tenant_id,
+                        'method'           => $log->method,
+                        'path'             => $log->path,
+                        'status_code'      => $log->status_code,
+                        'response_time_ms' => $log->response_time_ms,
+                        'bytes_sent_fmt'   => $formatter->formatBytes($log->bytes_sent),
+                        'ip_address'       => $log->ip_address,
+                        'browser'          => $log->browser,
+                        'os'               => $log->os,
+                        'device'           => $log->device,
+                        'country'          => $log->country ?: 'Unknown',
+                        'user_id'          => $log->user_id,
+                        'user_name'        => $userName,
+                        'is_auth'          => $isAuth,
+                        'time_ago'         => $log->created_at ? $log->created_at->diffForHumans() : 'just now',
+                        'time_clock'       => $log->created_at ? $log->created_at->format('H:i:s') : '',
+                    ];
+                });
 
-                    $currentLastId = $newLogs->last()->id;
+                $currentLastId = $newLogs->last()->id;
 
-                    echo "event: traffic\n";
-                    echo "data: " . json_encode([
-                        'logs'    => $formattedLogs,
-                        'last_id' => $currentLastId,
-                    ]) . "\n\n";
-
-                } else {
-                    // Lightweight keepalive ping
-                    echo "event: ping\n";
-                    echo "data: {\"time\":\"" . now()->toIso8601String() . "\",\"last_id\":{$currentLastId}}\n\n";
-                }
-
-                // Emit stats on every tick so the live visitor count can decay
-                // even when no new requests are arriving.
-                $liveVisitors = LwaLogs::forTenant($tenantId)
-                    ->where('created_at', '>=', now()->subMinutes($activeWindow))
-                    ->distinct()
-                    ->count(DB::raw('COALESCE(session_id, ip_address)'));
-                $totalCount = LwaLogs::forTenant($tenantId)->count();
-
-                echo "event: stats\n";
+                echo "id: {$currentLastId}\n";
+                echo "event: traffic\n";
                 echo "data: " . json_encode([
-                    'live_visitors'  => $liveVisitors,
-                    'total_requests' => $totalCount,
+                    'logs'    => $formattedLogs,
+                    'last_id' => $currentLastId,
                 ]) . "\n\n";
-
-                if (ob_get_level() > 0) {
-                    ob_flush();
-                }
-                flush();
-
-                sleep(max(1, (int) config('laravel-web-analytics.stream_interval', 2)));
+            } else {
+                echo "id: {$currentLastId}\n";
+                echo "event: ping\n";
+                echo "data: " . json_encode([
+                    'time'    => now()->toIso8601String(),
+                    'last_id' => $currentLastId,
+                ]) . "\n\n";
             }
+
+            // Stats are emitted on every response so the live visitor count
+            // also decays when no new traffic is arriving.
+            $liveVisitors = LwaLogs::forTenant($tenantId)
+                ->where('created_at', '>=', now()->subMinutes($activeWindow))
+                ->distinct()
+                ->count(DB::raw('COALESCE(session_id, ip_address)'));
+            $totalCount = LwaLogs::forTenant($tenantId)->count();
+
+            echo "id: {$currentLastId}\n";
+            echo "event: stats\n";
+            echo "data: " . json_encode([
+                'live_visitors'  => $liveVisitors,
+                'total_requests' => $totalCount,
+            ]) . "\n\n";
+
+            if (ob_get_level() > 0) {
+                ob_flush();
+            }
+            flush();
         }, 200, [
             'Content-Type'      => 'text/event-stream',
             'Cache-Control'     => 'no-cache, no-transform',

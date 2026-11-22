@@ -16,7 +16,7 @@ A modern, fast, and self-hosted Web Traffic & Visitor Analytics Dashboard for La
 
 ## ⚡ Highlights & Key Features
 
-- 🚀 **Real-Time Live Stream (SSE)**: Live active visitor count and instant real-time traffic feed without WebSockets, Node.js, or Pusher.
+- 🚀 **Real-Time Live Stream (SSE)**: Live active visitor count and instant real-time traffic feed without WebSockets, Node.js, or Pusher. Each stream response is short-lived and paced by EventSource, so no PHP worker is held open while waiting for new traffic.
 - 🧭 **Cloudflare-Style Segmented Navigation**: 5 focused analytical views — Requests, Visitors, Performance, Security, and Live Stream.
 - 🎨 **Tailwind CSS UI with Dark Mode**: Modern, responsive dashboard powered by Tailwind CSS Play CDN (zero build step / zero npm dependencies). Includes a 1-click persistent Dark/Light mode toggle.
 - 📊 **Comprehensive Metrics**: Total Requests, Unique Visitors, Bandwidth (Data Transferred in GB/MB), Avg Response Time, Error Rate.
