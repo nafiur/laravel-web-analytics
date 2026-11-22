@@ -3,7 +3,7 @@
 namespace Nafiur\WebAnalytics\Commands;
 
 use Illuminate\Console\Command;
-use Nafiur\WebAnalytics\Models\LwaLogs;
+use Nafiur\WebAnalytics\Services\PruneService;
 
 class PruneAnalyticsCommand extends Command
 {
@@ -20,7 +20,7 @@ class PruneAnalyticsCommand extends Command
     /**
      * Execute the console command.
      */
-    public function handle(): int
+    public function handle(PruneService $prune): int
     {
         $daysOption = $this->option('days');
         $days = max(1, (int) ($daysOption !== null && $daysOption !== ''
@@ -34,12 +34,7 @@ class PruneAnalyticsCommand extends Command
         }
         $this->info($msg . '...');
 
-        $query = LwaLogs::where('created_at', '<', now()->subDays($days));
-        if ($tenantId) {
-            $query->where('tenant_id', $tenantId);
-        }
-
-        $count = $query->delete();
+        $count = $prune->prune($days, $tenantId);
 
         $this->info("Successfully deleted {$count} outdated log record(s).");
 

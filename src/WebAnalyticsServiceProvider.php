@@ -22,13 +22,15 @@ class WebAnalyticsServiceProvider extends ServiceProvider
      */
     public function boot(): void
     {
+        // Commands must be registered outside the console guard so they are
+        // also available to Artisan::call() from HTTP routes and queue jobs.
+        $this->commands([
+            \Nafiur\WebAnalytics\Commands\PruneAnalyticsCommand::class,
+            \Nafiur\WebAnalytics\Commands\SimulateLiveTrafficCommand::class,
+        ]);
+
         // Publish Configuration
         if ($this->app->runningInConsole()) {
-            $this->commands([
-                \Nafiur\WebAnalytics\Commands\PruneAnalyticsCommand::class,
-                \Nafiur\WebAnalytics\Commands\SimulateLiveTrafficCommand::class,
-            ]);
-
             $this->publishes([
                 __DIR__ . '/../config/laravel-web-analytics.php' => config_path('laravel-web-analytics.php'),
             ], 'laravel-web-analytics-config');

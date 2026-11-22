@@ -4,11 +4,11 @@ namespace Nafiur\WebAnalytics\Http\Controllers;
 
 use Illuminate\Http\Request;
 use Illuminate\Routing\Controller;
-use Illuminate\Support\Facades\Artisan;
 use Illuminate\Support\Facades\DB;
 use Nafiur\WebAnalytics\Models\LwaLogs;
 use Nafiur\WebAnalytics\Services\AlertService;
 use Nafiur\WebAnalytics\Services\DatabaseTrafficAnalytics;
+use Nafiur\WebAnalytics\Services\PruneService;
 use Nafiur\WebAnalytics\Services\TenantResolver;
 use Nafiur\WebAnalytics\Services\WebAnalyticsLogParser;
 
@@ -319,7 +319,7 @@ class WebAnalyticsController extends Controller
     /**
      * Prune old telemetry rows from the settings page.
      */
-    public function prune(Request $request)
+    public function prune(Request $request, PruneService $prune)
     {
         if (!config('laravel-web-analytics.settings.destructive_actions_enabled', true)) {
             abort(403);
@@ -328,14 +328,9 @@ class WebAnalyticsController extends Controller
         $days = max(1, min(3650, (int) $request->input('days', 30)));
         $tenantId = $this->resolveDashboardTenant($request);
 
-        $arguments = ['--days' => $days];
-        if ($tenantId !== null && $tenantId !== '') {
-            $arguments['--tenant'] = $tenantId;
-        }
+        $deleted = $prune->prune($days, $tenantId);
 
-        Artisan::call('lwa:prune', $arguments);
-
-        return back()->with('lwa_status', "Pruned telemetry older than {$days} days.");
+        return back()->with('lwa_status', "Pruned {$deleted} record(s) older than {$days} days.");
     }
 
     /**

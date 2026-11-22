@@ -4,8 +4,10 @@ namespace Nafiur\WebAnalytics\Tests\Feature;
 
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Http;
+use Nafiur\WebAnalytics\Models\LwaLogs;
 use Nafiur\WebAnalytics\Services\AlertService;
 use Nafiur\WebAnalytics\Services\GeoIpService;
+use Nafiur\WebAnalytics\Services\PruneService;
 use Nafiur\WebAnalytics\Services\WebAnalyticsLogParser;
 use Nafiur\WebAnalytics\Tests\TestCase;
 
@@ -109,6 +111,26 @@ class ServicesTest extends TestCase
         $this->assertStringNotContainsString('`_*[x]', $text);
         $this->assertStringContainsString('https://example.test/ax', $text);
         $this->assertStringContainsString('`1.2.3.4`', $text);
+    }
+
+    public function test_prune_service_scopes_deletion_to_tenant(): void
+    {
+        LwaLogs::create([
+            'tenant_id'  => 'a',
+            'path'       => '/old',
+            'created_at' => now()->subDays(40),
+        ]);
+        LwaLogs::create([
+            'tenant_id'  => 'b',
+            'path'       => '/old',
+            'created_at' => now()->subDays(40),
+        ]);
+
+        $deleted = (new PruneService())->prune(30, 'a');
+
+        $this->assertSame(1, $deleted);
+        $this->assertSame(1, LwaLogs::count());
+        $this->assertDatabaseHas('lwa_logs', ['tenant_id' => 'b']);
     }
 
     public function test_file_log_parser_reads_combined_access_log(): void
