@@ -144,6 +144,9 @@ class AnalyticsTest extends TestCase
         }
 
         $this->assertStringNotContainsString('Display name', $content);
+        $this->assertStringContainsString('optgroup label="Africa"', $content);
+        $this->assertStringContainsString('value="Pacific/Kiritimati"', $content);
+        $this->assertGreaterThan(400, substr_count($content, '<option value="'));
     }
 
     public function test_time_series_exposes_timestamps_and_granularity(): void

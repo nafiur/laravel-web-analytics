@@ -92,27 +92,20 @@
                                             data-i18n="timezone">Timezone</span>
                                         <select id="settingTimezone"
                                             class="text-xs px-2.5 py-1.5 border border-slate-200 dark:border-slate-700 rounded-md bg-white dark:bg-slate-800 text-slate-700 dark:text-slate-200 focus:outline-none focus:ring-1 focus:ring-blue-500">
-                                            <option value="UTC">UTC</option>
-                                            <option value="Asia/Dhaka">GMT+6 — Dhaka</option>
-                                            <option value="Asia/Kolkata">GMT+5:30 — Kolkata</option>
-                                            <option value="Asia/Karachi">GMT+5 — Karachi</option>
-                                            <option value="Asia/Kathmandu">GMT+5:45 — Kathmandu</option>
-                                            <option value="Asia/Dubai">GMT+4 — Dubai</option>
-                                            <option value="Asia/Riyadh">GMT+3 — Riyadh</option>
-                                            <option value="Asia/Singapore">GMT+8 — Singapore</option>
-                                            <option value="Asia/Shanghai">GMT+8 — Shanghai</option>
-                                            <option value="Asia/Tokyo">GMT+9 — Tokyo</option>
-                                            <option value="Asia/Jakarta">GMT+7 — Jakarta</option>
-                                            <option value="Europe/London">GMT+0 — London</option>
-                                            <option value="Europe/Paris">GMT+1 — Paris</option>
-                                            <option value="Europe/Berlin">GMT+1 — Berlin</option>
-                                            <option value="America/New_York">GMT-5 — New York</option>
-                                            <option value="America/Chicago">GMT-6 — Chicago</option>
-                                            <option value="America/Denver">GMT-7 — Denver</option>
-                                            <option value="America/Los_Angeles">GMT-8 — Los Angeles</option>
-                                            <option value="America/Sao_Paulo">GMT-3 — São Paulo</option>
-                                            <option value="Australia/Sydney">GMT+10 — Sydney</option>
-                                            <option value="Pacific/Auckland">GMT+12 — Auckland</option>
+                                            @php
+                                                $groupedTimezones = collect($timezones)->groupBy(function ($tz) {
+                                                    return str_contains($tz, '/') ? explode('/', $tz, 2)[0] : 'UTC';
+                                                });
+                                            @endphp
+                                            @foreach($groupedTimezones as $region => $zones)
+                                                <optgroup label="{{ $region }}">
+                                                    @foreach($zones as $tz)
+                                                        <option value="{{ $tz }}">
+                                                            {{ $region === 'UTC' ? $tz : str_replace('_', ' ', str_replace($region . '/', '', $tz)) }}
+                                                        </option>
+                                                    @endforeach
+                                                </optgroup>
+                                            @endforeach
                                         </select>
                                     </div>
                                     <div class="flex items-center justify-between gap-4 px-4 py-3">

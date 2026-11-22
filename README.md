@@ -156,7 +156,7 @@ route('lwa_export', ['range' => '24h']);
 
 The dashboard's **Setting** tab provides an adapted settings screen:
 
-- **General** — **12 languages** (English, বাংলা, हिन्दी, Español, Français, Deutsch, Português, العربية, 中文, 日本語, اردو, Indonesian — Arabic/Urdu switch the layout to RTL), **22 timezones**, and appearance (System/Light/Dark). These are browser preferences stored in `localStorage`; no database changes are needed. The timezone is applied to live-feed timestamps and chart labels via `Intl.DateTimeFormat`.
+- **General** — **12 languages** (English, বাংলা, हिन्दी, Español, Français, Deutsch, Português, العربية, 中文, 日本語, اردو, Indonesian — Arabic/Urdu switch the layout to RTL), the **complete IANA timezone database** (all PHP-supported zones), and appearance (System/Light/Dark). These are browser preferences stored in `localStorage`; no database changes are needed. The timezone is applied to live-feed timestamps and chart labels via `Intl.DateTimeFormat`.
 - **Dashboard** — default time range, data source, compact numbers and keyboard shortcuts.
 - **Collection** — read-only view of capture/GeoIP config.
 - **Alerts** — read-only channel/threshold info and a **Send test alert** action.

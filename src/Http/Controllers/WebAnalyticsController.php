@@ -98,6 +98,11 @@ class WebAnalyticsController extends Controller
         $serverSoftware = $request->server('SERVER_SOFTWARE') ?: ($_SERVER['SERVER_SOFTWARE'] ?? 'Web Server');
         $serverOs = PHP_OS_FAMILY . ' (' . php_uname('s') . ')';
 
+        // Full IANA timezone database so the settings page can offer every
+        // timezone supported by PHP without maintaining a hardcoded list.
+        $timezones = \DateTimeZone::listIdentifiers(\DateTimeZone::ALL);
+        sort($timezones);
+
         return view('web-analytics::dashboard', compact(
             'analytics',
             'timeRange',
@@ -110,7 +115,8 @@ class WebAnalyticsController extends Controller
             'serverOs',
             'source',
             'tenantId',
-            'tableStats'
+            'tableStats',
+            'timezones'
         ));
     }
 
