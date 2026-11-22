@@ -62,6 +62,15 @@ php artisan vendor:publish --tag=laravel-web-analytics-config
 php artisan vendor:publish --tag=web-analytics-views
 ```
 
+> **After upgrading the package:** published views override the package's own views. If you have published them and want the new UI changes, re-publish with `--force` and clear the compiled views:
+>
+> ```bash
+> php artisan vendor:publish --tag=web-analytics-views --force
+> php artisan view:clear
+> ```
+>
+> If you do not customize the UI, simply delete `resources/views/vendor/web-analytics/` to always use the package views.
+
 Migrations are auto-loaded by the service provider, so do **not** publish them — publishing would register the same migrations from two paths. Run database migrations to create the `lwa_logs` table:
 
 ```bash
