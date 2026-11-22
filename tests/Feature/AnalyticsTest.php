@@ -81,6 +81,19 @@ class AnalyticsTest extends TestCase
         $this->assertStringContainsString("'=SUM(A1:A9)", $content);
     }
 
+    public function test_dashboard_has_only_the_requested_sidebar_links(): void
+    {
+        $content = $this->get('/web-analytics')->getContent();
+
+        $this->assertStringContainsString('id="sidebarOverview"', $content);
+        $this->assertSame(5, substr_count($content, 'data-sidebar-tab='));
+        $this->assertStringContainsString('id="tab-settings"', $content);
+
+        foreach (['AI Crawl Control', 'Web3', 'Manage account', 'Back to Domains'] as $removed) {
+            $this->assertStringNotContainsString($removed, $content);
+        }
+    }
+
     public function test_prune_clamps_nonpositive_retention(): void
     {
         LwaLogs::create($this->log(['created_at' => now()->subDays(3)]));

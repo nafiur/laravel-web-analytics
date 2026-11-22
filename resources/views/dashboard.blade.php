@@ -91,6 +91,17 @@
         .tab-pane { display: none; }
         .tab-pane.active { display: block; }
 
+        /* Cloudflare-style sidebar links */
+        .sidebar-link.active {
+            color: #0f172a;
+            background-color: #f1f5f9;
+            font-weight: 600;
+        }
+        .dark .sidebar-link.active {
+            color: #f8fafc;
+            background-color: #1e293b;
+        }
+
         .live-dot {
             width: 7px;
             height: 7px;
@@ -202,170 +213,44 @@
 
         <!-- ============ LEFT SIDEBAR ============ -->
         <aside id="appSidebar" class="w-64 bg-white dark:bg-[#111827] border-r border-slate-200 dark:border-slate-800 flex flex-col justify-between shrink-0 transition-transform duration-200 lg:translate-x-0 -translate-x-full fixed lg:static inset-y-14 left-0 z-30">
-            <div class="flex-1 overflow-y-auto py-3 px-3 space-y-4">
-                <!-- Search Box -->
-                <div class="relative">
-                    <i class="bx bx-search absolute left-2.5 top-2.5 text-slate-400 text-sm"></i>
-                    <input type="text" id="sidebarSearch" placeholder="Quick search..." 
-                           class="w-full text-xs pl-8 pr-12 py-1.5 bg-slate-50 dark:bg-slate-800/80 border border-slate-200 dark:border-slate-700 rounded-md text-slate-800 dark:text-slate-200 focus:outline-none focus:ring-1 focus:ring-blue-500">
-                    <span class="absolute right-2 top-2 text-[10px] text-slate-400 font-mono border border-slate-200 dark:border-slate-700 rounded px-1">Ctrl K</span>
-                </div>
-
-                <!-- Back to domains -->
-                <div>
-                    <a href="{{ route('lwa_dashboard') }}" class="flex items-center gap-2 px-2.5 py-1.5 text-xs font-medium text-slate-600 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white rounded-md hover:bg-slate-100 dark:hover:bg-slate-800 transition">
-                        <i class="bx bx-arrow-back text-sm text-slate-400"></i> Back to Domains
-                    </a>
-                </div>
-
-                <!-- Navigation Groups -->
-                <nav class="space-y-0.5 text-xs">
+            <div class="flex-1 overflow-y-auto py-4 px-3">
+                <nav class="space-y-1 text-xs">
                     <!-- Overview -->
-                    <a href="{{ route('lwa_dashboard') }}" class="flex items-center justify-between px-2.5 py-2 rounded-md font-medium text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800/80 hover:text-slate-900 dark:hover:text-white transition">
-                        <span class="flex items-center gap-2.5">
-                            <i class="bx bx-file text-sm text-slate-400"></i> Overview
-                        </span>
+                    <a href="{{ route('lwa_dashboard') }}" id="sidebarOverview"
+                       class="sidebar-link active flex items-center gap-2.5 px-2.5 py-2 rounded-md font-medium text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800/80 hover:text-slate-900 dark:hover:text-white transition">
+                        <i class="bx bx-grid-alt text-sm text-slate-400"></i> Overview
                     </a>
 
-                    <!-- Recents -->
-                    <button type="button" class="w-full flex items-center justify-between px-2.5 py-2 rounded-md font-medium text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800/80 hover:text-slate-900 dark:hover:text-white transition">
-                        <span class="flex items-center gap-2.5">
-                            <i class="bx bx-time text-sm text-slate-400"></i> Recents
-                        </span>
-                        <i class="bx bx-chevron-right text-slate-400 text-xs"></i>
-                    </button>
-
-                    <!-- AI Crawl Control -->
-                    <button type="button" class="w-full flex items-center justify-between px-2.5 py-2 rounded-md font-medium text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800/80 hover:text-slate-900 dark:hover:text-white transition">
-                        <span class="flex items-center gap-2.5">
-                            <i class="bx bx-bot text-sm text-slate-400"></i> AI Crawl Control
-                        </span>
-                        <i class="bx bx-chevron-right text-slate-400 text-xs"></i>
-                    </button>
-
-                    <!-- Agent Readiness -->
-                    <button type="button" class="w-full flex items-center justify-between px-2.5 py-2 rounded-md font-medium text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800/80 hover:text-slate-900 dark:hover:text-white transition">
-                        <span class="flex items-center gap-2.5">
-                            <i class="bx bx-check-shield text-sm text-slate-400"></i> Agent Readiness
-                        </span>
-                        <i class="bx bx-chevron-right text-slate-400 text-xs"></i>
-                    </button>
-
-                    <!-- Analytics (ACTIVE Cloudflare highlight) -->
-                    <a href="{{ route('lwa_dashboard') }}" class="flex items-center justify-between px-2.5 py-2 rounded-md font-semibold text-slate-900 dark:text-white bg-slate-100 dark:bg-slate-800 transition">
-                        <span class="flex items-center gap-2.5">
-                            <i class="bx bx-line-chart text-sm text-[#f6821f]"></i> Analytics
-                        </span>
-                        <i class="bx bx-chevron-right text-slate-500 text-xs"></i>
+                    <!-- Requests -->
+                    <a href="#tab-requests" data-sidebar-tab="#tab-requests"
+                       class="sidebar-link flex items-center gap-2.5 px-2.5 py-2 rounded-md font-medium text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800/80 hover:text-slate-900 dark:hover:text-white transition">
+                        <i class="bx bx-file text-sm text-slate-400"></i> Requests
                     </a>
 
-                    <!-- Observability New -->
-                    <button type="button" class="w-full flex items-center justify-between px-2.5 py-2 rounded-md font-medium text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800/80 hover:text-slate-900 dark:hover:text-white transition">
-                        <span class="flex items-center gap-2.5">
-                            <i class="bx bx-pulse text-sm text-slate-400"></i> Observability
-                            <span class="px-1.5 py-0.2 text-[9px] font-semibold rounded bg-sky-50 dark:bg-sky-950 text-sky-600 dark:text-sky-400 border border-sky-200 dark:border-sky-800">New</span>
-                        </span>
-                        <i class="bx bx-chevron-right text-slate-400 text-xs"></i>
-                    </button>
+                    <!-- Visitors -->
+                    <a href="#tab-visitors" data-sidebar-tab="#tab-visitors"
+                       class="sidebar-link flex items-center gap-2.5 px-2.5 py-2 rounded-md font-medium text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800/80 hover:text-slate-900 dark:hover:text-white transition">
+                        <i class="bx bx-group text-sm text-slate-400"></i> Visitors
+                    </a>
 
-                    <!-- DNS -->
-                    <button type="button" class="w-full flex items-center justify-between px-2.5 py-2 rounded-md font-medium text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800/80 hover:text-slate-900 dark:hover:text-white transition">
-                        <span class="flex items-center gap-2.5">
-                            <i class="bx bx-network-chart text-sm text-slate-400"></i> DNS
-                        </span>
-                        <i class="bx bx-chevron-right text-slate-400 text-xs"></i>
-                    </button>
+                    <!-- Performance -->
+                    <a href="#tab-performance" data-sidebar-tab="#tab-performance"
+                       class="sidebar-link flex items-center gap-2.5 px-2.5 py-2 rounded-md font-medium text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800/80 hover:text-slate-900 dark:hover:text-white transition">
+                        <i class="bx bx-line-chart text-sm text-slate-400"></i> Performance
+                    </a>
 
-                    <!-- Email -->
-                    <button type="button" class="w-full flex items-center justify-between px-2.5 py-2 rounded-md font-medium text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800/80 hover:text-slate-900 dark:hover:text-white transition">
-                        <span class="flex items-center gap-2.5">
-                            <i class="bx bx-envelope text-sm text-slate-400"></i> Email
-                        </span>
-                        <i class="bx bx-chevron-right text-slate-400 text-xs"></i>
-                    </button>
+                    <!-- Live Stream -->
+                    <a href="#tab-live" data-sidebar-tab="#tab-live"
+                       class="sidebar-link flex items-center gap-2.5 px-2.5 py-2 rounded-md font-medium text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800/80 hover:text-slate-900 dark:hover:text-white transition">
+                        <span class="live-dot"></span> Live Stream
+                    </a>
 
-                    <!-- SSL / TLS -->
-                    <button type="button" class="w-full flex items-center justify-between px-2.5 py-2 rounded-md font-medium text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800/80 hover:text-slate-900 dark:hover:text-white transition">
-                        <span class="flex items-center gap-2.5">
-                            <i class="bx bx-lock-alt text-sm text-slate-400"></i> SSL/TLS
-                        </span>
-                        <i class="bx bx-chevron-right text-slate-400 text-xs"></i>
-                    </button>
-
-                    <!-- Security -->
-                    <button type="button" class="w-full flex items-center justify-between px-2.5 py-2 rounded-md font-medium text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800/80 hover:text-slate-900 dark:hover:text-white transition">
-                        <span class="flex items-center gap-2.5">
-                            <i class="bx bx-shield-quarter text-sm text-slate-400"></i> Security
-                        </span>
-                        <i class="bx bx-chevron-right text-slate-400 text-xs"></i>
-                    </button>
-
-                    <!-- Access -->
-                    <button type="button" class="w-full flex items-center justify-between px-2.5 py-2 rounded-md font-medium text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800/80 hover:text-slate-900 dark:hover:text-white transition">
-                        <span class="flex items-center gap-2.5">
-                            <i class="bx bx-key text-sm text-slate-400"></i> Access
-                        </span>
-                        <i class="bx bx-chevron-right text-slate-400 text-xs"></i>
-                    </button>
-
-                    <!-- Speed -->
-                    <button type="button" class="w-full flex items-center justify-between px-2.5 py-2 rounded-md font-medium text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800/80 hover:text-slate-900 dark:hover:text-white transition">
-                        <span class="flex items-center gap-2.5">
-                            <i class="bx bx-bolt-circle text-sm text-slate-400"></i> Speed
-                        </span>
-                        <i class="bx bx-chevron-right text-slate-400 text-xs"></i>
-                    </button>
-
-                    <!-- Caching -->
-                    <button type="button" class="w-full flex items-center justify-between px-2.5 py-2 rounded-md font-medium text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800/80 hover:text-slate-900 dark:hover:text-white transition">
-                        <span class="flex items-center gap-2.5">
-                            <i class="bx bx-server text-sm text-slate-400"></i> Caching
-                        </span>
-                        <i class="bx bx-chevron-right text-slate-400 text-xs"></i>
-                    </button>
-
-                    <!-- Workers Routes -->
-                    <button type="button" class="w-full flex items-center justify-between px-2.5 py-2 rounded-md font-medium text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800/80 hover:text-slate-900 dark:hover:text-white transition">
-                        <span class="flex items-center gap-2.5">
-                            <i class="bx bx-code-alt text-sm text-slate-400"></i> Workers Routes
-                        </span>
-                        <i class="bx bx-chevron-right text-slate-400 text-xs"></i>
-                    </button>
-
-                    <!-- Rules -->
-                    <button type="button" class="w-full flex items-center justify-between px-2.5 py-2 rounded-md font-medium text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800/80 hover:text-slate-900 dark:hover:text-white transition">
-                        <span class="flex items-center gap-2.5">
-                            <i class="bx bx-git-branch text-sm text-slate-400"></i> Rules
-                        </span>
-                        <i class="bx bx-chevron-right text-slate-400 text-xs"></i>
-                    </button>
-
-                    <!-- Traffic -->
-                    <button type="button" class="w-full flex items-center justify-between px-2.5 py-2 rounded-md font-medium text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800/80 hover:text-slate-900 dark:hover:text-white transition">
-                        <span class="flex items-center gap-2.5">
-                            <i class="bx bx-transfer text-sm text-slate-400"></i> Traffic
-                        </span>
-                        <i class="bx bx-chevron-right text-slate-400 text-xs"></i>
-                    </button>
-
-                    <!-- Web3 -->
-                    <button type="button" class="w-full flex items-center justify-between px-2.5 py-2 rounded-md font-medium text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800/80 hover:text-slate-900 dark:hover:text-white transition">
-                        <span class="flex items-center gap-2.5">
-                            <i class="bx bx-globe text-sm text-slate-400"></i> Web3
-                        </span>
-                        <i class="bx bx-chevron-right text-slate-400 text-xs"></i>
-                    </button>
+                    <!-- Setting -->
+                    <a href="#tab-settings" data-sidebar-tab="#tab-settings"
+                       class="sidebar-link flex items-center gap-2.5 px-2.5 py-2 rounded-md font-medium text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800/80 hover:text-slate-900 dark:hover:text-white transition">
+                        <i class="bx bx-cog text-sm text-slate-400"></i> Setting
+                    </a>
                 </nav>
-            </div>
-
-            <!-- Sidebar Footer: Manage Account -->
-            <div class="p-3 border-t border-slate-200 dark:border-slate-800">
-                <button type="button" class="w-full flex items-center justify-between px-2.5 py-2 rounded-md font-medium text-xs text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800 hover:text-slate-900 dark:hover:text-white transition">
-                    <span class="flex items-center gap-2">
-                        <i class="bx bx-cog text-sm text-slate-400"></i> Manage account
-                    </span>
-                    <i class="bx bx-chevron-right text-slate-400 text-xs"></i>
-                </button>
             </div>
         </aside>
 
@@ -841,6 +726,58 @@
                     </div>
                 </div>
 
+                <!-- ============================================== -->
+                <!-- TAB 6: SETTING                                 -->
+                <!-- ============================================== -->
+                <div id="tab-settings" class="tab-pane space-y-4">
+                    <div class="bg-white dark:bg-[#111827] border border-slate-200 dark:border-slate-800 rounded-lg shadow-sm overflow-hidden">
+                        <div class="p-3.5 border-b border-slate-100 dark:border-slate-800">
+                            <div class="text-xs font-semibold text-slate-800 dark:text-slate-200">Analytics Settings</div>
+                            <div class="text-[11px] text-slate-400 mt-0.5">Current package configuration (read-only)</div>
+                        </div>
+                        <div class="divide-y divide-slate-100 dark:divide-slate-800">
+                            @php
+                                $settingRows = [
+                                    'Tracking'          => config('laravel-web-analytics.enabled', true) ? 'Enabled' : 'Disabled',
+                                    'Data source'       => ($source ?? 'database') === 'file' ? 'Server log file' : 'Database table',
+                                    'Storage'           => $logPath ?? '-',
+                                    'Records'           => $logSize ?? '-',
+                                    'Time range'        => $timeRange ?? '24h',
+                                    'Active visitor window' => config('laravel-web-analytics.active_visitor_window', 5) . ' minutes',
+                                    'Live stream interval'  => config('laravel-web-analytics.stream_interval', 2) . ' seconds',
+                                    'Log retention'     => config('laravel-web-analytics.retention_days', 30) . ' days',
+                                    'GeoIP provider'    => config('laravel-web-analytics.geoip.enabled', true)
+                                        ? config('laravel-web-analytics.geoip.provider', 'cloudflare') : 'Disabled',
+                                    'Alerts'            => config('laravel-web-analytics.alerts.enabled', false)
+                                        ? ucfirst(config('laravel-web-analytics.alerts.channel', 'telegram')) : 'Disabled',
+                                    'Multi-tenancy'     => config('laravel-web-analytics.multi_tenancy.enabled', false) ? 'Enabled' : 'Disabled',
+                                    'Tenant scope'      => !empty($tenantId) ? $tenantId : 'All tenants',
+                                ];
+                            @endphp
+                            @foreach($settingRows as $label => $value)
+                                <div class="flex items-center justify-between px-4 py-2.5 text-xs gap-4">
+                                    <span class="text-slate-500 dark:text-slate-400">{{ $label }}</span>
+                                    <span class="font-mono text-slate-800 dark:text-slate-200 text-right truncate max-w-[60%]">{{ $value }}</span>
+                                </div>
+                            @endforeach
+                        </div>
+                    </div>
+
+                    <div class="bg-white dark:bg-[#111827] border border-slate-200 dark:border-slate-800 rounded-lg p-4 shadow-sm">
+                        <div class="text-xs font-semibold text-slate-800 dark:text-slate-200 mb-3">Quick actions</div>
+                        <div class="flex flex-wrap items-center gap-2">
+                            <a href="{{ route('lwa_export', array_filter(['range' => $timeRange ?? '24h', 'tenant_id' => $tenantId ?? null, 'start_date' => $customStart ?? null, 'end_date' => $customEnd ?? null])) }}"
+                               class="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium text-slate-700 dark:text-slate-300 bg-white dark:bg-slate-800 hover:bg-slate-50 dark:hover:bg-slate-700 border border-slate-200 dark:border-slate-700 rounded-md shadow-sm transition">
+                                <i class="bx bx-download text-sm text-slate-400"></i> Export CSV
+                            </a>
+                            <button type="button" onclick="switchDataSource('{{ ($source ?? 'database') === 'file' ? 'database' : 'file' }}')"
+                                    class="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium text-slate-700 dark:text-slate-300 bg-white dark:bg-slate-800 hover:bg-slate-50 dark:hover:bg-slate-700 border border-slate-200 dark:border-slate-700 rounded-md shadow-sm transition">
+                                <i class="bx bx-transfer text-sm text-slate-400"></i> Switch to {{ ($source ?? 'database') === 'file' ? 'Database' : 'Server log file' }}
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
             </main>
         </div>
     </div>
@@ -889,25 +826,51 @@
             }
         })();
 
-        // 3. Tab Switching
+        // 3. Tab Switching (segmented controls + sidebar links)
         (function() {
             const tabs = document.querySelectorAll('.cf-tab-btn');
+            const sidebarLinks = document.querySelectorAll('.sidebar-link');
+            const overviewLink = document.getElementById('sidebarOverview');
             const panes = document.querySelectorAll('.tab-pane');
+
+            function activateTab(target) {
+                const effective = target === '#overview' ? '#tab-requests' : target;
+                const pane = document.querySelector(effective);
+                if (!pane) return;
+
+                panes.forEach(p => p.classList.remove('active'));
+                pane.classList.add('active');
+
+                tabs.forEach(t => t.classList.toggle('active', t.getAttribute('data-target') === effective));
+                sidebarLinks.forEach(l => l.classList.toggle('active', l.getAttribute('data-sidebar-tab') === target));
+                if (overviewLink) overviewLink.classList.toggle('active', target === '#overview');
+
+                // Trigger resize for ApexCharts inside newly visible tab
+                window.dispatchEvent(new Event('resize'));
+            }
 
             tabs.forEach(btn => {
                 btn.addEventListener('click', () => {
-                    tabs.forEach(t => t.classList.remove('active'));
-                    panes.forEach(p => p.classList.remove('active'));
-
-                    btn.classList.add('active');
                     const target = btn.getAttribute('data-target');
-                    const targetEl = document.querySelector(target);
-                    if (targetEl) targetEl.classList.add('active');
-
-                    // Trigger resize for ApexCharts inside newly visible tab
-                    window.dispatchEvent(new Event('resize'));
+                    activateTab(target);
+                    history.replaceState(null, '', target);
                 });
             });
+
+            sidebarLinks.forEach(link => {
+                link.addEventListener('click', (e) => {
+                    const target = link.getAttribute('data-sidebar-tab');
+                    if (!target || !document.querySelector(target)) return;
+                    e.preventDefault();
+                    activateTab(target);
+                    history.replaceState(null, '', target);
+                    document.getElementById('appSidebar')?.classList.add('-translate-x-full');
+                    document.getElementById('sidebarBackdrop')?.classList.add('hidden');
+                });
+            });
+
+            window.addEventListener('hashchange', () => activateTab(window.location.hash || '#overview'));
+            activateTab(window.location.hash || '#overview');
         })();
 
         // 4. Quick filter input on tables
