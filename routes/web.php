@@ -10,3 +10,4 @@ Route::get('/stream', [WebAnalyticsController::class, 'stream'])->name('lwa_stre
 Route::get('/export', [WebAnalyticsController::class, 'export'])->name('lwa_export');
 Route::post('/settings/prune', [WebAnalyticsController::class, 'prune'])->name('lwa_settings_prune');
 Route::post('/settings/empty', [WebAnalyticsController::class, 'emptyTable'])->name('lwa_settings_empty');
+Route::post('/settings/test-alert', [WebAnalyticsController::class, 'testAlert'])->name('lwa_settings_test_alert');

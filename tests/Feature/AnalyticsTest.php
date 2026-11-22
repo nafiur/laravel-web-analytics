@@ -144,6 +144,45 @@ class AnalyticsTest extends TestCase
         }
     }
 
+    public function test_time_series_exposes_timestamps_and_granularity(): void
+    {
+        LwaLogs::create($this->log(['created_at' => now()]));
+
+        $series = $this->getJson('/web-analytics/data?range=1h')->json('analytics.time_series');
+
+        $this->assertSame('hour', $series['granularity']);
+        $this->assertSame(count($series['labels']), count($series['timestamps']));
+        $this->assertNotEmpty($series['timestamps'][0]);
+    }
+
+    public function test_settings_page_includes_alerts_and_export_sections(): void
+    {
+        $content = $this->get('/web-analytics')->getContent();
+
+        $this->assertStringContainsString('settings-alerts', $content);
+        $this->assertStringContainsString('settings-export', $content);
+        $this->assertStringContainsString('/web-analytics/settings/test-alert', $content);
+    }
+
+    public function test_test_alert_endpoint_sends_when_enabled(): void
+    {
+        config()->set('laravel-web-analytics.alerts.enabled', true);
+        config()->set('laravel-web-analytics.alerts.channel', 'slack');
+        config()->set('laravel-web-analytics.alerts.webhook_url', 'https://example.test/hook');
+        \Illuminate\Support\Facades\Http::fake();
+
+        $this->post('/web-analytics/settings/test-alert')->assertRedirect();
+
+        \Illuminate\Support\Facades\Http::assertSentCount(1);
+    }
+
+    public function test_test_alert_endpoint_rejects_when_disabled(): void
+    {
+        config()->set('laravel-web-analytics.alerts.enabled', false);
+
+        $this->post('/web-analytics/settings/test-alert')->assertSessionHasErrors('alert');
+    }
+
     public function test_prune_endpoint_removes_only_old_records(): void
     {
         LwaLogs::create($this->log(['created_at' => now()->subDays(40)]));

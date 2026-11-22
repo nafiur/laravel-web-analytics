@@ -130,6 +130,7 @@ The package defines routes with the `lwa_` prefix to avoid conflicts with your a
 | `GET /web-analytics/export` | `lwa_export` | Export analytics to CSV |
 | `POST /web-analytics/settings/prune` | `lwa_settings_prune` | Prune rows older than N days |
 | `POST /web-analytics/settings/empty` | `lwa_settings_empty` | Empty the telemetry table (requires `confirm=DELETE`) |
+| `POST /web-analytics/settings/test-alert` | `lwa_settings_test_alert` | Send a test alert through the configured channel |
 
 Generate URLs in your Blade templates or code:
 
@@ -144,9 +145,11 @@ route('lwa_export', ['range' => '24h']);
 
 The dashboard's **Setting** tab provides an adapted settings screen:
 
-- **General** — language (English/বাংলা), appearance (System/Light/Dark) and timezone. These are browser preferences stored in `localStorage`; no database changes are needed.
+- **General** — language (English/বাংলা), appearance (System/Light/Dark) and timezone. These are browser preferences stored in `localStorage`; no database changes are needed. The timezone is applied to live-feed timestamps and chart labels via `Intl.DateTimeFormat`.
 - **Dashboard** — default time range, data source, compact numbers and keyboard shortcuts.
 - **Collection** — read-only view of capture/GeoIP config.
+- **Alerts** — read-only channel/threshold info and a **Send test alert** action.
+- **Export** — default CSV range and whether to include the tenant scope in export links.
 - **Data maintenance** — row counts and oldest/newest timestamps, plus **Prune** and **Empty table** actions. Both are POST routes behind the dashboard's middleware with CSRF protection; emptying requires typing `DELETE`, and in multi-tenant mode only the current tenant's rows are removed.
 - **About** — package/runtime information.
 

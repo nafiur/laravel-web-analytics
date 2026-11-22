@@ -316,6 +316,7 @@ class DatabaseTrafficAnalytics
         ksort($bucketMap);
 
         $labels = [];
+        $timestamps = [];
         $requests = [];
         $bandwidthMb = [];
         $latencies = [];
@@ -329,8 +330,10 @@ class DatabaseTrafficAnalytics
             try {
                 $dt = Carbon::parse($key);
                 $labels[] = $isHourly ? $dt->format('H:i') : $dt->format('d M');
+                $timestamps[] = $dt->toIso8601String();
             } catch (\Throwable $e) {
                 $labels[] = (string) $key;
+                $timestamps[] = '';
             }
 
             $requests[] = $bucket['req_count'];
@@ -345,6 +348,7 @@ class DatabaseTrafficAnalytics
 
         if (empty($labels)) {
             $labels = ['No Data'];
+            $timestamps = [''];
             $requests = [0];
             $bandwidthMb = [0];
             $latencies = [0];
@@ -357,6 +361,8 @@ class DatabaseTrafficAnalytics
 
         return [
             'labels'       => $labels,
+            'timestamps'   => $timestamps,
+            'granularity'  => $isHourly ? 'hour' : 'day',
             'requests'     => $requests,
             'bandwidth_mb' => $bandwidthMb,
             'latency'      => $latencies,

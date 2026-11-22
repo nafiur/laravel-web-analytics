@@ -7,6 +7,7 @@ use Illuminate\Routing\Controller;
 use Illuminate\Support\Facades\Artisan;
 use Illuminate\Support\Facades\DB;
 use Nafiur\WebAnalytics\Models\LwaLogs;
+use Nafiur\WebAnalytics\Services\AlertService;
 use Nafiur\WebAnalytics\Services\DatabaseTrafficAnalytics;
 use Nafiur\WebAnalytics\Services\TenantResolver;
 use Nafiur\WebAnalytics\Services\WebAnalyticsLogParser;
@@ -356,5 +357,19 @@ class WebAnalyticsController extends Controller
         $query->delete();
 
         return back()->with('lwa_status', "Deleted {$count} telemetry record(s).");
+    }
+
+    /**
+     * Send a test notification through the configured alert channel.
+     */
+    public function testAlert()
+    {
+        if (!config('laravel-web-analytics.alerts.enabled')) {
+            return back()->withErrors(['alert' => 'Alerts are disabled in configuration.']);
+        }
+
+        AlertService::sendTest();
+
+        return back()->with('lwa_status', 'Test alert sent.');
     }
 }

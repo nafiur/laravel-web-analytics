@@ -364,6 +364,13 @@ class WebAnalyticsLogParser
             fn($key) => count($bucketVisitorIps[$key] ?? []),
             array_keys($timeSeriesBuckets)
         ));
+        $timeStamps = array_map(function ($key) {
+            try {
+                return Carbon::parse($key)->toIso8601String();
+            } catch (\Throwable $e) {
+                return '';
+            }
+        }, array_keys($timeSeriesBuckets));
 
         // Recent Logs (latest 20)
         $recentLogs = [];
@@ -472,6 +479,8 @@ class WebAnalyticsLogParser
             ],
             'time_series' => [
                 'labels'    => array_values(array_column($timeSeriesBuckets, 'label')),
+                'timestamps' => $timeStamps,
+                'granularity' => $isHourly ? 'hour' : 'day',
                 'requests'  => array_values(array_column($timeSeriesBuckets, 'requests')),
                 'bandwidth_mb' => array_values(array_map(fn($b) => round($b / (1024 * 1024), 2), array_column($timeSeriesBuckets, 'bytes'))),
                 'latency'   => array_fill(0, count($timeSeriesBuckets), 0),
@@ -707,6 +716,8 @@ class WebAnalyticsLogParser
             ],
             'time_series' => [
                 'labels'     => [],
+                'timestamps' => [],
+                'granularity' => $isHourly ?? 'hour',
                 'requests'   => [],
                 'bandwidth_mb' => [],
                 'latency'    => [],

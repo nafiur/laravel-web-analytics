@@ -10,6 +10,8 @@
                             <a href="#settings-general" class="settings-nav-link active block px-2.5 py-2 rounded-md font-medium text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800 transition">General</a>
                             <a href="#settings-dashboard" class="settings-nav-link block px-2.5 py-2 rounded-md font-medium text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800 transition">Dashboard</a>
                             <a href="#settings-collection" class="settings-nav-link block px-2.5 py-2 rounded-md font-medium text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800 transition">Collection</a>
+                            <a href="#settings-alerts" class="settings-nav-link block px-2.5 py-2 rounded-md font-medium text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800 transition">Alerts</a>
+                            <a href="#settings-export" class="settings-nav-link block px-2.5 py-2 rounded-md font-medium text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800 transition">Export</a>
 
                             <div class="px-2.5 pt-4 pb-1 text-[10px] font-semibold uppercase tracking-wider text-slate-400">Data</div>
                             <a href="#settings-maintenance" class="settings-nav-link block px-2.5 py-2 rounded-md font-medium text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800 transition">Maintenance</a>
@@ -145,6 +147,57 @@
                                             <span class="font-mono text-slate-800 dark:text-slate-200">{{ $value }}</span>
                                         </div>
                                     @endforeach
+                                </div>
+                            </section>
+
+                            <!-- Alerts -->
+                            <section id="settings-alerts" class="bg-white dark:bg-[#111827] border border-slate-200 dark:border-slate-800 rounded-lg shadow-sm overflow-hidden">
+                                <div class="p-4 border-b border-slate-100 dark:border-slate-800">
+                                    <h2 class="text-sm font-semibold text-slate-900 dark:text-white">Alerts</h2>
+                                    <p class="text-[11px] text-slate-400 mt-0.5">Webhook alerts for 5xx errors and error-rate spikes</p>
+                                </div>
+                                <div class="divide-y divide-slate-100 dark:divide-slate-800 text-xs">
+                                    @foreach([
+                                        'Status' => config('laravel-web-analytics.alerts.enabled', false) ? 'Enabled' : 'Disabled',
+                                        'Channel' => ucfirst(config('laravel-web-analytics.alerts.channel', 'telegram')),
+                                        'Error threshold' => config('laravel-web-analytics.alerts.error_rate_threshold_percentage', 10) . '%',
+                                        'Webhook configured' => config('laravel-web-analytics.alerts.webhook_url') ? 'Yes' : 'No',
+                                        'Telegram credentials' => config('laravel-web-analytics.alerts.telegram_bot_token') ? 'Yes' : 'No',
+                                    ] as $label => $value)
+                                        <div class="flex items-center justify-between gap-4 px-4 py-2.5">
+                                            <span class="text-slate-500 dark:text-slate-400">{{ $label }}</span>
+                                            <span class="font-mono text-slate-800 dark:text-slate-200">{{ $value }}</span>
+                                        </div>
+                                    @endforeach
+                                    <div class="flex items-center justify-between gap-4 px-4 py-3">
+                                        <span class="text-slate-500 dark:text-slate-400">Test notification</span>
+                                        <form method="POST" action="{{ route('lwa_settings_test_alert') }}">
+                                            @csrf
+                                            <button type="submit" class="px-3 py-1.5 text-xs font-medium text-slate-700 dark:text-slate-300 bg-white dark:bg-slate-800 hover:bg-slate-50 dark:hover:bg-slate-700 border border-slate-200 dark:border-slate-700 rounded-md">Send test alert</button>
+                                        </form>
+                                    </div>
+                                </div>
+                            </section>
+
+                            <!-- Export defaults -->
+                            <section id="settings-export" class="bg-white dark:bg-[#111827] border border-slate-200 dark:border-slate-800 rounded-lg shadow-sm overflow-hidden">
+                                <div class="p-4 border-b border-slate-100 dark:border-slate-800">
+                                    <h2 class="text-sm font-semibold text-slate-900 dark:text-white">Export defaults</h2>
+                                    <p class="text-[11px] text-slate-400 mt-0.5">Applied to every CSV export link</p>
+                                </div>
+                                <div class="divide-y divide-slate-100 dark:divide-slate-800 text-xs">
+                                    <div class="flex items-center justify-between gap-4 px-4 py-3">
+                                        <span class="text-slate-500 dark:text-slate-400">Default export range</span>
+                                        <select id="settingExportRange" class="text-xs px-2.5 py-1.5 border border-slate-200 dark:border-slate-700 rounded-md bg-white dark:bg-slate-800 text-slate-700 dark:text-slate-200">
+                                            @foreach(['1h' => 'Last 1 hour', '6h' => 'Last 6 hours', '24h' => 'Last 24 hours', 'today' => 'Today', '7d' => 'Last 7 days', '30d' => 'Last 30 days', 'all' => 'All time'] as $value => $label)
+                                                <option value="{{ $value }}" {{ ($timeRange ?? '24h') === $value ? 'selected' : '' }}>{{ $label }}</option>
+                                            @endforeach
+                                        </select>
+                                    </div>
+                                    <div class="flex items-center justify-between gap-4 px-4 py-3">
+                                        <span class="text-slate-500 dark:text-slate-400">Include tenant in export</span>
+                                        <input type="checkbox" id="settingExportTenant" class="w-8 h-4 accent-[#0051c3] cursor-pointer">
+                                    </div>
                                 </div>
                             </section>
 

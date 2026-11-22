@@ -74,7 +74,7 @@
                         </div>
 
                         <!-- Export to CSV -->
-                        <a href="{{ route('lwa_export', array_filter(['range' => $timeRange ?? '24h', 'tenant_id' => $tenantId ?? null, 'start_date' => $customStart ?? null, 'end_date' => $customEnd ?? null])) }}" 
+                        <a href="{{ route('lwa_export', array_filter(['range' => $timeRange ?? '24h', 'tenant_id' => $tenantId ?? null, 'start_date' => $customStart ?? null, 'end_date' => $customEnd ?? null])) }}" class="lwa-export-link" 
                            class="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium text-slate-700 dark:text-slate-300 bg-white dark:bg-slate-800 hover:bg-slate-50 dark:hover:bg-slate-700 border border-slate-200 dark:border-slate-700 rounded-md shadow-sm transition"
                            title="Export filtered logs to CSV">
                             <i class="bx bx-download text-sm"></i> <span data-i18n="export">Export</span>

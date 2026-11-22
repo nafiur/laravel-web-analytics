@@ -130,6 +130,8 @@
 
         // ============ APEXCHARTS CONFIGURATION ============
         const timeLabels = {!! json_encode($analytics['time_series']['labels'] ?? ['No Data']) !!};
+        const timeStamps = {!! json_encode($analytics['time_series']['timestamps'] ?? []) !!};
+        const timeGranularity = {!! json_encode($analytics['time_series']['granularity'] ?? 'hour') !!};
         const requestsData = {!! json_encode($analytics['time_series']['requests'] ?? [0]) !!};
         const bandwidthData = {!! json_encode($analytics['time_series']['bandwidth_mb'] ?? [0]) !!};
         const latencyData = {!! json_encode($analytics['time_series']['latency'] ?? [0]) !!};
@@ -295,9 +297,10 @@
         chartMethod.render();
 
         // 5. Origin Latency Chart
+        let chartLatency = null;
         let chartLatencyEl = document.querySelector("#chartLatency");
         if (chartLatencyEl) {
-            let chartLatency = new ApexCharts(chartLatencyEl, {
+            chartLatency = new ApexCharts(chartLatencyEl, {
                 series: [{ name: 'Latency (ms)', data: latencyData }],
                 chart: { type: 'line', height: 250, toolbar: { show: false } },
                 colors: ['#f59e0b'],
@@ -326,6 +329,9 @@
         renderSparkline('#sparklineRequests', requestsData, '#0051c3');
         renderSparkline('#sparklineBytes', bandwidthData, '#0051c3');
         renderSparkline('#sparklineVisits', visitorsData, '#0051c3');
+
+        // Charts whose x-axis is the shared time series (used by timezone settings)
+        window.lwaTimeCharts = [chartRequests, chartBandwidth, chartStatus, chartLatency].filter(Boolean);
 
         // ============ REAL-TIME SSE STREAM ============
         (function() {
@@ -484,14 +490,11 @@
                 if (languageSelect) languageSelect.value = lang;
             }
 
-            window.lwaApplyTimezone = function() { applyTimezone(); };
-
             function currentTimezone() {
                 return localStorage.getItem('lwa_timezone') || 'UTC';
             }
 
-            function applyTimezone() {
-                const tz = currentTimezone();
+            function formatDataElements(tz) {
                 document.querySelectorAll('[data-utc]').forEach(el => {
                     const iso = el.getAttribute('data-utc');
                     if (!iso) return;
@@ -504,19 +507,50 @@
                         }).format(date);
                     } catch (e) { /* invalid timezone falls back to the server value */ }
                 });
-                if (clock) {
-                    try {
-                        clock.textContent = new Intl.DateTimeFormat(undefined, {
-                            timeZone: tz, hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: false
-                        }).format(new Date());
-                    } catch (e) { /* ignore */ }
-                }
             }
+
+            function tickClock() {
+                if (!clock) return;
+                try {
+                    clock.textContent = new Intl.DateTimeFormat(undefined, {
+                        timeZone: currentTimezone(), hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: false
+                    }).format(new Date());
+                } catch (e) { /* ignore */ }
+            }
+
+            function formatTimeLabels(tz) {
+                if (!Array.isArray(timeStamps) || !timeStamps.length) return [];
+                return timeStamps.map((iso, i) => {
+                    const date = new Date(iso);
+                    if (isNaN(date.getTime())) return timeLabels[i] || iso;
+                    try {
+                        return new Intl.DateTimeFormat(undefined, {
+                            timeZone: tz,
+                            ...(timeGranularity === 'hour'
+                                ? { hour: '2-digit', minute: '2-digit', hour12: false }
+                                : { day: '2-digit', month: 'short' })
+                        }).format(date);
+                    } catch (e) { return timeLabels[i] || iso; }
+                });
+            }
+
+            function applyTimezone() {
+                const tz = currentTimezone();
+                formatDataElements(tz);
+                const labels = formatTimeLabels(tz);
+                if (labels.length && window.lwaTimeCharts && window.lwaTimeCharts.length) {
+                    window.lwaTimeCharts.forEach(chart => chart.updateOptions({ xaxis: { categories: labels } }));
+                }
+                tickClock();
+            }
+
+            // New live rows only need their own timestamp reformatted.
+            window.lwaApplyTimezone = function() { formatDataElements(currentTimezone()); };
 
             applyLanguage(currentLanguage());
             applyTimezone();
             if (timezoneSelect) timezoneSelect.value = currentTimezone();
-            if (clock) setInterval(applyTimezone, 1000);
+            if (clock) setInterval(tickClock, 1000);
 
             if (languageSelect) {
                 languageSelect.addEventListener('change', () => {
@@ -587,6 +621,39 @@
                     document.getElementById('themeToggle')?.click();
                 }
             });
+
+            // Export link defaults
+            const exportRangeSelect = document.getElementById('settingExportRange');
+            const exportTenantToggle = document.getElementById('settingExportTenant');
+            function applyExportDefaults() {
+                document.querySelectorAll('.lwa-export-link').forEach(link => {
+                    try {
+                        const url = new URL(link.href, window.location.origin);
+                        const range = localStorage.getItem('lwa_export_range');
+                        if (range) url.searchParams.set('range', range);
+                        if (localStorage.getItem('lwa_export_tenant') !== '1') {
+                            url.searchParams.delete('tenant_id');
+                        }
+                        link.href = url.toString();
+                    } catch (e) { /* keep the server-rendered URL */ }
+                });
+            }
+            if (exportRangeSelect) {
+                const savedExportRange = localStorage.getItem('lwa_export_range') || (rangeSelect ? rangeSelect.value : '24h');
+                exportRangeSelect.value = savedExportRange;
+                exportRangeSelect.addEventListener('change', () => {
+                    localStorage.setItem('lwa_export_range', exportRangeSelect.value);
+                    applyExportDefaults();
+                });
+            }
+            if (exportTenantToggle) {
+                exportTenantToggle.checked = localStorage.getItem('lwa_export_tenant') === '1';
+                exportTenantToggle.addEventListener('change', () => {
+                    localStorage.setItem('lwa_export_tenant', exportTenantToggle.checked ? '1' : '0');
+                    applyExportDefaults();
+                });
+            }
+            applyExportDefaults();
 
             document.querySelectorAll('.settings-nav-link').forEach(link => {
                 link.addEventListener('click', (e) => {

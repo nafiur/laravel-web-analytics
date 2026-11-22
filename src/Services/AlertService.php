@@ -102,6 +102,20 @@ class AlertService
     }
 
     /**
+     * Send a test notification through the configured channel.
+     */
+    public static function sendTest(): bool
+    {
+        if (!config('laravel-web-analytics.alerts.enabled')) {
+            return false;
+        }
+
+        self::send("✅ *Laravel Web Analytics*\nTest alert from " . config('app.name', 'Laravel') . "\n⏰ " . now()->toDateTimeString());
+
+        return true;
+    }
+
+    /**
      * Deliver the message through the configured channel.
      */
     private static function send(string $message): void
