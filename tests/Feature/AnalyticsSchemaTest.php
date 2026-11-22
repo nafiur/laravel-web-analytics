@@ -4,15 +4,15 @@ namespace Nafiur\WebAnalytics\Tests\Feature;
 
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Schema;
-use Nafiur\WebAnalytics\Models\V3\Pageview;
-use Nafiur\WebAnalytics\Models\V3\Website;
+use Nafiur\WebAnalytics\Models\Analytics\Pageview;
+use Nafiur\WebAnalytics\Models\Analytics\Website;
 use Nafiur\WebAnalytics\Tests\TestCase;
 
-class V3SchemaTest extends TestCase
+class AnalyticsSchemaTest extends TestCase
 {
     use RefreshDatabase;
 
-    public function test_v3_tables_are_created_when_enabled(): void
+    public function test_analytics_tables_are_created_when_enabled(): void
     {
         foreach ([
             'lwa_websites', 'lwa_visitors', 'lwa_sessions', 'lwa_pageviews',
@@ -22,7 +22,7 @@ class V3SchemaTest extends TestCase
         }
     }
 
-    public function test_website_scope_is_applied_to_v3_models(): void
+    public function test_website_scope_is_applied_to_analytics_models(): void
     {
         Website::create([
             'name' => 'First', 'domain' => 'first.test', 'tracking_id' => 'trk_first',
@@ -43,7 +43,7 @@ class V3SchemaTest extends TestCase
             'path' => '/second', 'created_at' => now(),
         ]);
 
-        config()->set('laravel-web-analytics.v3.website_id', $firstId);
+        config()->set('laravel-web-analytics.analytics.website_id', $firstId);
 
         $this->assertSame(1, Pageview::count());
         $this->assertSame('/first', Pageview::first()->path);

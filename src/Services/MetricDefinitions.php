@@ -5,7 +5,7 @@ namespace Nafiur\WebAnalytics\Services;
 use Carbon\Carbon;
 
 /**
- * Authoritative v3 metric definitions. Pure functions — no database access —
+ * Authoritative analytics metric definitions. Pure functions — no database access —
  * so boundary cases can be unit-tested before calculators are implemented.
  */
 class MetricDefinitions
@@ -14,7 +14,7 @@ class MetricDefinitions
 
     public static function sessionTimeoutMinutes(): int
     {
-        return max(1, (int) config('laravel-web-analytics.v3.session_timeout_minutes', self::DEFAULT_SESSION_TIMEOUT_MINUTES));
+        return max(1, (int) config('laravel-web-analytics.analytics.session_timeout_minutes', self::DEFAULT_SESSION_TIMEOUT_MINUTES));
     }
 
     /**
@@ -23,7 +23,7 @@ class MetricDefinitions
      */
     public static function isBounce(int $pageviews, int $durationSeconds, ?int $threshold = null): bool
     {
-        $threshold = $threshold ?? (int) config('laravel-web-analytics.v3.bounce_max_duration_seconds', 0);
+        $threshold = $threshold ?? (int) config('laravel-web-analytics.analytics.bounce_max_duration_seconds', 0);
 
         return $pageviews === 1 && $durationSeconds <= $threshold;
     }

@@ -5,7 +5,7 @@ use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Support\Facades\Schema;
 
 /**
- * v3 data model — opt-in through WEB_ANALYTICS_V3_ENABLED.
+ * advanced analytics data model — opt-in through WEB_ANALYTICS_SCHEMA_ENABLED.
  *
  * The legacy lwa_logs table is left untouched; these tables are additive so
  * existing v2 installations keep working until the upgrade command is run.
@@ -14,7 +14,7 @@ return new class extends Migration
 {
     public function up(): void
     {
-        if (!filter_var(env('WEB_ANALYTICS_V3_ENABLED', false), FILTER_VALIDATE_BOOLEAN)) {
+        if (!filter_var(env('WEB_ANALYTICS_SCHEMA_ENABLED', false), FILTER_VALIDATE_BOOLEAN)) {
             return;
         }
 
@@ -140,7 +140,7 @@ return new class extends Migration
 
     public function down(): void
     {
-        if (!filter_var(env('WEB_ANALYTICS_V3_ENABLED', false), FILTER_VALIDATE_BOOLEAN)) {
+        if (!filter_var(env('WEB_ANALYTICS_SCHEMA_ENABLED', false), FILTER_VALIDATE_BOOLEAN)) {
             return;
         }
 

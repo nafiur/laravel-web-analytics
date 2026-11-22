@@ -39,8 +39,8 @@ abstract class TestCase extends Orchestra
             ]);
         }
 
-        $app['config']->set('laravel-web-analytics.v3.enabled',
-            filter_var(env('WEB_ANALYTICS_V3_ENABLED', false), FILTER_VALIDATE_BOOLEAN));
+        $app['config']->set('laravel-web-analytics.analytics.enabled',
+            filter_var(env('WEB_ANALYTICS_SCHEMA_ENABLED', false), FILTER_VALIDATE_BOOLEAN));
 
         $app['config']->set('laravel-web-analytics.route.middleware', ['web']);
         $app['config']->set('laravel-web-analytics.geoip.enabled', false);

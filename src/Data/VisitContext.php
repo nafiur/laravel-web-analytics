@@ -4,7 +4,7 @@ namespace Nafiur\WebAnalytics\Data;
 
 /**
  * Minimal, privacy-filtered request context produced by the tracking
- * middleware. No raw IP is stored by v3 collectors unless explicitly enabled.
+ * middleware. No raw IP is stored by advanced collectors unless explicitly enabled.
  */
 final class VisitContext
 {

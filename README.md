@@ -34,12 +34,12 @@ A modern, fast, and self-hosted Web Traffic & Visitor Analytics Dashboard for La
 
 ---
 
-## 🚧 v3 preview (opt-in)
+## 🚧 Advanced analytics schema (opt-in)
 
-The v3 data model is additive and disabled by default. Enable it only after reading the architecture blueprint:
+The advanced analytics data model is additive and disabled by default. Enable it only after reading the architecture blueprint:
 
 ```env
-WEB_ANALYTICS_V3_ENABLED=true
+WEB_ANALYTICS_SCHEMA_ENABLED=true
 WEB_ANALYTICS_WEBSITE_ID=1
 ```
 

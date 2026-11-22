@@ -1,6 +1,6 @@
 <?php
 
-namespace Nafiur\WebAnalytics\Models\V3;
+namespace Nafiur\WebAnalytics\Models\Analytics;
 
 use Illuminate\Database\Eloquent\Model;
 use Nafiur\WebAnalytics\Services\WebsiteScope;
