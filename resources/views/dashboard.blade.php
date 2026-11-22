@@ -310,6 +310,7 @@
             <!-- Page Body Content -->
             <main class="flex-1 p-4 sm:p-6 space-y-6">
 
+                @include('web-analytics::sections.overview')
                 @include('web-analytics::sections.requests')
                 @include('web-analytics::sections.visitors')
                 @include('web-analytics::sections.performance')

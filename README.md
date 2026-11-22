@@ -195,17 +195,34 @@ Client IP resolution uses Laravel's trusted-proxy configuration. Only enable `WE
 
 ---
 
-## 🧭 Dashboard Views & -Style Navigation
+## 🧭 Dashboard Navigation
 
-The dashboard features a clean, tabbed -style layout with segmented controls:
+The sidebar exposes 13 sections. Items map to report panes (or scroll to a specific report on the same page) — no extra routes are required:
 
-| Tab | Key Insights & Visualizations |
-|-----|-------------------------------|
-| **📈 Requests** | Total requests volume over time, bandwidth data transfer (GB/MB), status codes (2xx, 3xx, 4xx, 5xx), HTTP methods (GET, POST, PUT, DELETE), top paths, and top IP addresses. |
-| **👥 Visitors** | Unique visitors, active live visitors (5m window), geographic breakdowns (top countries & cities), devices, operating systems, browsers, referrers, and **UTM source / medium / campaign** breakdowns. |
-| **⚡ Performance** | Latency time series, average response times (ms), bandwidth consumption by path, and slowest application endpoints. |
-| **🛡️ Security** | 4xx & 5xx error spike rates, status code distribution, top error paths, and recent error requests telemetry. |
-| **🟢 Live Stream** | Instant Server-Sent Events (SSE) feed updating live requests second-by-second with real-time row animations without refreshing the page. |
+| Menu item | Shows |
+|-----------|-------|
+| **Overview** | KPI cards, traffic chart, top pages, sources, countries, devices |
+| **Real-time** | Live SSE traffic feed and active visitors |
+| **Visitors** | Unique visitors, IPs, geography, devices, browsers |
+| **Traffic Sources** | Referrers / UTM sources (scrolls to Top referrers) |
+| **Pages & Screens** | Top paths (scrolls to Top paths) |
+| **Geography** | Top countries (scrolls to Countries) |
+| **Devices & Browsers** | Device / OS / browser breakdowns |
+| **Campaigns** | UTM source / medium / campaign breakdowns |
+| **Events & Goals** | Unavailable — requires a custom event collector |
+| **Conversions** | Unavailable — requires configured goals |
+| **Performance** | Latency, response times, bandwidth by path |
+| **Error Monitoring** | 4xx/5xx errors, slow/error paths |
+| **Settings** | Preferences, maintenance, alerts, about |
+
+> **No fabricated analytics:** Events & Goals and Conversions are intentionally shown as unavailable until an event collector exists. All other derived metrics use explicit definitions:
+>
+> - **Total Visitors** — distinct IP addresses in the range (privacy-preserving device proxy)
+> - **Unique Visitors** — distinct `session_id` (IP fallback)
+> - **Pageviews** — GET requests to non-API paths
+> - **Sessions** — distinct visitor session identifiers
+> - **Bounce Rate** — sessions with exactly one recorded request
+> - **Avg Engagement Time** — average time between first and last request in a session |
 
 ### Time Range Filtering
 Select from predefined or custom time ranges via the segmented dropdown:

@@ -76,6 +76,43 @@ class DatabaseTrafficAnalytics
             ->count(DB::raw('COALESCE(session_id, ip_address)'));
         $liveActiveRequests5m = (clone $liveQuery)->count();
 
+        // Honest engagement metrics derived from the recorded session_id and
+        // timestamps. Definitions are documented in the dashboard tooltips.
+        $totalVisitors = (clone $baseQuery)->distinct()->count('ip_address');
+        $sessions = (clone $baseQuery)->distinct()->count('session_id');
+        $pageviews = (clone $baseQuery)->where('method', 'GET')->where('path', 'not like', 'api/%')->count();
+
+        $sessionHits = (clone $baseQuery)
+            ->selectRaw('session_id, COUNT(*) as hits')
+            ->whereNotNull('session_id')
+            ->groupBy('session_id')
+            ->pluck('hits', 'session_id');
+        $singlePageSessions = $sessionHits->filter(fn ($hits) => (int) $hits === 1)->count();
+        $bounceRate = $sessionHits->isNotEmpty()
+            ? round(($singlePageSessions / $sessionHits->count()) * 100, 2)
+            : 0.0;
+
+        $firstSeen = (clone $baseQuery)
+            ->selectRaw('session_id, MIN(created_at) as first_at')
+            ->whereNotNull('session_id')
+            ->groupBy('session_id')
+            ->pluck('first_at', 'session_id');
+        $lastSeen = (clone $baseQuery)
+            ->selectRaw('session_id, MAX(created_at) as last_at')
+            ->whereNotNull('session_id')
+            ->groupBy('session_id')
+            ->pluck('last_at', 'session_id');
+        $engagement = [];
+        foreach ($firstSeen as $sessionId => $first) {
+            if (!isset($lastSeen[$sessionId])) {
+                continue;
+            }
+            $engagement[] = abs(Carbon::parse($lastSeen[$sessionId])->diffInSeconds(Carbon::parse($first)));
+        }
+        $avgEngagement = !empty($engagement)
+            ? (int) round(array_sum($engagement) / count($engagement))
+            : 0;
+
         // Time Series
         $timeSeries = $this->buildTimeSeries($timeRange, $start, $end, $tenantId);
 
@@ -193,6 +230,17 @@ class DatabaseTrafficAnalytics
                 'total_bytes_fmt'     => $this->formatBytes($totalBytes),
                 'unique_visitors'     => $uniqueVisitors,
                 'unique_visitors_fmt' => $this->formatNumber($uniqueVisitors),
+                'total_visitors'      => $totalVisitors,
+                'total_visitors_fmt'  => $this->formatNumber($totalVisitors),
+                'sessions'            => $sessions,
+                'sessions_fmt'        => $this->formatNumber($sessions),
+                'pageviews'           => $pageviews,
+                'pageviews_fmt'       => $this->formatNumber($pageviews),
+                'bounce_rate'         => $bounceRate,
+                'avg_engagement_time' => $avgEngagement,
+                'avg_engagement_fmt'  => $avgEngagement >= 60
+                    ? floor($avgEngagement / 60) . 'm ' . ($avgEngagement % 60) . 's'
+                    : $avgEngagement . 's',
                 'live_visitors'       => $liveActiveVisitors,
                 'live_visitors_fmt'   => number_format($liveActiveVisitors),
                 'live_requests_5m'    => $liveActiveRequests5m,

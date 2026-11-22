@@ -385,6 +385,37 @@ class WebAnalyticsLogParser
             fn($key) => count($bucketVisitorIps[$key] ?? []),
             array_keys($timeSeriesBuckets)
         ));
+        // Engagement metrics derived from IP + request timestamps (no sessions
+        // exist in access logs, so IPs are used as the visitor proxy).
+        $totalVisitors = count($uniqueIps);
+        $sessions = $totalVisitors;
+        $pageviews = 0;
+        $ipHits = [];
+        $ipFirst = [];
+        $ipLast = [];
+        foreach ($records as $record) {
+            if (strtoupper($record['method']) === 'GET' && !str_starts_with($record['path'], '/api/')) {
+                $pageviews++;
+            }
+            $ip = $record['ip'];
+            $ipHits[$ip] = ($ipHits[$ip] ?? 0) + 1;
+            if (!isset($ipFirst[$ip]) || $record['datetime']->lt($ipFirst[$ip])) {
+                $ipFirst[$ip] = $record['datetime'];
+            }
+            if (!isset($ipLast[$ip]) || $record['datetime']->gt($ipLast[$ip])) {
+                $ipLast[$ip] = $record['datetime'];
+            }
+        }
+        $singleHit = count(array_filter($ipHits, fn ($hits) => $hits === 1));
+        $bounceRate = $totalVisitors > 0 ? round(($singleHit / $totalVisitors) * 100, 2) : 0.0;
+        $engagement = [];
+        foreach ($ipFirst as $ip => $first) {
+            if (isset($ipLast[$ip])) {
+                $engagement[] = abs($ipLast[$ip]->diffInSeconds($first));
+            }
+        }
+        $avgEngagement = !empty($engagement) ? (int) round(array_sum($engagement) / count($engagement)) : 0;
+
         $timeStamps = array_map(function ($key) {
             try {
                 return Carbon::parse($key)->toIso8601String();
@@ -484,6 +515,17 @@ class WebAnalyticsLogParser
                 'total_bytes_fmt'      => $this->formatBytes($totalBytes),
                 'unique_visitors'      => count($uniqueIps),
                 'unique_visitors_fmt'  => $this->formatNumber(count($uniqueIps)),
+                'total_visitors'       => $totalVisitors,
+                'total_visitors_fmt'   => $this->formatNumber($totalVisitors),
+                'sessions'             => $sessions,
+                'sessions_fmt'         => $this->formatNumber($sessions),
+                'pageviews'            => $pageviews,
+                'pageviews_fmt'        => $this->formatNumber($pageviews),
+                'bounce_rate'          => $bounceRate,
+                'avg_engagement_time'  => $avgEngagement,
+                'avg_engagement_fmt'   => $avgEngagement >= 60
+                    ? floor($avgEngagement / 60) . 'm ' . ($avgEngagement % 60) . 's'
+                    : $avgEngagement . 's',
                 'live_visitors'        => count($uniqueIps),
                 'live_visitors_fmt'    => number_format(count($uniqueIps)),
                 'live_requests_5m'     => min($totalRequests, 20),
@@ -735,6 +777,15 @@ class WebAnalyticsLogParser
                 'total_bytes_fmt'      => '0 B',
                 'unique_visitors'      => 0,
                 'unique_visitors_fmt'  => '0',
+                'total_visitors'       => 0,
+                'total_visitors_fmt'   => '0',
+                'sessions'             => 0,
+                'sessions_fmt'         => '0',
+                'pageviews'            => 0,
+                'pageviews_fmt'        => '0',
+                'bounce_rate'          => 0,
+                'avg_engagement_time'  => 0,
+                'avg_engagement_fmt'   => '0s',
                 'live_visitors'        => 0,
                 'live_visitors_fmt'    => '0',
                 'live_requests_5m'     => 0,

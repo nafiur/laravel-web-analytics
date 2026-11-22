@@ -119,14 +119,61 @@ class AnalyticsTest extends TestCase
         $content = $this->get('/web-analytics')->getContent();
 
         $this->assertStringContainsString('id="sidebarOverview"', $content);
-        $this->assertSame(5, substr_count($content, 'data-sidebar-tab='));
+        $this->assertSame(10, substr_count($content, 'data-sidebar-tab='));
+        $this->assertSame(2, substr_count($content, 'sidebar-unavailable'));
 
-        foreach (['tab-requests', 'tab-visitors', 'tab-performance', 'tab-security', 'tab-live', 'tab-settings'] as $pane) {
+        foreach (['Overview', 'Real-time', 'Visitors', 'Traffic Sources', 'Pages &amp; Screens', 'Geography',
+                  'Devices &amp; Browsers', 'Campaigns', 'Events &amp; Goals', 'Conversions',
+                  'Performance', 'Error Monitoring', 'Settings'] as $label) {
+            $this->assertStringContainsString($label, $content);
+        }
+
+        foreach (['tab-overview', 'tab-requests', 'tab-visitors', 'tab-performance', 'tab-security', 'tab-live', 'tab-settings'] as $pane) {
             $this->assertStringContainsString('id="' . $pane . '"', $content);
         }
 
-        foreach (['AI Crawl Control', 'Web3', 'Manage account', 'Back to Domains'] as $removed) {
-            $this->assertStringNotContainsString($removed, $content);
+        foreach (['AI Crawl Control', 'Web3', 'Manage account', 'Back to Domains', 'section-top-pages', 'section-campaigns'] as $needle) {
+            if (str_starts_with($needle, 'section-')) {
+                $this->assertStringContainsString($needle, $content);
+            } else {
+                $this->assertStringNotContainsString($needle, $content);
+            }
+        }
+    }
+
+    public function test_overview_exposes_honest_engagement_metrics(): void
+    {
+        $base = now()->subMinutes(10);
+        LwaLogs::create($this->log([
+            'session_id' => 's_engaged',
+            'ip_address' => '8.8.8.8',
+            'path'       => '/a',
+            'created_at' => $base,
+        ]));
+        LwaLogs::create($this->log([
+            'session_id' => 's_engaged',
+            'ip_address' => '8.8.8.8',
+            'path'       => '/b',
+            'created_at' => $base->copy()->addMinutes(2),
+        ]));
+        LwaLogs::create($this->log([
+            'session_id' => 's_bounce',
+            'ip_address' => '1.1.1.1',
+            'path'       => '/c',
+            'created_at' => $base,
+        ]));
+
+        $summary = $this->getJson('/web-analytics/data?range=all')->json('analytics.summary');
+
+        $this->assertSame(2, $summary['total_visitors']);
+        $this->assertSame(2, $summary['sessions']);
+        $this->assertSame(3, $summary['pageviews']);
+        $this->assertEquals(50.0, $summary['bounce_rate']);
+        $this->assertGreaterThan(0, $summary['avg_engagement_time']);
+
+        $content = $this->get('/web-analytics')->getContent();
+        foreach (['chartOverviewTraffic', 'Total Visitors', 'Avg Engagement', 'Live Now'] as $needle) {
+            $this->assertStringContainsString($needle, $content);
         }
     }
 

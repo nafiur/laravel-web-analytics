@@ -90,8 +90,8 @@
             const overviewLink = document.getElementById('sidebarOverview');
             const panes = document.querySelectorAll('.tab-pane');
 
-            function activateTab(target) {
-                const effective = target === '#overview' ? '#tab-requests' : target;
+            function activateTab(target, scrollTarget) {
+                const effective = target === '#overview' ? '#tab-overview' : target;
                 const pane = document.querySelector(effective);
                 if (!pane) return;
 
@@ -108,6 +108,29 @@
 
                 // Trigger resize for ApexCharts inside newly visible tab
                 window.dispatchEvent(new Event('resize'));
+
+                if (scrollTarget) {
+                    requestAnimationFrame(() => {
+                        document.querySelector(scrollTarget)?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                    });
+                }
+            }
+
+            function activateFromHash(hash) {
+                const target = hash || '#overview';
+                const el = document.querySelector(target);
+                if (el && el.classList.contains('tab-pane')) {
+                    activateTab(target);
+                    return;
+                }
+                if (el) {
+                    const pane = el.closest('.tab-pane');
+                    if (pane) {
+                        activateTab('#' + pane.id, target);
+                        return;
+                    }
+                }
+                activateTab(target);
             }
 
             tabs.forEach(btn => {
@@ -123,15 +146,16 @@
                     const target = link.getAttribute('data-sidebar-tab');
                     if (!target || !document.querySelector(target)) return;
                     e.preventDefault();
-                    activateTab(target);
-                    history.replaceState(null, '', target);
+                    const scrollTarget = link.getAttribute('data-sidebar-scroll');
+                    activateTab(target, scrollTarget);
+                    history.replaceState(null, '', scrollTarget || target);
                     document.getElementById('appSidebar')?.classList.add('-translate-x-full');
                     document.getElementById('sidebarBackdrop')?.classList.add('hidden');
                 });
             });
 
-            window.addEventListener('hashchange', () => activateTab(window.location.hash || '#overview'));
-            activateTab(window.location.hash || '#overview');
+            window.addEventListener('hashchange', () => activateFromHash(window.location.hash));
+            activateFromHash(window.location.hash);
         })();
 
         // 4. Quick filter input on tables
@@ -256,6 +280,25 @@
             }
         });
         chartRequests.render();
+
+        // Overview traffic chart (same series, separate container)
+        let chartOverviewTraffic = null;
+        const overviewChartEl = document.querySelector("#chartOverviewTraffic");
+        if (overviewChartEl) {
+            chartOverviewTraffic = new ApexCharts(overviewChartEl, {
+                series: [{ name: 'Requests', data: requestsData }],
+                chart: { type: 'area', height: 250, toolbar: { show: false }, zoom: { enabled: false } },
+                colors: ['#4f46e5'],
+                fill: { type: 'gradient', gradient: { shadeIntensity: 1, opacityFrom: 0.35, opacityTo: 0.05, stops: [0, 95, 100] } },
+                dataLabels: { enabled: false },
+                stroke: { curve: 'straight', width: 2 },
+                xaxis: { categories: timeLabels, labels: { style: { fontSize: '10px', colors: '#94a3b8' } }, axisBorder: { show: false }, axisTicks: { show: false } },
+                yaxis: { labels: { style: { fontSize: '10px', colors: '#94a3b8' } } },
+                grid: { borderColor: isDarkMode() ? '#26344b' : '#e4e8f0', strokeDashArray: 3 },
+                tooltip: { theme: isDarkMode() ? 'dark' : 'light', y: { formatter: (val) => Number(val).toLocaleString() + ' reqs' } }
+            });
+            chartOverviewTraffic.render();
+        }
 
         // 2. Data Transfer (Area Chart matching )
         let chartBandwidth = new ApexCharts(document.querySelector("#chartDataTransfer"), {
@@ -534,7 +577,7 @@
         renderSparkline('#sparklineVisits', visitorsData, '#0051c3');
 
         // Charts whose x-axis is the shared time series (used by timezone settings)
-        window.lwaTimeCharts = [chartRequests, chartBandwidth, chartStatus, chartLatency].filter(Boolean);
+        window.lwaTimeCharts = [chartOverviewTraffic, chartRequests, chartBandwidth, chartStatus, chartLatency].filter(Boolean);
 
         // ============ REAL-TIME SSE STREAM ============
         (function() {
@@ -703,6 +746,15 @@
                     timezone: 'Timezone',
                     defaultRange: 'Default time range',
                     overview: 'Overview',
+                    realtime: 'Real-time',
+                    trafficSources: 'Traffic Sources',
+                    pages: 'Pages & Screens',
+                    geography: 'Geography',
+                    devices: 'Devices & Browsers',
+                    campaigns: 'Campaigns',
+                    events: 'Events & Goals',
+                    conversions: 'Conversions',
+                    errors: 'Error Monitoring',
                     requests: 'Requests',
                     visitors: 'Visitors',
                     performance: 'Performance',
@@ -733,6 +785,15 @@
                     timezone: 'সময় অঞ্চল',
                     defaultRange: 'ডিফল্ট সময় সীমা',
                     overview: 'ওভারভিউ',
+                    realtime: 'রিয়েল-টাইম',
+                    trafficSources: 'ট্রাফিক সোর্স',
+                    pages: 'পেজ ও স্ক্রিন',
+                    geography: 'ভূগোল',
+                    devices: 'ডিভাইস ও ব্রাউজার',
+                    campaigns: 'ক্যাম্পেইন',
+                    events: 'ইভেন্ট ও গোল',
+                    conversions: 'কনভার্শন',
+                    errors: 'এরর মনিটরিং',
                     requests: 'রিকোয়েস্ট',
                     visitors: 'ভিজিটর',
                     performance: 'পারফরম্যান্স',

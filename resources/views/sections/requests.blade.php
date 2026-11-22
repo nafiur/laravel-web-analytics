@@ -1,7 +1,7 @@
                 <!-- ============================================== -->
                 <!-- TAB 1: REQUESTS (Exact  Matching)    -->
                 <!-- ============================================== -->
-                <div id="tab-requests" class="tab-pane active space-y-5">
+                <div id="tab-requests" class="tab-pane space-y-5">
                     <!-- 5 KPI Cards Row (Total requests, Data transfer, Visits, Cache/Success rate, 5xx rate) -->
                     <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-3.5">
                         <!-- Total requests -->
@@ -175,7 +175,7 @@
                     <!-- Breakdown Lists Grid (2 Columns, Progress Bar Style) -->
                     <div class="grid grid-cols-1 lg:grid-cols-2 gap-4">
                         <!-- Top paths -->
-                        <div class="lwa-surface border lwa-border rounded-lg p-4 shadow-sm">
+                        <div id="section-top-pages" class="lwa-surface border lwa-border rounded-lg p-4 shadow-sm scroll-mt-32">
                             <div class="text-xs font-semibold text-slate-800 dark:text-slate-200 mb-3">Top paths</div>
                             @include('web-analytics::partials.breakdown-list', [
                                 'items' => $analytics['breakdowns']['top_paths'] ?? [],
@@ -219,7 +219,7 @@
                         </div>
 
                         <!-- Top referrers -->
-                        <div class="lwa-surface border lwa-border rounded-lg p-4 shadow-sm">
+                        <div id="section-traffic-sources" class="lwa-surface border lwa-border rounded-lg p-4 shadow-sm scroll-mt-32">
                             <div class="text-xs font-semibold text-slate-800 dark:text-slate-200 mb-3">Top referrers
                             </div>
                             @include('web-analytics::partials.breakdown-list', [
