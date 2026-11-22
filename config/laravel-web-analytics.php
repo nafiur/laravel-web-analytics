@@ -201,6 +201,9 @@ return [
     */
     'analytics' => [
         'enabled'                  => env('WEB_ANALYTICS_SCHEMA_ENABLED', false),
+        'mode'                     => env('WEB_ANALYTICS_COLLECTOR_MODE', 'sync'), // 'queue' | 'sync'
+        'write_legacy'             => env('WEB_ANALYTICS_WRITE_LEGACY', true),
+        'queue'                    => env('WEB_ANALYTICS_QUEUE', null),
         'website_id'               => env('WEB_ANALYTICS_WEBSITE_ID', null),
         'session_timeout_minutes'  => env('WEB_ANALYTICS_SESSION_TIMEOUT', 30),
         'bounce_max_duration_seconds' => env('WEB_ANALYTICS_BOUNCE_MAX_SECONDS', 0),

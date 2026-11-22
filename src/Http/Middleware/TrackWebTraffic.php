@@ -4,6 +4,8 @@ namespace Nafiur\WebAnalytics\Http\Middleware;
 use Closure;
 use Illuminate\Http\Request;
 use Illuminate\Support\Str;
+use Nafiur\WebAnalytics\Contracts\Collector;
+use Nafiur\WebAnalytics\Data\VisitContext;
 use Nafiur\WebAnalytics\Models\LwaLogs;
 use Nafiur\WebAnalytics\Services\AlertService;
 use Nafiur\WebAnalytics\Services\BotDetector;
@@ -149,28 +151,49 @@ class TrackWebTraffic
             // Resolve tenant identifier if multi-tenancy is enabled
             $tenantId = TenantResolver::resolve($request);
 
-            LwaLogs::create([
-                'tenant_id'        => $tenantId ? substr($tenantId, 0, 100) : null,
-                'session_id'       => substr($sessionId, 0, 100),
-                'ip_address'       => substr($ip, 0, 45),
-                'method'           => strtoupper($request->method()),
-                'path'             => substr($path, 0, 490),
-                'full_url'         => substr($request->fullUrl(), 0, 1000),
-                'status_code'      => $response->getStatusCode(),
-                'response_time_ms' => $durationMs,
-                'bytes_sent'       => $bytes,
-                'country'          => $location['country'],
-                'city'             => $location['city'],
-                'browser'          => $uaInfo['browser'],
-                'os'               => $uaInfo['os'],
-                'device'           => $uaInfo['device'],
-                'referrer'         => $referrer,
-                'utm_source'       => $utmSource !== null ? substr((string) $utmSource, 0, 100) : null,
-                'utm_medium'       => $utmMedium !== null ? substr((string) $utmMedium, 0, 100) : null,
-                'utm_campaign'     => $utmCampaign !== null ? substr((string) $utmCampaign, 0, 100) : null,
-                'user_agent'       => substr($userAgent, 0, 500),
-                'user_id'          => $userId,
-            ]);
+            if (config('laravel-web-analytics.analytics.write_legacy', true)) {
+                LwaLogs::create([
+                    'tenant_id'        => $tenantId ? substr($tenantId, 0, 100) : null,
+                    'session_id'       => substr($sessionId, 0, 100),
+                    'ip_address'       => substr($ip, 0, 45),
+                    'method'           => strtoupper($request->method()),
+                    'path'             => substr($path, 0, 490),
+                    'full_url'         => substr($request->fullUrl(), 0, 1000),
+                    'status_code'      => $response->getStatusCode(),
+                    'response_time_ms' => $durationMs,
+                    'bytes_sent'       => $bytes,
+                    'country'          => $location['country'],
+                    'city'             => $location['city'],
+                    'browser'          => $uaInfo['browser'],
+                    'os'               => $uaInfo['os'],
+                    'device'           => $uaInfo['device'],
+                    'referrer'         => $referrer,
+                    'utm_source'       => $utmSource !== null ? substr((string) $utmSource, 0, 100) : null,
+                    'utm_medium'       => $utmMedium !== null ? substr((string) $utmMedium, 0, 100) : null,
+                    'utm_campaign'     => $utmCampaign !== null ? substr((string) $utmCampaign, 0, 100) : null,
+                    'user_agent'       => substr($userAgent, 0, 500),
+                    'user_id'          => $userId,
+                ]);
+            }
+
+            // Advanced analytics (opt-in): feed the v3-style collector.
+            $advancedWebsiteId = config('laravel-web-analytics.analytics.website_id');
+            if (config('laravel-web-analytics.analytics.enabled', false) && $advancedWebsiteId) {
+                app(Collector::class)->pageview(new VisitContext(
+                    websiteId:      (int) $advancedWebsiteId,
+                    visitorHash:    $sessionId,
+                    path:           $path,
+                    method:         strtoupper($request->method()),
+                    statusCode:     $response->getStatusCode(),
+                    responseTimeMs: $durationMs,
+                    bytesSent:      $bytes,
+                    referrer:       $rawReferrer,
+                    utmSource:      $utmSource !== null ? (string) $utmSource : null,
+                    utmMedium:      $utmMedium !== null ? (string) $utmMedium : null,
+                    utmCampaign:    $utmCampaign !== null ? (string) $utmCampaign : null,
+                    occurredAt:     now()->toIso8601String(),
+                ));
+            }
         } catch (\Throwable $e) {
             // Never disrupt user request due to logging failures
         }

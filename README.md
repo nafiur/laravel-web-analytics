@@ -41,9 +41,12 @@ The advanced analytics data model is additive and disabled by default. Enable it
 ```env
 WEB_ANALYTICS_SCHEMA_ENABLED=true
 WEB_ANALYTICS_WEBSITE_ID=1
+WEB_ANALYTICS_COLLECTOR_MODE=sync   # or 'queue' once a worker is available
+WEB_ANALYTICS_WRITE_LEGACY=true     # keep writing lwa_logs during migration
+WEB_ANALYTICS_QUEUE=                # optional named queue
 ```
 
-This creates separate `lwa_websites`, `lwa_visitors`, `lwa_sessions`, `lwa_pageviews`, `lwa_events`, hourly/daily rollup and upgrade-checkpoint tables. The legacy `lwa_logs` table is untouched; the v2 collector remains active until the upgrade command is available.
+This creates separate `lwa_websites`, `lwa_visitors`, `lwa_sessions`, `lwa_pageviews`, `lwa_events`, hourly/daily rollup and upgrade-checkpoint tables. The legacy `lwa_logs` table is untouched by default (`WEB_ANALYTICS_WRITE_LEGACY=true`). When enabled, the middleware also feeds the collector, which resolves visitors/sessions with a 30-minute inactivity timeout and either writes inline (`sync`) or dispatches `RecordPageview` / `RecordEvent` jobs (`queue`). Custom event properties are validated and stripped of sensitive keys.
 
 Blueprint: `laravel-web-analytics-v3-blueprint.md` (on the planning desktop).
 

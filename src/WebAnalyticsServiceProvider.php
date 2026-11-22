@@ -4,6 +4,10 @@ namespace Nafiur\WebAnalytics;
 
 use Illuminate\Support\ServiceProvider;
 use Illuminate\Support\Facades\Route;
+use Nafiur\WebAnalytics\Contracts\Collector;
+use Nafiur\WebAnalytics\Contracts\StorageDriver;
+use Nafiur\WebAnalytics\Services\AnalyticsCollector;
+use Nafiur\WebAnalytics\Services\EloquentStorageDriver;
 
 class WebAnalyticsServiceProvider extends ServiceProvider
 {
@@ -15,6 +19,9 @@ class WebAnalyticsServiceProvider extends ServiceProvider
         $this->mergeConfigFrom(
             __DIR__ . '/../config/laravel-web-analytics.php', 'laravel-web-analytics'
         );
+
+        $this->app->bind(StorageDriver::class, EloquentStorageDriver::class);
+        $this->app->bind(Collector::class, AnalyticsCollector::class);
     }
 
     /**
