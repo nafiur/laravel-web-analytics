@@ -17,7 +17,7 @@ A modern, fast, and self-hosted Web Traffic & Visitor Analytics Dashboard for La
 ## ⚡ Highlights & Key Features
 
 - 🚀 **Real-Time Live Stream (SSE)**: Live active visitor count and instant real-time traffic feed without WebSockets, Node.js, or Pusher. Each stream response is short-lived and paced by EventSource, so no PHP worker is held open while waiting for new traffic.
-- 🧭 **Cloudflare-Style Segmented Navigation**: 5 focused analytical views — Requests, Visitors, Performance, Security, and Live Stream.
+- 🧭 **Cloudflare-Style Navigation**: Sidebar with Overview, Requests, Visitors, Performance, Live Stream and Setting. Each section has its own Blade view, and the Settings screen is hidden from the analytics tab bar.
 - 🎨 **Tailwind CSS UI with Dark Mode**: Modern, responsive dashboard powered by Tailwind CSS Play CDN (zero build step / zero npm dependencies). Includes a 1-click persistent Dark/Light mode toggle.
 - 📊 **Comprehensive Metrics**: Total Requests, Unique Visitors, Bandwidth (Data Transferred in GB/MB), Avg Response Time, Error Rate.
 - 🧪 **Built-In Live Traffic Simulator**: Easily generate realistic live traffic every second with `php artisan lwa:live` to demo and test live streaming.
@@ -156,7 +156,7 @@ route('lwa_export', ['range' => '24h']);
 
 The dashboard's **Setting** tab provides an adapted settings screen:
 
-- **General** — language (English/বাংলা), appearance (System/Light/Dark) and timezone. These are browser preferences stored in `localStorage`; no database changes are needed. The timezone is applied to live-feed timestamps and chart labels via `Intl.DateTimeFormat`.
+- **General** — **12 languages** (English, বাংলা, हिन्दी, Español, Français, Deutsch, Português, العربية, 中文, 日本語, اردو, Indonesian — Arabic/Urdu switch the layout to RTL), **22 timezones**, and appearance (System/Light/Dark). These are browser preferences stored in `localStorage`; no database changes are needed. The timezone is applied to live-feed timestamps and chart labels via `Intl.DateTimeFormat`.
 - **Dashboard** — default time range, data source, compact numbers and keyboard shortcuts.
 - **Collection** — read-only view of capture/GeoIP config.
 - **Alerts** — read-only channel/threshold info and a **Send test alert** action.
@@ -181,7 +181,7 @@ The dashboard features a clean, tabbed Cloudflare-style layout with segmented co
 | Tab | Key Insights & Visualizations |
 |-----|-------------------------------|
 | **📈 Requests** | Total requests volume over time, bandwidth data transfer (GB/MB), status codes (2xx, 3xx, 4xx, 5xx), HTTP methods (GET, POST, PUT, DELETE), top paths, and top IP addresses. |
-| **👥 Visitors** | Unique visitors, active live visitors (5m window), geographic breakdowns (top countries & cities), devices (Desktop, Mobile, Tablet), operating systems, browsers, and top referrers. |
+| **👥 Visitors** | Unique visitors, active live visitors (5m window), geographic breakdowns (top countries & cities), devices, operating systems, browsers, referrers, and **UTM source / medium / campaign** breakdowns. |
 | **⚡ Performance** | Latency time series, average response times (ms), bandwidth consumption by path, and slowest application endpoints. |
 | **🛡️ Security** | 4xx & 5xx error spike rates, status code distribution, top error paths, and recent error requests telemetry. |
 | **🟢 Live Stream** | Instant Server-Sent Events (SSE) feed updating live requests second-by-second with real-time row animations without refreshing the page. |
@@ -239,6 +239,12 @@ return [
      * Database table name for storing web analytics logs
      */
     'table_name' => env('WEB_ANALYTICS_TABLE_NAME', 'lwa_logs'),
+
+    /*
+     * Optional server access-log fallback (used by ?source=file)
+     */
+    'server_log_path' => env('WEB_ANALYTICS_SERVER_LOG_PATH', null),
+    'max_lines'       => env('WEB_ANALYTICS_MAX_LINES', 50000),
 
     /*
      * Route configurations for the Analytics Dashboard
@@ -426,7 +432,7 @@ When enabled, the package automatically detects active tenants from:
 
 ### 3. Dashboard Tenant Scoping (Security)
 
-Dashboard routes (`lwa_dashboard`, `lwa_data`, `lwa_stream`, `lwa_export`) **ignore** `?tenant_id=` and `X-Tenant-ID` by default. They only use tenant IDs resolved from trusted server-side context, so a user cannot view another tenant's analytics by editing the URL.
+Dashboard routes (`lwa_dashboard`, `lwa_data`, `lwa_stream`, `lwa_export` and the `lwa_settings_*` actions) **ignore** `?tenant_id=` and `X-Tenant-ID` by default. They only use tenant IDs resolved from trusted server-side context, so a user cannot view another tenant's analytics by editing the URL.
 
 For admin dashboards that legitimately need cross-tenant views, opt in with an authorizer callback that returns `true` only when the current user is allowed:
 
@@ -459,6 +465,17 @@ Prune logs for a specific tenant:
 ```bash
 php artisan lwa:prune --days=30 --tenant=tenant-uuid
 ```
+
+---
+
+## 🛠 Artisan Commands
+
+| Command | Alias | Description |
+|---------|-------|-------------|
+| `lwa:prune` | `analytics:prune` | Delete logs older than the retention window (`--days`, `--tenant`) |
+| `lwa:export` | `analytics:export` | Export CSV (`--range`, `--tenant`, `--output`) |
+| `lwa:summary` | `analytics:summary` | Print the periodic digest and send it if alerts are enabled |
+| `lwa:live` | — | Generate simulated live traffic for demos (`--rps`, `--interval`, `--count`, `--tenant`) |
 
 ---
 
