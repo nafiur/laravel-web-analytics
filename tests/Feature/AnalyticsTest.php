@@ -166,7 +166,7 @@ class AnalyticsTest extends TestCase
         $content = $this->get('/web-analytics')->getContent();
 
         foreach ([
-            '--lwa-bg:', '[data-theme="dark"]', 'data-lucide="menu"',
+            '--lwa-bg:', '[data-theme="dark"]', 'data-lucide="activity"',
             'lwaConnectionBadge', 'lwa-skeleton', 'lwaErrorToast',
             'lwaRefreshBtn', 'themeToggle',
         ] as $needle) {

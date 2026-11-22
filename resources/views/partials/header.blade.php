@@ -4,8 +4,9 @@
             <!-- Left: Brand /  Style Logo & Project Switcher -->
             <div class="flex items-center gap-3">
                 <button type="button" id="sidebarMobileToggle"
-                    class="lg:hidden text-slate-500 hover:text-slate-700 dark:text-slate-400 p-1 rounded-md">
-                    <i data-lucide="menu" class=" text-xl"></i>
+                    class="lg:hidden text-slate-500 hover:text-slate-700 dark:text-slate-400 p-1 rounded-md"
+                    aria-label="Toggle analytics navigation" title="Analytics navigation">
+                    <i data-lucide="activity" class="text-xl text-[#f6821f]"></i>
                 </button>
                 <div class="flex items-center gap-2.5">
                     <!-- Cloud icon-->
