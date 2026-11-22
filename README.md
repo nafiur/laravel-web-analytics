@@ -128,6 +128,8 @@ The package defines routes with the `lwa_` prefix to avoid conflicts with your a
 | `GET /web-analytics/data` | `lwa_data` | AJAX endpoint for real-time data |
 | `GET /web-analytics/stream` | `lwa_stream` | SSE stream for live traffic |
 | `GET /web-analytics/export` | `lwa_export` | Export analytics to CSV |
+| `POST /web-analytics/settings/prune` | `lwa_settings_prune` | Prune rows older than N days |
+| `POST /web-analytics/settings/empty` | `lwa_settings_empty` | Empty the telemetry table (requires `confirm=DELETE`) |
 
 Generate URLs in your Blade templates or code:
 
@@ -137,6 +139,18 @@ route('lwa_data', ['range' => '24h']);
 route('lwa_stream');
 route('lwa_export', ['range' => '24h']);
 ```
+
+### Settings page
+
+The dashboard's **Setting** tab provides an adapted settings screen:
+
+- **General** — language (English/বাংলা), appearance (System/Light/Dark) and timezone. These are browser preferences stored in `localStorage`; no database changes are needed.
+- **Dashboard** — default time range, data source, compact numbers and keyboard shortcuts.
+- **Collection** — read-only view of capture/GeoIP config.
+- **Data maintenance** — row counts and oldest/newest timestamps, plus **Prune** and **Empty table** actions. Both are POST routes behind the dashboard's middleware with CSRF protection; emptying requires typing `DELETE`, and in multi-tenant mode only the current tenant's rows are removed.
+- **About** — package/runtime information.
+
+Set `WEB_ANALYTICS_DESTRUCTIVE_ACTIONS=false` to disable the prune/empty actions entirely.
 
 ### Data source & client IP
 
@@ -290,6 +304,10 @@ return [
      * Number of days to retain logs
      */
     'retention_days' => env('WEB_ANALYTICS_RETENTION_DAYS', 30),
+
+    'settings' => [
+        'destructive_actions_enabled' => env('WEB_ANALYTICS_DESTRUCTIVE_ACTIONS', true),
+    ],
 
     /*
      * Multi-Tenancy Support

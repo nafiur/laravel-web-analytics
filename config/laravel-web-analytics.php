@@ -152,6 +152,20 @@ return [
 
     /*
     |--------------------------------------------------------------------------
+    | Settings Page
+    |--------------------------------------------------------------------------
+    |
+    | The dashboard settings page can prune or empty telemetry tables. Disable
+    | these destructive actions entirely in environments where they are not
+    | wanted (the buttons are still visible but return 403).
+    |
+    */
+    'settings' => [
+        'destructive_actions_enabled' => env('WEB_ANALYTICS_DESTRUCTIVE_ACTIONS', true),
+    ],
+
+    /*
+    |--------------------------------------------------------------------------
     | GeoIP / City Lookup Provider
     |--------------------------------------------------------------------------
     |

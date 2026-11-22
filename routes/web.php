@@ -8,3 +8,5 @@ Route::get('/index', [WebAnalyticsController::class, 'index'])->name('lwa_index'
 Route::get('/data', [WebAnalyticsController::class, 'data'])->name('lwa_data');
 Route::get('/stream', [WebAnalyticsController::class, 'stream'])->name('lwa_stream');
 Route::get('/export', [WebAnalyticsController::class, 'export'])->name('lwa_export');
+Route::post('/settings/prune', [WebAnalyticsController::class, 'prune'])->name('lwa_settings_prune');
+Route::post('/settings/empty', [WebAnalyticsController::class, 'emptyTable'])->name('lwa_settings_empty');

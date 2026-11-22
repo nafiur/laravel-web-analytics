@@ -3,13 +3,13 @@
                 <div class="flex flex-wrap items-center justify-between gap-3">
                     <!-- Cloudflare Segmented Sub-Tabs -->
                     <div class="flex items-center p-1 bg-slate-100 dark:bg-slate-800/80 rounded-lg overflow-x-auto no-scrollbar">
-                        <button type="button" class="cf-tab-btn active" data-target="#tab-requests">Requests</button>
-                        <button type="button" class="cf-tab-btn" data-target="#tab-visitors">Visitors</button>
-                        <button type="button" class="cf-tab-btn" data-target="#tab-performance">Performance</button>
-                        <button type="button" class="cf-tab-btn" data-target="#tab-security">Security</button>
+                        <button type="button" class="cf-tab-btn active" data-target="#tab-requests" data-i18n="requests">Requests</button>
+                        <button type="button" class="cf-tab-btn" data-target="#tab-visitors" data-i18n="visitors">Visitors</button>
+                        <button type="button" class="cf-tab-btn" data-target="#tab-performance" data-i18n="performance">Performance</button>
+                        <button type="button" class="cf-tab-btn" data-target="#tab-security" data-i18n="security">Security</button>
                         <button type="button" class="cf-tab-btn" data-target="#tab-live">
                             <span class="flex items-center gap-1.5">
-                                <span class="live-dot"></span> Live Stream
+                                <span class="live-dot"></span> <span data-i18n="liveStream">Live Stream</span>
                             </span>
                         </button>
                     </div>
@@ -26,7 +26,7 @@
                         <!-- Add Filter Button -->
                         <button type="button" onclick="document.getElementById('quickFilterInput').classList.toggle('hidden'); document.getElementById('quickFilterInput').focus();"
                                 class="inline-flex items-center gap-1 px-3 py-1.5 text-xs font-medium text-slate-700 dark:text-slate-300 bg-white dark:bg-slate-800 hover:bg-slate-50 dark:hover:bg-slate-700 border border-slate-200 dark:border-slate-700 rounded-md shadow-sm transition">
-                            <i class="bx bx-filter text-sm text-slate-400"></i> Add filter
+                            <i class="bx bx-filter text-sm text-slate-400"></i> <span data-i18n="addFilter">Add filter</span>
                         </button>
 
                         <input type="text" id="quickFilterInput" placeholder="Filter path or IP..." 
@@ -77,7 +77,7 @@
                         <a href="{{ route('lwa_export', array_filter(['range' => $timeRange ?? '24h', 'tenant_id' => $tenantId ?? null, 'start_date' => $customStart ?? null, 'end_date' => $customEnd ?? null])) }}" 
                            class="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium text-slate-700 dark:text-slate-300 bg-white dark:bg-slate-800 hover:bg-slate-50 dark:hover:bg-slate-700 border border-slate-200 dark:border-slate-700 rounded-md shadow-sm transition"
                            title="Export filtered logs to CSV">
-                            <i class="bx bx-download text-sm"></i> Export
+                            <i class="bx bx-download text-sm"></i> <span data-i18n="export">Export</span>
                         </a>
                     </div>
                 </div>

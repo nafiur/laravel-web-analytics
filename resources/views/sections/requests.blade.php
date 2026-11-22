@@ -7,7 +7,7 @@
                         <!-- Total requests -->
                         <div class="bg-white dark:bg-[#111827] border border-slate-200 dark:border-slate-800 rounded-lg p-3.5 shadow-sm flex flex-col justify-between">
                             <div>
-                                <div class="text-[11px] font-medium text-slate-500 dark:text-slate-400">Total requests</div>
+                                <div class="text-[11px] font-medium text-slate-500 dark:text-slate-400" data-i18n="totalRequests">Total requests</div>
                                 <div class="flex items-baseline gap-2 mt-1">
                                     <span class="text-2xl font-bold text-slate-900 dark:text-white" id="kpiRequests">{{ $analytics['summary']['total_requests_fmt'] ?? '0' }}</span>
                                 </div>
@@ -18,7 +18,7 @@
                         <!-- Total data transfer -->
                         <div class="bg-white dark:bg-[#111827] border border-slate-200 dark:border-slate-800 rounded-lg p-3.5 shadow-sm flex flex-col justify-between">
                             <div>
-                                <div class="text-[11px] font-medium text-slate-500 dark:text-slate-400">Total data transfer</div>
+                                <div class="text-[11px] font-medium text-slate-500 dark:text-slate-400" data-i18n="dataTransfer">Total data transfer</div>
                                 <div class="flex items-baseline gap-2 mt-1">
                                     <span class="text-2xl font-bold text-slate-900 dark:text-white" id="kpiBytes">{{ $analytics['summary']['total_bytes_fmt'] ?? '0 B' }}</span>
                                 </div>
@@ -29,7 +29,7 @@
                         <!-- Total visits -->
                         <div class="bg-white dark:bg-[#111827] border border-slate-200 dark:border-slate-800 rounded-lg p-3.5 shadow-sm flex flex-col justify-between">
                             <div>
-                                <div class="text-[11px] font-medium text-slate-500 dark:text-slate-400">Total visits</div>
+                                <div class="text-[11px] font-medium text-slate-500 dark:text-slate-400" data-i18n="visits">Total visits</div>
                                 <div class="flex items-baseline gap-2 mt-1">
                                     <span class="text-2xl font-bold text-slate-900 dark:text-white" id="kpiVisits">{{ $analytics['summary']['unique_visitors_fmt'] ?? '0' }}</span>
                                 </div>
@@ -40,7 +40,7 @@
                         <!-- Cache hit / Success rate -->
                         <div class="bg-white dark:bg-[#111827] border border-slate-200 dark:border-slate-800 rounded-lg p-3.5 shadow-sm flex flex-col justify-between">
                             <div>
-                                <div class="text-[11px] font-medium text-slate-500 dark:text-slate-400">Success rate (2xx)</div>
+                                <div class="text-[11px] font-medium text-slate-500 dark:text-slate-400" data-i18n="successRate">Success rate (2xx)</div>
                                 <div class="flex items-baseline gap-2 mt-1">
                                     <span class="text-2xl font-bold text-slate-900 dark:text-white" id="kpiSuccessRate">{{ $analytics['summary']['success_rate'] ?? '100' }}%</span>
                                 </div>
@@ -53,7 +53,7 @@
                         <!-- 5xx error rate -->
                         <div class="bg-white dark:bg-[#111827] border border-slate-200 dark:border-slate-800 rounded-lg p-3.5 shadow-sm flex flex-col justify-between">
                             <div>
-                                <div class="text-[11px] font-medium text-slate-500 dark:text-slate-400">5xx error rate</div>
+                                <div class="text-[11px] font-medium text-slate-500 dark:text-slate-400" data-i18n="errorRate">5xx error rate</div>
                                 <div class="flex items-baseline gap-2 mt-1">
                                     <span class="text-2xl font-bold text-slate-900 dark:text-white" id="kpi5xxRate">
                                         {{ number_format(($analytics['summary']['total_requests'] ?? 0) > 0 ? (($analytics['summary']['status_counts']['5xx'] ?? 0) / $analytics['summary']['total_requests']) * 100 : 0, 2) }}%

@@ -1,24 +1,31 @@
     <!-- ============ SCRIPTS ============ -->
     <script>
-        // 1. Dark Mode Toggle
+        // 1. Dark Mode Toggle (synced with Settings > Appearance)
         (function() {
-            const toggle = document.getElementById('themeToggle');
             const icon = document.getElementById('themeIcon');
-            const isDark = localStorage.theme === 'dark' || (!('theme' in localStorage) && window.matchMedia('(prefers-color-scheme: dark)').matches);
-            
-            if (isDark) {
-                document.documentElement.classList.add('dark');
-                if (icon) icon.className = 'bx bx-sun text-lg';
-            } else {
-                document.documentElement.classList.remove('dark');
-                if (icon) icon.className = 'bx bx-moon text-lg';
-            }
+            const toggle = document.getElementById('themeToggle');
+
+            window.lwaApplyAppearance = function(appearance) {
+                const dark = appearance === 'dark'
+                    || (appearance === 'system' && window.matchMedia('(prefers-color-scheme: dark)').matches);
+                document.documentElement.classList.toggle('dark', dark);
+                if (icon) icon.className = dark ? 'bx bx-sun text-lg' : 'bx bx-moon text-lg';
+                window.dispatchEvent(new Event('theme-changed'));
+            };
+
+            const saved = localStorage.getItem('lwa_appearance')
+                || (localStorage.theme === 'dark' ? 'dark' : (localStorage.theme === 'light' ? 'light' : 'system'));
+            window.lwaApplyAppearance(saved);
 
             if (toggle) {
                 toggle.addEventListener('click', () => {
                     const darkNow = document.documentElement.classList.toggle('dark');
-                    localStorage.theme = darkNow ? 'dark' : 'light';
+                    const choice = darkNow ? 'dark' : 'light';
+                    localStorage.setItem('lwa_appearance', choice);
+                    localStorage.setItem('theme', choice);
                     if (icon) icon.className = darkNow ? 'bx bx-sun text-lg' : 'bx bx-moon text-lg';
+                    const select = document.getElementById('settingAppearance');
+                    if (select) select.value = choice;
                     window.dispatchEvent(new Event('theme-changed'));
                 });
             }
@@ -413,10 +420,11 @@
                     <td class="py-2.5 px-4 font-mono text-slate-600 dark:text-slate-300">${parseFloat(log.response_time_ms || 0)} ms</td>
                     <td class="py-2.5 px-4 text-slate-500">${cleanBytes}</td>
                     <td class="py-2.5 px-4 text-slate-500 dark:text-slate-400 truncate max-w-[140px]">${cleanClient}</td>
-                    <td class="py-2.5 px-4 text-right text-slate-400">just now</td>
+                    <td class="py-2.5 px-4 text-right text-slate-400" data-utc="${escapeHtml(log.created_at_iso || '')}">just now</td>
                 `;
 
                 tbody.insertBefore(tr, tbody.firstChild);
+                if (window.lwaApplyTimezone) window.lwaApplyTimezone();
                 setTimeout(() => { tr.className = 'hover:bg-slate-50/60 dark:hover:bg-slate-800/40 transition-all duration-1000'; }, 1500);
 
                 while (tbody.children.length > 30) {
@@ -426,6 +434,170 @@
                 const clock = document.getElementById('lastUpdatedClock');
                 if (clock) clock.textContent = 'Hit: ' + log.path + ' (' + new Date().toLocaleTimeString() + ')';
             }
+        })();
+
+        // 9. Settings page preferences (language / appearance / timezone / data)
+        (function() {
+            const dictionary = {
+                en: {
+                    settings: 'Settings', dashboard: 'Dashboard', collection: 'Collection', maintenance: 'Data maintenance',
+                    general: 'General', language: 'Language', appearance: 'Appearance', timezone: 'Timezone',
+                    displayName: 'Display name', email: 'Email', defaultRange: 'Default time range',
+                    overview: 'Overview', requests: 'Requests', visitors: 'Visitors', performance: 'Performance',
+                    liveStream: 'Live Stream', security: 'Security', addFilter: 'Add filter', export: 'Export',
+                    totalRequests: 'Total requests', dataTransfer: 'Total data transfer', visits: 'Total visits',
+                    successRate: 'Success rate (2xx)', errorRate: '5xx error rate', topPaths: 'Top paths',
+                    topCountries: 'Top countries', topIps: 'Top client IPs', recentRequests: 'Recent requests',
+                    prune: 'Prune', emptyTable: 'Empty table'
+                },
+                bn: {
+                    settings: 'সেটিংস', dashboard: 'ড্যাশবোর্ড', collection: 'সংগ্রহ', maintenance: 'ডাটা রক্ষণাবেক্ষণ',
+                    general: 'সাধারণ', language: 'ভাষা', appearance: 'অ্যাপিয়ারেন্স', timezone: 'সময় অঞ্চল',
+                    displayName: 'প্রদর্শন নাম', email: 'ইমেইল', defaultRange: 'ডিফল্ট সময় সীমা',
+                    overview: 'ওভারভিউ', requests: 'রিকোয়েস্ট', visitors: 'ভিজিটর', performance: 'পারফরম্যান্স',
+                    liveStream: 'লাইভ স্ট্রিম', security: 'নিরাপত্তা', addFilter: 'ফিল্টার যোগ করুন', export: 'এক্সপোর্ট',
+                    totalRequests: 'মোট রিকোয়েস্ট', dataTransfer: 'মোট ডাটা ট্রান্সফার', visits: 'মোট ভিজিট',
+                    successRate: 'সফলতার হার (2xx)', errorRate: '5xx ত্রুটির হার', topPaths: 'শীর্ষ পাথ',
+                    topCountries: 'শীর্ষ দেশ', topIps: 'শীর্ষ ক্লায়েন্ট আইপি', recentRequests: 'সাম্প্রতিক রিকোয়েস্ট',
+                    prune: 'মুছুন', emptyTable: 'টেবিল খালি করুন'
+                }
+            };
+
+            const languageSelect = document.getElementById('settingLanguage');
+            const appearanceSelect = document.getElementById('settingAppearance');
+            const timezoneSelect = document.getElementById('settingTimezone');
+            const rangeSelect = document.getElementById('settingDefaultRange');
+            const compactToggle = document.getElementById('settingCompact');
+            const shortcutsToggle = document.getElementById('settingShortcuts');
+            const clock = document.getElementById('settingsClock');
+
+            function currentLanguage() {
+                return localStorage.getItem('lwa_language') || 'en';
+            }
+
+            function applyLanguage(lang) {
+                const dict = dictionary[lang] || dictionary.en;
+                document.querySelectorAll('[data-i18n]').forEach(el => {
+                    const key = el.getAttribute('data-i18n');
+                    if (dict[key]) el.textContent = dict[key];
+                });
+                if (languageSelect) languageSelect.value = lang;
+            }
+
+            window.lwaApplyTimezone = function() { applyTimezone(); };
+
+            function currentTimezone() {
+                return localStorage.getItem('lwa_timezone') || 'UTC';
+            }
+
+            function applyTimezone() {
+                const tz = currentTimezone();
+                document.querySelectorAll('[data-utc]').forEach(el => {
+                    const iso = el.getAttribute('data-utc');
+                    if (!iso) return;
+                    const date = new Date(iso);
+                    if (isNaN(date.getTime())) return;
+                    try {
+                        el.textContent = new Intl.DateTimeFormat(undefined, {
+                            timeZone: tz, year: 'numeric', month: '2-digit', day: '2-digit',
+                            hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: false
+                        }).format(date);
+                    } catch (e) { /* invalid timezone falls back to the server value */ }
+                });
+                if (clock) {
+                    try {
+                        clock.textContent = new Intl.DateTimeFormat(undefined, {
+                            timeZone: tz, hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: false
+                        }).format(new Date());
+                    } catch (e) { /* ignore */ }
+                }
+            }
+
+            applyLanguage(currentLanguage());
+            applyTimezone();
+            if (timezoneSelect) timezoneSelect.value = currentTimezone();
+            if (clock) setInterval(applyTimezone, 1000);
+
+            if (languageSelect) {
+                languageSelect.addEventListener('change', () => {
+                    localStorage.setItem('lwa_language', languageSelect.value);
+                    applyLanguage(languageSelect.value);
+                });
+            }
+
+            if (appearanceSelect) {
+                appearanceSelect.value = localStorage.getItem('lwa_appearance') || 'system';
+                appearanceSelect.addEventListener('change', () => {
+                    localStorage.setItem('lwa_appearance', appearanceSelect.value);
+                    if (appearanceSelect.value === 'system') localStorage.removeItem('theme');
+                    else localStorage.setItem('theme', appearanceSelect.value);
+                    window.lwaApplyAppearance(appearanceSelect.value);
+                });
+            }
+
+            if (timezoneSelect) {
+                timezoneSelect.addEventListener('change', () => {
+                    localStorage.setItem('lwa_timezone', timezoneSelect.value);
+                    applyTimezone();
+                });
+            }
+
+            // Apply the saved default range on the next plain dashboard visit.
+            const savedRange = localStorage.getItem('lwa_default_range');
+            const params = new URLSearchParams(window.location.search);
+            if (savedRange && savedRange !== '24h' && !params.has('range')) {
+                params.set('range', savedRange);
+                window.location.search = params.toString();
+            }
+            if (rangeSelect) {
+                rangeSelect.addEventListener('change', () => {
+                    localStorage.setItem('lwa_default_range', rangeSelect.value);
+                });
+            }
+
+            if (compactToggle) {
+                const compact = localStorage.getItem('lwa_compact') === '1';
+                compactToggle.checked = compact;
+                document.body.classList.toggle('lwa-compact', compact);
+                compactToggle.addEventListener('change', () => {
+                    localStorage.setItem('lwa_compact', compactToggle.checked ? '1' : '0');
+                    document.body.classList.toggle('lwa-compact', compactToggle.checked);
+                });
+            }
+
+            let shortcutsEnabled = localStorage.getItem('lwa_shortcuts') !== '0';
+            if (shortcutsToggle) {
+                shortcutsToggle.checked = shortcutsEnabled;
+                shortcutsToggle.addEventListener('change', () => {
+                    shortcutsEnabled = shortcutsToggle.checked;
+                    localStorage.setItem('lwa_shortcuts', shortcutsEnabled ? '1' : '0');
+                });
+            }
+
+            const help = document.getElementById('shortcutsHelp');
+            document.addEventListener('keydown', (e) => {
+                if (!help) return;
+                if (e.key === 'Escape') { help.classList.add('hidden'); return; }
+                if (!shortcutsEnabled) return;
+                if (e.key === '?' && !['INPUT', 'SELECT', 'TEXTAREA'].includes(document.activeElement?.tagName)) {
+                    help.classList.remove('hidden');
+                    help.classList.add('flex');
+                }
+                if (e.key.toLowerCase() === 't' && !['INPUT', 'SELECT', 'TEXTAREA'].includes(document.activeElement?.tagName)) {
+                    document.getElementById('themeToggle')?.click();
+                }
+            });
+
+            document.querySelectorAll('.settings-nav-link').forEach(link => {
+                link.addEventListener('click', (e) => {
+                    const section = document.querySelector(link.getAttribute('href'));
+                    if (!section) return;
+                    e.preventDefault();
+                    document.querySelectorAll('.settings-nav-link').forEach(l => l.classList.remove('active'));
+                    link.classList.add('active');
+                    section.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                });
+            });
         })();
     </script>
 </body>

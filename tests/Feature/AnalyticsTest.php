@@ -130,6 +130,63 @@ class AnalyticsTest extends TestCase
         }
     }
 
+    public function test_settings_page_renders_all_sections(): void
+    {
+        $content = $this->get('/web-analytics')->getContent();
+
+        foreach ([
+            'settings-general', 'settings-dashboard', 'settings-collection',
+            'settings-maintenance', 'settings-about', 'settingLanguage',
+            'settingAppearance', 'settingTimezone', '/web-analytics/settings/prune',
+            '/web-analytics/settings/empty',
+        ] as $needle) {
+            $this->assertStringContainsString($needle, $content);
+        }
+    }
+
+    public function test_prune_endpoint_removes_only_old_records(): void
+    {
+        LwaLogs::create($this->log(['created_at' => now()->subDays(40)]));
+        LwaLogs::create($this->log(['created_at' => now()]));
+
+        $this->post('/web-analytics/settings/prune', ['days' => 30])->assertRedirect();
+
+        $this->assertSame(1, LwaLogs::count());
+    }
+
+    public function test_empty_table_requires_typed_confirmation(): void
+    {
+        LwaLogs::create($this->log());
+
+        $this->post('/web-analytics/settings/empty', [])->assertSessionHasErrors('confirm');
+        $this->assertSame(1, LwaLogs::count());
+
+        $this->post('/web-analytics/settings/empty', ['confirm' => 'DELETE'])->assertRedirect();
+        $this->assertSame(0, LwaLogs::count());
+    }
+
+    public function test_empty_table_is_scoped_to_current_tenant(): void
+    {
+        config()->set('laravel-web-analytics.multi_tenancy.enabled', true);
+        config()->set('laravel-web-analytics.multi_tenancy.tenant_resolver', fn () => 'tenant-a');
+
+        LwaLogs::create($this->log(['tenant_id' => 'tenant-a']));
+        LwaLogs::create($this->log(['tenant_id' => 'tenant-b']));
+
+        $this->post('/web-analytics/settings/empty', ['confirm' => 'DELETE'])->assertRedirect();
+
+        $this->assertDatabaseMissing('lwa_logs', ['tenant_id' => 'tenant-a']);
+        $this->assertDatabaseHas('lwa_logs', ['tenant_id' => 'tenant-b']);
+    }
+
+    public function test_destructive_actions_can_be_disabled(): void
+    {
+        config()->set('laravel-web-analytics.settings.destructive_actions_enabled', false);
+
+        $this->post('/web-analytics/settings/prune', ['days' => 30])->assertForbidden();
+        $this->post('/web-analytics/settings/empty', ['confirm' => 'DELETE'])->assertForbidden();
+    }
+
     public function test_prune_clamps_nonpositive_retention(): void
     {
         LwaLogs::create($this->log(['created_at' => now()->subDays(3)]));

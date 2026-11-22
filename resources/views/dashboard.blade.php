@@ -101,6 +101,16 @@
             color: #f8fafc;
             background-color: #1e293b;
         }
+        .settings-nav-link.active {
+            color: #0f172a;
+            background-color: #f1f5f9;
+            font-weight: 600;
+        }
+        .dark .settings-nav-link.active {
+            color: #f8fafc;
+            background-color: #1e293b;
+        }
+        .lwa-compact .tab-pane .text-2xl { font-size: 1.15rem; }
 
         .live-dot {
             width: 7px;

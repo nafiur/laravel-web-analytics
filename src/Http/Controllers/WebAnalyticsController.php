@@ -4,6 +4,7 @@ namespace Nafiur\WebAnalytics\Http\Controllers;
 
 use Illuminate\Http\Request;
 use Illuminate\Routing\Controller;
+use Illuminate\Support\Facades\Artisan;
 use Illuminate\Support\Facades\DB;
 use Nafiur\WebAnalytics\Models\LwaLogs;
 use Nafiur\WebAnalytics\Services\DatabaseTrafficAnalytics;
@@ -87,6 +88,12 @@ class WebAnalyticsController extends Controller
             $logSize = number_format($totalCount) . ' records';
         }
 
+        $tableStats = [
+            'rows'      => $totalCount ?? 0,
+            'oldest'    => LwaLogs::forTenant($tenantId)->min('created_at'),
+            'newest'    => LwaLogs::forTenant($tenantId)->max('created_at'),
+        ];
+
         $serverSoftware = $request->server('SERVER_SOFTWARE') ?: ($_SERVER['SERVER_SOFTWARE'] ?? 'Web Server');
         $serverOs = PHP_OS_FAMILY . ' (' . php_uname('s') . ')';
 
@@ -101,7 +108,8 @@ class WebAnalyticsController extends Controller
             'serverSoftware',
             'serverOs',
             'source',
-            'tenantId'
+            'tenantId',
+            'tableStats'
         ));
     }
 
@@ -189,6 +197,7 @@ class WebAnalyticsController extends Controller
                         'is_auth'          => $isAuth,
                         'time_ago'         => $log->created_at ? $log->created_at->diffForHumans() : 'just now',
                         'time_clock'       => $log->created_at ? $log->created_at->format('H:i:s') : '',
+                        'created_at_iso'   => $log->created_at?->toIso8601String(),
                     ];
                 });
 
@@ -304,5 +313,48 @@ class WebAnalyticsController extends Controller
         };
 
         return response()->stream($callback, 200, $headers);
+    }
+
+    /**
+     * Prune old telemetry rows from the settings page.
+     */
+    public function prune(Request $request)
+    {
+        if (!config('laravel-web-analytics.settings.destructive_actions_enabled', true)) {
+            abort(403);
+        }
+
+        $days = max(1, min(3650, (int) $request->input('days', 30)));
+        $tenantId = $this->resolveDashboardTenant($request);
+
+        $arguments = ['--days' => $days];
+        if ($tenantId !== null && $tenantId !== '') {
+            $arguments['--tenant'] = $tenantId;
+        }
+
+        Artisan::call('lwa:prune', $arguments);
+
+        return back()->with('lwa_status', "Pruned telemetry older than {$days} days.");
+    }
+
+    /**
+     * Empty the telemetry table (optionally scoped to the current tenant).
+     */
+    public function emptyTable(Request $request)
+    {
+        if (!config('laravel-web-analytics.settings.destructive_actions_enabled', true)) {
+            abort(403);
+        }
+
+        if ($request->input('confirm') !== 'DELETE') {
+            return back()->withErrors(['confirm' => 'Type DELETE to confirm this action.']);
+        }
+
+        $tenantId = $this->resolveDashboardTenant($request);
+        $query = LwaLogs::forTenant($tenantId);
+        $count = $query->count();
+        $query->delete();
+
+        return back()->with('lwa_status', "Deleted {$count} telemetry record(s).");
     }
 }

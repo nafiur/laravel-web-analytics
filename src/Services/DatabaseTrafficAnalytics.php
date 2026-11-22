@@ -119,6 +119,7 @@ class DatabaseTrafficAnalytics
                     'is_auth'          => $isAuth,
                     'time_ago'         => $log->created_at ? $log->created_at->diffForHumans() : 'just now',
                     'time_clock'       => $log->created_at ? $log->created_at->format('H:i:s') : '',
+                    'created_at_iso'   => $log->created_at?->toIso8601String(),
                 ];
             })
             ->toArray();
@@ -171,6 +172,7 @@ class DatabaseTrafficAnalytics
                     'is_auth'          => $isAuth,
                     'time_ago'         => $log->created_at ? $log->created_at->diffForHumans() : 'just now',
                     'time_clock'       => $log->created_at ? $log->created_at->format('H:i:s') : '',
+                    'created_at_iso'   => $log->created_at?->toIso8601String(),
                 ];
             })
             ->toArray();

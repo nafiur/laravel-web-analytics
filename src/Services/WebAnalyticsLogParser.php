@@ -387,6 +387,7 @@ class WebAnalyticsLogParser
                 'is_auth'          => false,
                 'time_ago'         => $r['datetime']->diffForHumans(),
                 'time_clock'       => $r['datetime']->format('H:i:s'),
+                'created_at_iso'   => $r['datetime']->toIso8601String(),
             ];
         }
 
@@ -443,6 +444,7 @@ class WebAnalyticsLogParser
                 'is_auth'          => false,
                 'time_ago'         => $er['datetime']->diffForHumans(),
                 'time_clock'       => $er['datetime']->format('H:i:s'),
+                'created_at_iso'   => $er['datetime']->toIso8601String(),
             ];
         }
 
