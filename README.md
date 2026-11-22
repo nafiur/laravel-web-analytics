@@ -46,7 +46,7 @@ WEB_ANALYTICS_WRITE_LEGACY=true     # keep writing lwa_logs during migration
 WEB_ANALYTICS_QUEUE=                # optional named queue
 ```
 
-This creates separate `lwa_websites`, `lwa_visitors`, `lwa_sessions`, `lwa_pageviews`, `lwa_events`, hourly/daily rollup and upgrade-checkpoint tables. The legacy `lwa_logs` table is untouched by default (`WEB_ANALYTICS_WRITE_LEGACY=true`). When enabled, the middleware also feeds the collector, which resolves visitors/sessions with a 30-minute inactivity timeout and either writes inline (`sync`) or dispatches `RecordPageview` / `RecordEvent` jobs (`queue`). Custom event properties are validated and stripped of sensitive keys.
+This creates separate `lwa_websites`, `lwa_visitors`, `lwa_sessions`, `lwa_pageviews`, `lwa_events`, hourly/daily rollup and upgrade-checkpoint tables. The legacy `lwa_logs` table is untouched by default (`WEB_ANALYTICS_WRITE_LEGACY=true`). When enabled, the middleware also feeds the collector, which resolves visitors/sessions with a 30-minute inactivity timeout and either writes inline (`sync`) or dispatches `RecordPageview` / `RecordEvent` jobs (`queue`). Custom event properties are validated and stripped of sensitive keys. Run `php artisan lwa:aggregate` (or schedule it hourly/daily) to build rollups; `MetricService` then answers KPI/chart queries from those rollups instead of scanning raw events.
 
 Blueprint: `laravel-web-analytics-v3-blueprint.md` (on the planning desktop).
 
@@ -594,6 +594,7 @@ php artisan lwa:prune --days=30 --tenant=tenant-uuid
 | `lwa:prune` | `analytics:prune` | Delete logs older than the retention window (`--days`, `--tenant`) |
 | `lwa:export` | `analytics:export` | Export CSV (`--range`, `--tenant`, `--output`) |
 | `lwa:summary` | `analytics:summary` | Print the periodic digest and send it if alerts are enabled |
+| `lwa:aggregate` | — | Build hourly/daily rollups from raw events (`--website`, `--from`, `--to`, `--granularity`) |
 | `lwa:live` | — | Generate simulated live traffic for demos (`--rps`, `--interval`, `--count`, `--tenant`) |
 
 ---
