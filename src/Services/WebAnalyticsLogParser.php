@@ -640,7 +640,7 @@ class WebAnalyticsLogParser
 
     protected function resolveCountry(string $ip): string
     {
-        if (in_array($ip, ['127.0.0.1', '::1', 'localhost']) || str_starts_with($ip, '192.168.') || str_starts_with($ip, '10.') || str_starts_with($ip, '172.')) {
+        if (IpAddress::isPrivate($ip) || strtolower($ip) === 'localhost') {
             return 'Localhost / Internal';
         }
 

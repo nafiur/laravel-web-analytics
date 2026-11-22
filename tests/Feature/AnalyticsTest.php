@@ -77,9 +77,10 @@ class AnalyticsTest extends TestCase
     {
         LwaLogs::create($this->log(['path' => '=SUM(A1:A9)']));
 
-        $content = $this->get('/web-analytics/export?range=all')->streamedContent();
+        $response = $this->get('/web-analytics/export?range=all');
 
-        $this->assertStringContainsString("'=SUM(A1:A9)", $content);
+        $this->assertStringContainsString('charset=UTF-8', (string) $response->headers->get('Content-Type'));
+        $this->assertStringContainsString("'=SUM(A1:A9)", $response->streamedContent());
     }
 
     public function test_stream_response_is_short_lived_and_paced_by_eventsource(): void

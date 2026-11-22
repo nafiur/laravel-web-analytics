@@ -8,6 +8,7 @@ use Illuminate\Support\Str;
 use Nafiur\WebAnalytics\Models\LwaLogs;
 use Nafiur\WebAnalytics\Services\AlertService;
 use Nafiur\WebAnalytics\Services\GeoIpService;
+use Nafiur\WebAnalytics\Services\IpAddress;
 use Nafiur\WebAnalytics\Services\TenantResolver;
 use Symfony\Component\HttpFoundation\Response;
 
@@ -248,7 +249,7 @@ class TrackWebTraffic
         }
 
         // 2. Localhost / Private IPs
-        if (in_array($ip, ['127.0.0.1', '::1', 'localhost']) || str_starts_with($ip, '192.168.') || str_starts_with($ip, '10.') || str_starts_with($ip, '172.16.')) {
+        if (IpAddress::isPrivate($ip) || strtolower($ip) === 'localhost') {
             return [
                 'country' => 'Localhost / Internal',
                 'city'    => 'Local',

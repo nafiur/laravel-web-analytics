@@ -60,8 +60,8 @@ class AlertService
             if ($rate >= $threshold && Cache::add("lwa_alerts_spike_{$minute}", 1, 300)) {
                 self::send("⚠️ *Laravel Web Analytics Alert*\n"
                     . "📈 Error spike: `{$rate}%` (`{$errors}`/`{$total}`)\n"
-                    . "🔗 Sample URL: `{$url}`\n"
-                    . "🌐 IP: `{$ip}`\n"
+                    . "🔗 Sample URL: `" . self::clean($url) . "`\n"
+                    . "🌐 IP: `" . self::clean($ip) . "`\n"
                     . "⏰ Time: " . now()->toDateTimeString());
             }
         } catch (\Throwable $e) {
@@ -89,11 +89,11 @@ class AlertService
 
         $message = "⚠️ *Laravel Web Analytics Alert*\n"
                  . "🚨 High Severity Status: `{$statusCode}`\n"
-                 . "🔗 URL: `{$url}`\n"
-                 . "🌐 IP: `{$ip}`\n";
+                 . "🔗 URL: `" . self::clean($url) . "`\n"
+                 . "🌐 IP: `" . self::clean($ip) . "`\n";
 
         if ($error !== '') {
-            $message .= "📝 Error: `{$error}`\n";
+            $message .= "📝 Error: `" . self::clean($error) . "`\n";
         }
 
         $message .= "⏰ Time: " . now()->toDateTimeString();
@@ -129,6 +129,15 @@ class AlertService
         } catch (\Throwable $e) {
             Log::warning('LWA Alert failed to send: ' . $e->getMessage());
         }
+    }
+
+    /**
+     * Strip Markdown control characters from untrusted values so Telegram's
+     * Markdown parser cannot reject or mangle the alert payload.
+     */
+    private static function clean(string $value): string
+    {
+        return str_replace(['`', '*', '_', '[', ']'], '', $value);
     }
 
     /**
