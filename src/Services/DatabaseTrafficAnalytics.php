@@ -411,9 +411,15 @@ class DatabaseTrafficAnalytics
      */
     protected function getTopBreakdown($baseQuery, string $column, int $totalRequests, int $limit = 10): array
     {
-        $rows = (clone $baseQuery)
-            ->whereNotNull($column)
-            ->where($column, '!=', '')
+        $query = (clone $baseQuery)->whereNotNull($column);
+
+        // Comparing a numeric column to '' fails on PostgreSQL; only apply the
+        // empty-string guard to text columns.
+        if (!in_array($column, ['status_code', 'user_id'], true)) {
+            $query->where($column, '!=', '');
+        }
+
+        $rows = $query
             ->select($column, DB::raw('COUNT(*) as total_count'))
             ->groupBy($column)
             ->orderByDesc('total_count')

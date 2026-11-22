@@ -489,7 +489,7 @@ composer install
 vendor/bin/phpunit
 ```
 
-The test suite uses Orchestra Testbench with an in-memory SQLite database, so the `pdo_sqlite` PHP extension is required.
+The suite uses Orchestra Testbench. Locally it defaults to an in-memory SQLite database (`pdo_sqlite` required). CI runs the same suite against **SQLite, MySQL 8 and PostgreSQL 16** through service containers; set `DB_CONNECTION`, `DB_HOST`, `DB_PORT`, `DB_DATABASE`, `DB_USERNAME` and `DB_PASSWORD` to run it against another database locally.
 
 ---
 
