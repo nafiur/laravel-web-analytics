@@ -168,7 +168,9 @@ class AnalyticsTest extends TestCase
         foreach ([
             '--lwa-bg:', '[data-theme="dark"]', 'data-lucide="activity"',
             'lwaConnectionBadge', 'lwa-skeleton', 'lwaErrorToast',
-            'lwaRefreshBtn', 'themeToggle',
+            'lwaRefreshBtn', 'themeToggle', 'sidebarCollapseToggle',
+            'sidebar-label', 'panel-left-close', 'lwa-sidebar-collapsed',
+            'family=Inter', 'ApexCharts', 'lucide@latest',
         ] as $needle) {
             $this->assertStringContainsString($needle, $content);
         }

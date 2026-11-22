@@ -41,7 +41,7 @@
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link
-        href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap"
+        href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap"
         rel="stylesheet">
 
     <!-- ApexCharts -->
@@ -79,7 +79,7 @@
         }
 
         body {
-            font-family: 'Inter', 'Plus Jakarta Sans', system-ui, sans-serif;
+            font-family: 'Inter', system-ui, -apple-system, sans-serif;
             background-color: var(--lwa-bg);
             color: var(--lwa-text);
         }
@@ -216,6 +216,17 @@
         .dark .sidebar-link.active {
             color: #f8fafc;
             background-color: #1e293b;
+        }
+
+        /* Collapsible desktop sidebar */
+        @media (min-width: 1024px) {
+            body.lwa-sidebar-collapsed #appSidebar { width: 4rem; }
+            body.lwa-sidebar-collapsed #appSidebar .sidebar-label { display: none; }
+            body.lwa-sidebar-collapsed #appSidebar .sidebar-link {
+                justify-content: center;
+                padding-left: 0;
+                padding-right: 0;
+            }
         }
 
         .settings-nav-link.active {

@@ -8,6 +8,14 @@
                     aria-label="Toggle analytics navigation" title="Analytics navigation">
                     <i data-lucide="activity" class="text-xl text-[#f6821f]"></i>
                 </button>
+
+                <!-- Desktop sidebar collapse -->
+                <button type="button" id="sidebarCollapseToggle"
+                    class="hidden lg:inline-flex text-slate-500 hover:text-slate-700 dark:text-slate-400 p-1 rounded-md"
+                    aria-label="Collapse sidebar" title="Collapse / expand sidebar">
+                    <i data-lucide="panel-left-close" class="text-lg"></i>
+                </button>
+
                 <div class="flex items-center gap-2.5">
                     <!-- Cloud icon-->
                     <div

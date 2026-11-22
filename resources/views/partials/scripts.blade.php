@@ -59,6 +59,30 @@
             }
         })();
 
+        // 2b. Desktop sidebar collapse (persisted preference)
+        (function() {
+            const btn = document.getElementById('sidebarCollapseToggle');
+
+            function applySidebarState(collapsed) {
+                document.body.classList.toggle('lwa-sidebar-collapsed', collapsed);
+                if (!btn) return;
+                btn.innerHTML = '<i data-lucide="' + (collapsed ? 'panel-left-open' : 'panel-left-close') + '" class="text-lg"></i>';
+                btn.setAttribute('aria-label', collapsed ? 'Expand sidebar' : 'Collapse sidebar');
+                window.lwaRenderIcons();
+                window.dispatchEvent(new Event('resize'));
+            }
+
+            applySidebarState(localStorage.getItem('lwa_sidebar_collapsed') === '1');
+
+            if (btn) {
+                btn.addEventListener('click', () => {
+                    const collapsed = !document.body.classList.contains('lwa-sidebar-collapsed');
+                    localStorage.setItem('lwa_sidebar_collapsed', collapsed ? '1' : '0');
+                    applySidebarState(collapsed);
+                });
+            }
+        })();
+
         // 3. Tab Switching (segmented controls + sidebar links)
         (function() {
             const tabs = document.querySelectorAll('.cf-tab-btn');

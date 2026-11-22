@@ -34,6 +34,24 @@ A modern, fast, and self-hosted Web Traffic & Visitor Analytics Dashboard for La
 
 ---
 
+## 🎨 Design System
+
+| Topic | Choice |
+|-------|--------|
+| UI Framework | Tailwind CSS (Play CDN — no build step) |
+| Backend | Laravel Blade |
+| Charts | ApexCharts |
+| Icons | Lucide |
+| Theme | Dark + Light (+ System), persisted in `localStorage` |
+| Layout | Responsive (desktop / tablet / mobile) |
+| Sidebar | Collapsible on desktop, off-canvas on mobile |
+| Typography | Inter (with JetBrains Mono for numbers/codes) |
+| Style | Modern restrained SaaS |
+
+Theme colors are exposed as CSS custom properties (`--lwa-*`) with `[data-theme="dark"]`, so components do not duplicate color variants. The desktop sidebar collapse state is remembered across visits.
+
+---
+
 ## 📋 Requirements
 
 - PHP `^8.1 | ^8.2 | ^8.3 | ^8.4 | ^8.5`
