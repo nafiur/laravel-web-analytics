@@ -14,7 +14,7 @@
                         <i class="bx bxs-cloud text-xl"></i>
                     </div>
                     <span class="font-bold text-sm tracking-tight text-slate-900 dark:text-white hidden sm:inline">
-                        {{ config('app.name', 'Laravel') }}
+                        {{ config('app.name', 'Laravel Web Analytics') }}
                     </span>
                     <button type="button"
                         class="text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 text-xs">

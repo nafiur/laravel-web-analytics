@@ -2,7 +2,7 @@
             <div class="bg-white dark:bg-[#111827] border-b border-slate-200 dark:border-slate-800 px-4 sm:px-6 py-2.5 sticky top-14 z-30">
                 <div class="flex flex-wrap items-center justify-between gap-3">
                     <!-- Cloudflare Segmented Sub-Tabs -->
-                    <div class="flex items-center p-1 bg-slate-100 dark:bg-slate-800/80 rounded-lg overflow-x-auto no-scrollbar">
+                    <div id="segmentedTabs" class="flex items-center p-1 bg-slate-100 dark:bg-slate-800/80 rounded-lg overflow-x-auto no-scrollbar">
                         <button type="button" class="cf-tab-btn active" data-target="#tab-requests" data-i18n="requests">Requests</button>
                         <button type="button" class="cf-tab-btn" data-target="#tab-visitors" data-i18n="visitors">Visitors</button>
                         <button type="button" class="cf-tab-btn" data-target="#tab-performance" data-i18n="performance">Performance</button>

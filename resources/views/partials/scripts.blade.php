@@ -68,6 +68,10 @@
                 sidebarLinks.forEach(l => l.classList.toggle('active', l.getAttribute('data-sidebar-tab') === target));
                 if (overviewLink) overviewLink.classList.toggle('active', target === '#overview');
 
+                // Settings is a full settings screen, not another analytics view.
+                const segmented = document.getElementById('segmentedTabs');
+                if (segmented) segmented.classList.toggle('hidden', effective === '#tab-settings');
+
                 // Trigger resize for ApexCharts inside newly visible tab
                 window.dispatchEvent(new Event('resize'));
             }
