@@ -87,7 +87,10 @@ class AnalyticsTest extends TestCase
 
         $this->assertStringContainsString('id="sidebarOverview"', $content);
         $this->assertSame(5, substr_count($content, 'data-sidebar-tab='));
-        $this->assertStringContainsString('id="tab-settings"', $content);
+
+        foreach (['tab-requests', 'tab-visitors', 'tab-performance', 'tab-security', 'tab-live', 'tab-settings'] as $pane) {
+            $this->assertStringContainsString('id="' . $pane . '"', $content);
+        }
 
         foreach (['AI Crawl Control', 'Web3', 'Manage account', 'Back to Domains'] as $removed) {
             $this->assertStringNotContainsString($removed, $content);
