@@ -60,19 +60,6 @@
                     class="hidden sm:inline-flex items-center gap-1 px-2.5 py-1 text-xs font-medium text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white transition">
                     <i data-lucide="circle-help" class=" text-sm"></i> Support
                 </a>
-
-                <!-- Theme Toggle -->
-                <button type="button" id="themeToggle"
-                    class="p-1.5 text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-slate-800 rounded-md transition"
-                    aria-label="Toggle light/dark theme" title="Toggle Light/Dark Theme">
-                    <span id="themeIconWrapper"><i id="themeIcon" data-lucide="moon" class="text-lg"></i></span>
-                </button>
-
-                <!-- User avatar -->
-                <div
-                    class="w-7 h-7 rounded-full bg-gradient-to-tr from-slate-700 to-slate-900 text-white text-xs font-semibold flex items-center justify-center ring-1 ring-slate-300 dark:ring-slate-700 cursor-pointer">
-                    {{ strtoupper(substr(auth()->user()?->name ?? 'Admin', 0, 1)) }}
-                </div>
             </div>
         </div>
     </header>

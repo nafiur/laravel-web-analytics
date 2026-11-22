@@ -83,7 +83,7 @@ class DatabaseTrafficAnalytics
         $breakdowns = [
             'top_paths'           => $this->getTopBreakdown($baseQuery, 'path', $totalRequests, 10),
             'top_paths_bandwidth' => $this->getTopBandwidthBreakdown($baseQuery, 10),
-            'top_ips'             => $this->getTopBreakdown($baseQuery, 'ip_address', $totalRequests, 10),
+            'top_ips'             => $this->getTopIpBreakdown($baseQuery, $totalRequests, 10),
             'top_countries'       => $this->getTopBreakdown($baseQuery, 'country', $totalRequests, 10),
             'top_browsers'        => $this->getTopBreakdown($baseQuery, 'browser', $totalRequests, 8),
             'top_os'              => $this->getTopBreakdown($baseQuery, 'os', $totalRequests, 8),
@@ -432,6 +432,35 @@ class DatabaseTrafficAnalytics
                 'count_fmt'  => $this->formatNumber($cnt),
                 'percentage' => $pct,
                 'flag'       => $column === 'country' ? CountryFlag::emoji($val) : '',
+            ];
+        }
+
+        return $result;
+    }
+
+    /**
+     * Top client IPs with the country flag resolved from their recorded country.
+     */
+    protected function getTopIpBreakdown($baseQuery, int $totalRequests, int $limit = 10): array
+    {
+        $rows = (clone $baseQuery)
+            ->whereNotNull('ip_address')
+            ->where('ip_address', '!=', '')
+            ->select('ip_address', DB::raw('MAX(country) as country'), DB::raw('COUNT(*) as total_count'))
+            ->groupBy('ip_address')
+            ->orderByDesc('total_count')
+            ->limit($limit)
+            ->get();
+
+        $result = [];
+        foreach ($rows as $row) {
+            $cnt = (int) $row->total_count;
+            $result[] = [
+                'name'       => (string) $row->ip_address,
+                'count'      => $cnt,
+                'count_fmt'  => $this->formatNumber($cnt),
+                'percentage' => $totalRequests > 0 ? round(($cnt / $totalRequests) * 100, 1) : 0.0,
+                'flag'       => CountryFlag::emoji($row->country),
             ];
         }
 

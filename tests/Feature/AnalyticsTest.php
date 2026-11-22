@@ -139,6 +139,7 @@ class AnalyticsTest extends TestCase
             'settings-maintenance', 'settings-about', 'settingLanguage',
             'settingAppearance', 'settingTimezone', '/web-analytics/settings/prune',
             '/web-analytics/settings/empty', 'value="hi"', 'Asia/Tokyo',
+            'id="languageFlag"', '🇺🇸',
         ] as $needle) {
             $this->assertStringContainsString($needle, $content);
         }
@@ -171,6 +172,29 @@ class AnalyticsTest extends TestCase
         ] as $needle) {
             $this->assertStringContainsString($needle, $content);
         }
+    }
+
+    public function test_ip_breakdown_and_stream_include_country_flags(): void
+    {
+        LwaLogs::create($this->log([
+            'ip_address' => '103.230.104.10',
+            'country'    => 'Bangladesh',
+        ]));
+        LwaLogs::create($this->log([
+            'ip_address' => '103.230.104.11',
+            'country'    => 'Bangladesh',
+        ]));
+
+        $ips = $this->getJson('/web-analytics/data?range=all')->json('analytics.breakdowns.top_ips');
+        $flag = CountryFlag::emoji('Bangladesh');
+
+        $this->assertSame($flag, $ips[0]['flag']);
+
+        $stream = $this->get('/web-analytics/stream?last_id=1')->streamedContent();
+        preg_match("/event: traffic\ndata: (.+)/", $stream, $matches);
+        $this->assertNotEmpty($matches, 'Expected a traffic event in the SSE response');
+        $payload = json_decode($matches[1], true);
+        $this->assertSame($flag, $payload['logs'][0]['flag']);
     }
 
     public function test_settings_page_includes_alerts_and_export_sections(): void

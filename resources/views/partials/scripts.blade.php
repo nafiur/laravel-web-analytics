@@ -630,6 +630,7 @@
                 let cleanUser = escapeHtml(log.user_name || 'Guest');
                 let cleanPath = escapeHtml(log.path || '/');
                 let cleanIp = escapeHtml(log.ip_address || '-');
+                let ipFlag = escapeHtml(log.flag || '');
                 let cleanBytes = escapeHtml(log.bytes_sent_fmt || '-');
                 let cleanClient = escapeHtml((log.browser || 'Other') + ' on ' + (log.os || 'Other'));
 
@@ -641,7 +642,7 @@
                     <td class="py-2.5 px-4 font-mono font-semibold ${log.method === 'POST' ? 'text-sky-600' : 'text-emerald-600'}">${cleanMethod}</td>
                     <td class="py-2.5 px-4"><span class="inline-flex items-center gap-1 px-2 py-0.5 rounded text-[11px] ${log.is_auth ? 'bg-sky-50 text-sky-700 dark:bg-sky-950/50 dark:text-sky-400 font-medium' : 'bg-slate-100 text-slate-500 dark:bg-slate-800 dark:text-slate-400'}">${cleanUser}</span></td>
                     <td class="py-2.5 px-4 font-mono text-slate-700 dark:text-slate-200 truncate max-w-[220px]" title="${cleanPath}">${cleanPath}</td>
-                    <td class="py-2.5 px-4 font-mono text-slate-500">${cleanIp}</td>
+                    <td class="py-2.5 px-4 font-mono text-slate-500">${ipFlag ? '<span class="mr-1" aria-hidden="true">' + ipFlag + '</span>' : ''}${cleanIp}</td>
                     <td class="py-2.5 px-4 font-mono text-slate-600 dark:text-slate-300">${parseFloat(log.response_time_ms || 0)} ms</td>
                     <td class="py-2.5 px-4 text-slate-500">${cleanBytes}</td>
                     <td class="py-2.5 px-4 text-slate-500 dark:text-slate-400 truncate max-w-[140px]">${cleanClient}</td>
@@ -1041,12 +1042,19 @@
                 return localStorage.getItem('lwa_language') || 'en';
             }
 
+            const languageFlags = {
+                en: '🇺🇸', bn: '🇧🇩', hi: '🇮🇳', es: '🇪🇸', fr: '🇫🇷', de: '🇩🇪',
+                pt: '🇵🇹', ar: '🇸🇦', zh: '🇨🇳', ja: '🇯🇵', ur: '🇵🇰', id: '🇮🇩'
+            };
+
             function applyLanguage(lang) {
                 const dict = dictionary[lang] || dictionary.en;
                 document.querySelectorAll('[data-i18n]').forEach(el => {
                     const key = el.getAttribute('data-i18n');
                     if (dict[key]) el.textContent = dict[key];
                 });
+                const flag = document.getElementById('languageFlag');
+                if (flag) flag.textContent = languageFlags[lang] || '🇺🇸';
                 document.documentElement.dir = (lang === 'ar' || lang === 'ur') ? 'rtl' : 'ltr';
                 if (languageSelect) languageSelect.value = lang;
             }

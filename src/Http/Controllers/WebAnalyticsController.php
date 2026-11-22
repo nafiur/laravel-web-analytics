@@ -7,6 +7,7 @@ use Illuminate\Routing\Controller;
 use Illuminate\Support\Facades\DB;
 use Nafiur\WebAnalytics\Models\LwaLogs;
 use Nafiur\WebAnalytics\Services\AlertService;
+use Nafiur\WebAnalytics\Services\CountryFlag;
 use Nafiur\WebAnalytics\Services\DatabaseTrafficAnalytics;
 use Nafiur\WebAnalytics\Services\PruneService;
 use Nafiur\WebAnalytics\Services\TenantResolver;
@@ -199,6 +200,7 @@ class WebAnalyticsController extends Controller
                         'os'               => $log->os,
                         'device'           => $log->device,
                         'country'          => $log->country ?: 'Unknown',
+                        'flag'             => CountryFlag::emoji($log->country),
                         'user_id'          => $log->user_id,
                         'user_name'        => $userName,
                         'is_auth'          => $isAuth,

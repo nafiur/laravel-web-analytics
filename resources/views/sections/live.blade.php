@@ -53,7 +53,10 @@
                                                 </span>
                                             </td>
                                             <td class="py-2 px-4 font-mono text-slate-700 dark:text-slate-200 truncate max-w-[220px]" title="{{ $log['path'] }}">{{ $log['path'] }}</td>
-                                            <td class="py-2 px-4 font-mono text-slate-500">{{ $log['ip_address'] }}</td>
+                                            <td class="py-2 px-4 font-mono text-slate-500">
+                                                @php($ipFlag = \Nafiur\WebAnalytics\Services\CountryFlag::emoji($log['country'] ?? null))
+                                                @if($ipFlag !== '')<span class="mr-1" aria-hidden="true">{{ $ipFlag }}</span>@endif{{ $log['ip_address'] }}
+                                            </td>
                                             <td class="py-2 px-4 font-mono text-slate-600 dark:text-slate-300">{{ $log['response_time_ms'] }} ms</td>
                                             <td class="py-2 px-4 text-slate-500">{{ $log['bytes_sent_fmt'] }}</td>
                                             <td class="py-2 px-4 text-slate-500 dark:text-slate-400 truncate max-w-[140px]">{{ $log['browser'] }} on {{ $log['os'] }}</td>

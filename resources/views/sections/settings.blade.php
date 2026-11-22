@@ -59,8 +59,11 @@
                                 </div>
                                 <div class="divide-y divide-slate-100 dark:divide-slate-800 text-xs">
                                     <div class="flex items-center justify-between gap-4 px-4 py-3">
-                                        <span class="text-slate-600 dark:text-slate-300"
-                                            data-i18n="language">Language</span>
+                                        <span class="flex items-center gap-1.5">
+                                            <span id="languageFlag" class="text-sm leading-none" aria-hidden="true">🇺🇸</span>
+                                            <span class="text-slate-600 dark:text-slate-300"
+                                                data-i18n="language">Language</span>
+                                        </span>
                                         <select id="settingLanguage"
                                             class="text-xs px-2.5 py-1.5 border border-slate-200 dark:border-slate-700 rounded-md bg-white dark:bg-slate-800 text-slate-700 dark:text-slate-200 focus:outline-none focus:ring-1 focus:ring-blue-500">
                                             <option value="en">🇺🇸 English</option>

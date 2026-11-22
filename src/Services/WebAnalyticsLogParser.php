@@ -243,6 +243,7 @@ class WebAnalyticsLogParser
         $utmSourcesCount = [];
         $utmMediumsCount = [];
         $utmCampaignsCount = [];
+        $ipCountries = [];
 
         // Time Series Buckets (by hour or by day depending on range)
         $isHourly = in_array($timeRange, ['1h', '6h', '12h', '24h', 'today'], true);
@@ -252,6 +253,7 @@ class WebAnalyticsLogParser
         foreach ($records as $r) {
             $totalBytes += $r['bytes'];
             $uniqueIps[$r['ip']] = ($uniqueIps[$r['ip']] ?? 0) + 1;
+            $ipCountries[$r['ip']] = $r['country'];
 
             // Status group
             $stGroup = $r['status_group'];
@@ -516,7 +518,7 @@ class WebAnalyticsLogParser
             ],
             'breakdowns' => [
                 'top_paths'         => $this->formatBreakdownList($pathsCount, $totalRequests, 12),
-                'top_ips'           => $this->formatBreakdownList($uniqueIps, $totalRequests, 10),
+                'top_ips'           => $this->formatIpBreakdown($uniqueIps, $ipCountries, $totalRequests, 10),
                 'top_countries'     => $this->formatBreakdownList($countriesCount, $totalRequests, 10, true),
                 'top_browsers'      => $this->formatBreakdownList($browsersCount, $totalRequests, 8),
                 'top_os'            => $this->formatBreakdownList($osCount, $totalRequests, 8),
@@ -549,6 +551,17 @@ class WebAnalyticsLogParser
                 'percentage' => $pct,
                 'flag'       => $withFlags ? CountryFlag::emoji((string) $name) : '',
             ];
+        }
+
+        return $result;
+    }
+
+    /** @param array<string, string> $ipCountries */
+    protected function formatIpBreakdown(array $items, array $ipCountries, int $total, int $limit = 10): array
+    {
+        $result = $this->formatBreakdownList($items, $total, $limit);
+        foreach ($result as &$item) {
+            $item['flag'] = CountryFlag::emoji($ipCountries[$item['name']] ?? null);
         }
 
         return $result;
