@@ -1,5 +1,4 @@
 <?php
-
 namespace Nafiur\WebAnalytics\Http\Middleware;
 
 use Closure;
@@ -32,7 +31,7 @@ class TrackWebTraffic
      */
     public function terminate(Request $request, Response $response): void
     {
-        if (!config('laravel-web-analytics.enabled', true)) {
+        if (! config('laravel-web-analytics.enabled', true)) {
             return;
         }
 
@@ -58,26 +57,26 @@ class TrackWebTraffic
 
             // User Agent parsing
             $userAgent = $request->userAgent() ?? '';
-            $uaInfo = $this->parseUserAgent($userAgent);
+            $uaInfo    = $this->parseUserAgent($userAgent);
 
             // Bot / crawler filtering (false | true | 'known')
-            if (!BotDetector::shouldCapture($userAgent)) {
+            if (! BotDetector::shouldCapture($userAgent)) {
                 return;
             }
 
             // Check capture API / AJAX settings
-            if (($request->is('api/*') || $request->expectsJson()) && !config('laravel-web-analytics.capture.api', true)) {
+            if (($request->is('api/*') || $request->expectsJson()) && ! config('laravel-web-analytics.capture.api', true)) {
                 return;
             }
-            if ($request->ajax() && !config('laravel-web-analytics.capture.ajax', true)) {
+            if ($request->ajax() && ! config('laravel-web-analytics.capture.ajax', true)) {
                 return;
             }
-            if (!$request->is('api/*') && !$request->expectsJson() && !$request->ajax()
-                && !config('laravel-web-analytics.capture.web', true)) {
+            if (! $request->is('api/*') && ! $request->expectsJson() && ! $request->ajax()
+                && ! config('laravel-web-analytics.capture.web', true)) {
                 return;
             }
 
-            $startTime = $request->attributes->get('_lwa_start_time', defined('LARAVEL_START') ? constant('LARAVEL_START') : microtime(true));
+            $startTime  = $request->attributes->get('_lwa_start_time', defined('LARAVEL_START') ? constant('LARAVEL_START') : microtime(true));
             $durationMs = round((microtime(true) - $startTime) * 1000, 2);
 
             // Response byte size calculation
@@ -86,7 +85,7 @@ class TrackWebTraffic
                 $bytes = (int) $response->headers->get('Content-Length');
             } else {
                 $content = $response->getContent();
-                $bytes = is_string($content) ? strlen($content) : 0;
+                $bytes   = is_string($content) ? strlen($content) : 0;
             }
 
             // Resolve location (Country & City)
@@ -95,8 +94,7 @@ class TrackWebTraffic
             // Capture authenticated user ID without depending on any User model
             $userId = null;
             try {
-                $userId = $request->user()?->getAuthIdentifier() 
-                    ?? (function_exists('auth') ? auth()->id() ?? auth('web')->id() : null);
+                $userId = $request->user()?->getAuthIdentifier() ?? (function_exists('auth') ? auth()->id() ?? auth('web')->id() : null);
             } catch (\Throwable $e) {
                 // Ignore auth inspection errors
             }
@@ -106,12 +104,12 @@ class TrackWebTraffic
             //   fingerprint   -> 'f_' . daily salted hash (cookieless)
             //   session       -> 's_' . Laravel session id, with stateless fallback
             $sessionId = null;
-            $strategy = config('laravel-web-analytics.privacy.visitor_id_strategy', 'session');
+            $strategy  = config('laravel-web-analytics.privacy.visitor_id_strategy', 'session');
 
             if ($userId) {
                 $sessionId = 'u_' . $userId;
             } elseif ($strategy === 'fingerprint') {
-                $salt = config('laravel-web-analytics.privacy.fingerprint_salt') ?: config('app.key', 'lwa');
+                $salt      = config('laravel-web-analytics.privacy.fingerprint_salt') ?: config('app.key', 'lwa');
                 $sessionId = 'f_' . substr(hash('sha256', $ip . '|' . $userAgent . '|' . now()->toDateString() . '|' . $salt), 0, 32);
             } else {
                 try {
@@ -124,18 +122,18 @@ class TrackWebTraffic
                 } catch (\Throwable $e) {
                     // Ignore session retrieval issues
                 }
-                if (!$sessionId) {
+                if (! $sessionId) {
                     $sessionId = 'f_' . substr(md5($ip . '|' . $userAgent), 0, 24);
                 }
             }
 
             // Referrer
             $rawReferrer = $request->headers->get('referer');
-            $referrer = $rawReferrer ? substr($rawReferrer, 0, 490) : 'Direct';
+            $referrer    = $rawReferrer ? substr($rawReferrer, 0, 490) : 'Direct';
 
             // UTM campaign parameters
-            $utmSource = $request->query('utm_source');
-            $utmMedium = $request->query('utm_medium');
+            $utmSource   = $request->query('utm_source');
+            $utmMedium   = $request->query('utm_medium');
             $utmCampaign = $request->query('utm_campaign');
 
             // Alerts (disabled by default). Counters and dedupe keep webhook
@@ -184,7 +182,7 @@ class TrackWebTraffic
     protected function shouldIgnorePath(string $path): bool
     {
         $trimmed = ltrim($path, '/');
-        $ext = strtolower(pathinfo($path, PATHINFO_EXTENSION));
+        $ext     = strtolower(pathinfo($path, PATHINFO_EXTENSION));
 
         $ignoredExtensions = ['css', 'js', 'jpg', 'jpeg', 'png', 'gif', 'svg', 'ico', 'woff', 'woff2', 'ttf', 'eot', 'map', 'webp', 'avif'];
         if ($ext && in_array($ext, $ignoredExtensions)) {
@@ -229,7 +227,7 @@ class TrackWebTraffic
             }
 
             if ($forwarded = $request->server('HTTP_X_FORWARDED_FOR')) {
-                $parts = explode(',', $forwarded);
+                $parts     = explode(',', $forwarded);
                 $candidate = trim($parts[0]);
                 if (filter_var($candidate, FILTER_VALIDATE_IP)) {
                     return $candidate;
@@ -260,7 +258,7 @@ class TrackWebTraffic
      */
     protected function resolveLocation(Request $request, string $ip): array
     {
-        // 1. Cloudflare headers
+        // 1.  headers
         if ($cfCountry = $request->server('HTTP_CF_IPCOUNTRY')) {
             return [
                 'country' => strtoupper($cfCountry),
@@ -279,7 +277,7 @@ class TrackWebTraffic
         // 3. GeoIP lookup service (if enabled)
         if (config('laravel-web-analytics.geoip.enabled', true)) {
             $geo = GeoIpService::resolve($ip);
-            if (!empty($geo['country_name']) || !empty($geo['country_code'])) {
+            if (! empty($geo['country_name']) || ! empty($geo['country_code'])) {
                 return [
                     'country' => $geo['country_name'] ?? $geo['country_code'],
                     'city'    => $geo['city'] ?? null,

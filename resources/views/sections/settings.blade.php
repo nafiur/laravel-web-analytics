@@ -50,11 +50,12 @@
 
                             <!-- General -->
                             <section id="settings-general"
-                                class="bg-white dark:bg-[#111827] border border-slate-200 dark:border-slate-800 rounded-lg shadow-sm overflow-hidden">
+                                class="lwa-surface border lwa-border rounded-lg shadow-sm overflow-hidden">
                                 <div class="p-4 border-b border-slate-100 dark:border-slate-800">
                                     <h2 class="text-sm font-semibold text-slate-900 dark:text-white"
                                         data-i18n="settings">Settings</h2>
-                                    <p class="text-[11px] text-slate-400 mt-0.5">Analytics preferences for this browser</p>
+                                    <p class="text-[11px] text-slate-400 mt-0.5">Analytics preferences for this browser
+                                    </p>
                                 </div>
                                 <div class="divide-y divide-slate-100 dark:divide-slate-800 text-xs">
                                     <div class="flex items-center justify-between gap-4 px-4 py-3">
@@ -124,7 +125,7 @@
 
                             <!-- Dashboard preferences -->
                             <section id="settings-dashboard"
-                                class="bg-white dark:bg-[#111827] border border-slate-200 dark:border-slate-800 rounded-lg shadow-sm overflow-hidden">
+                                class="lwa-surface border lwa-border rounded-lg shadow-sm overflow-hidden">
                                 <div class="p-4 border-b border-slate-100 dark:border-slate-800">
                                     <h2 class="text-sm font-semibold text-slate-900 dark:text-white"
                                         data-i18n="dashboard">Dashboard</h2>
@@ -176,7 +177,7 @@
 
                             <!-- Collection (read-only) -->
                             <section id="settings-collection"
-                                class="bg-white dark:bg-[#111827] border border-slate-200 dark:border-slate-800 rounded-lg shadow-sm overflow-hidden">
+                                class="lwa-surface border lwa-border rounded-lg shadow-sm overflow-hidden">
                                 <div class="p-4 border-b border-slate-100 dark:border-slate-800">
                                     <h2 class="text-sm font-semibold text-slate-900 dark:text-white"
                                         data-i18n="collection">Collection</h2>
@@ -199,7 +200,7 @@
                                                 : 'Disabled',
                                             'Ignored paths' => count(config('laravel-web-analytics.ignored_paths', [])),
                                             'GeoIP' => config('laravel-web-analytics.geoip.enabled', true)
-                                                ? config('laravel-web-analytics.geoip.provider', 'cloudflare')
+                                                ? config('laravel-web-analytics.geoip.provider', '')
                                                 : 'Disabled',
                                             'Active visitor window' =>
                                                 config('laravel-web-analytics.active_visitor_window', 5) . ' minutes',
@@ -215,8 +216,7 @@
                                     @endphp
                                     @foreach ($collectionRows as $label => $value)
                                         <div class="flex items-center justify-between gap-4 px-4 py-2.5">
-                                            <span
-                                                class="text-slate-500 dark:text-slate-400">{{ $label }}</span>
+                                            <span class="text-slate-500 dark:text-slate-400">{{ $label }}</span>
                                             <span
                                                 class="font-mono text-slate-800 dark:text-slate-200">{{ $value }}</span>
                                         </div>
@@ -226,7 +226,7 @@
 
                             <!-- Alerts -->
                             <section id="settings-alerts"
-                                class="bg-white dark:bg-[#111827] border border-slate-200 dark:border-slate-800 rounded-lg shadow-sm overflow-hidden">
+                                class="lwa-surface border lwa-border rounded-lg shadow-sm overflow-hidden">
                                 <div class="p-4 border-b border-slate-100 dark:border-slate-800">
                                     <h2 class="text-sm font-semibold text-slate-900 dark:text-white">Alerts</h2>
                                     <p class="text-[11px] text-slate-400 mt-0.5">Webhook alerts for 5xx errors and
@@ -261,7 +261,7 @@
 
                             <!-- Export defaults -->
                             <section id="settings-export"
-                                class="bg-white dark:bg-[#111827] border border-slate-200 dark:border-slate-800 rounded-lg shadow-sm overflow-hidden">
+                                class="lwa-surface border lwa-border rounded-lg shadow-sm overflow-hidden">
                                 <div class="p-4 border-b border-slate-100 dark:border-slate-800">
                                     <h2 class="text-sm font-semibold text-slate-900 dark:text-white">Export defaults
                                     </h2>
@@ -290,7 +290,7 @@
 
                             <!-- Data maintenance -->
                             <section id="settings-maintenance"
-                                class="bg-white dark:bg-[#111827] border border-slate-200 dark:border-slate-800 rounded-lg shadow-sm overflow-hidden">
+                                class="lwa-surface border lwa-border rounded-lg shadow-sm overflow-hidden">
                                 <div class="p-4 border-b border-slate-100 dark:border-slate-800">
                                     <h2 class="text-sm font-semibold text-slate-900 dark:text-white"
                                         data-i18n="maintenance">Data maintenance</h2>
@@ -371,7 +371,7 @@
 
                             <!-- About -->
                             <section id="settings-about"
-                                class="bg-white dark:bg-[#111827] border border-slate-200 dark:border-slate-800 rounded-lg shadow-sm overflow-hidden">
+                                class="lwa-surface border lwa-border rounded-lg shadow-sm overflow-hidden">
                                 <div class="p-4 border-b border-slate-100 dark:border-slate-800">
                                     <h2 class="text-sm font-semibold text-slate-900 dark:text-white">About</h2>
                                 </div>
@@ -402,7 +402,7 @@
                 <div id="shortcutsHelp"
                     class="hidden fixed inset-0 z-50 items-center justify-center bg-slate-900/50 p-4">
                     <div
-                        class="w-full max-w-sm bg-white dark:bg-[#111827] border border-slate-200 dark:border-slate-700 rounded-lg shadow-xl p-5 text-xs">
+                        class="w-full max-w-sm lwa-surface border border-slate-200 dark:border-slate-700 rounded-lg shadow-xl p-5 text-xs">
                         <div class="flex items-center justify-between mb-3">
                             <span class="font-semibold text-slate-900 dark:text-white">Keyboard shortcuts</span>
                             <button type="button"

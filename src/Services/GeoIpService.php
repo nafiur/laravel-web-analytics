@@ -1,9 +1,8 @@
 <?php
-
 namespace Nafiur\WebAnalytics\Services;
 
-use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Cache;
+use Illuminate\Support\Facades\Http;
 
 class GeoIpService
 {
@@ -23,7 +22,7 @@ class GeoIpService
             return $default;
         }
 
-        $provider = config('laravel-web-analytics.geoip.provider', 'cloudflare');
+        $provider = config('laravel-web-analytics.geoip.provider', '');
 
         if ($provider === 'ip-api') {
             return Cache::remember("lwa_geo_{$ip}", 86400, function () use ($ip, $default) {

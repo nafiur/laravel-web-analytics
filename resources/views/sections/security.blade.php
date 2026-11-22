@@ -3,26 +3,26 @@
                 <!-- ============================================== -->
                 <div id="tab-security" class="tab-pane space-y-5">
                     <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
-                        <div class="bg-white dark:bg-[#111827] border border-slate-200 dark:border-slate-800 rounded-lg p-4 shadow-sm">
+                        <div class="lwa-surface border lwa-border rounded-lg p-4 shadow-sm">
                             <div class="text-xs font-medium text-slate-500 dark:text-slate-400">Total Error Requests</div>
                             <div class="text-2xl font-bold text-rose-600 dark:text-rose-400 mt-1">{{ $analytics['summary']['error_count_fmt'] ?? 0 }}</div>
                             <div class="text-[11px] text-slate-400 mt-1">Error rate: {{ $analytics['summary']['error_rate'] ?? 0 }}%</div>
                         </div>
 
-                        <div class="bg-white dark:bg-[#111827] border border-slate-200 dark:border-slate-800 rounded-lg p-4 shadow-sm">
+                        <div class="lwa-surface border lwa-border rounded-lg p-4 shadow-sm">
                             <div class="text-xs font-medium text-slate-500 dark:text-slate-400">4xx Client Errors</div>
                             <div class="text-2xl font-bold text-amber-600 dark:text-amber-400 mt-1">{{ number_format($analytics['summary']['status_counts']['4xx'] ?? 0) }}</div>
                             <div class="text-[11px] text-slate-400 mt-1">404 Not Found, 401 Unauthorized, etc.</div>
                         </div>
 
-                        <div class="bg-white dark:bg-[#111827] border border-slate-200 dark:border-slate-800 rounded-lg p-4 shadow-sm">
+                        <div class="lwa-surface border lwa-border rounded-lg p-4 shadow-sm">
                             <div class="text-xs font-medium text-slate-500 dark:text-slate-400">5xx Server Errors</div>
                             <div class="text-2xl font-bold text-purple-600 dark:text-purple-400 mt-1">{{ number_format($analytics['summary']['status_counts']['5xx'] ?? 0) }}</div>
                             <div class="text-[11px] text-slate-400 mt-1">500 Internal Error, 502 Bad Gateway</div>
                         </div>
                     </div>
 
-                    <div class="bg-white dark:bg-[#111827] border border-slate-200 dark:border-slate-800 rounded-lg shadow-sm overflow-hidden">
+                    <div class="lwa-surface border lwa-border rounded-lg shadow-sm overflow-hidden">
                         <div class="p-3.5 border-b border-slate-100 dark:border-slate-800 flex items-center justify-between">
                             <div class="text-xs font-semibold text-slate-800 dark:text-slate-200">Top Error URLs (4xx / 5xx)</div>
                             <span class="text-[11px] text-slate-400">Sorted by failure count</span>

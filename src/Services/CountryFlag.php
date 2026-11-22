@@ -1,5 +1,4 @@
 <?php
-
 namespace Nafiur\WebAnalytics\Services;
 
 /**
@@ -26,16 +25,16 @@ class CountryFlag
         $value = strtolower(trim($country));
 
         $aliases = [
-            'usa' => 'us', 'u.s.a.' => 'us', 'united states of america' => 'us',
-            'uk' => 'gb', 'u.k.' => 'gb', 'great britain' => 'gb', 'england' => 'gb',
-            'uae' => 'ae', 'russia' => 'ru', 'iran' => 'ir', 'syria' => 'sy',
-            'vietnam' => 'vn', 'laos' => 'la', 'moldova' => 'md',
-            'czech republic' => 'cz', 'turkey' => 'tr', 'ivory coast' => 'ci',
-            'cote divoire' => 'ci', 'cape verde' => 'cv', 'swaziland' => 'sz',
-            'macedonia' => 'mk', 'burma' => 'mm', 'palestine' => 'ps',
-            'korea' => 'kr', 'south korea' => 'kr', 'north korea' => 'kp',
-            'unknown' => '', 'global / other' => '', 'localhost / internal' => '',
-            'local' => '', 'direct' => '', '-' => '',
+            'usa'            => 'us', 'u.s.a.'       => 'us', 'united states of america' => 'us',
+            'uk'             => 'gb', 'u.k.'         => 'gb', 'great britain'            => 'gb', 'england' => 'gb',
+            'uae'            => 'ae', 'russia'       => 'ru', 'iran'                     => 'ir', 'syria'   => 'sy',
+            'vietnam'        => 'vn', 'laos'         => 'la', 'moldova'                  => 'md',
+            'czech republic' => 'cz', 'turkey'       => 'tr', 'ivory coast'              => 'ci',
+            'cote divoire'   => 'ci', 'cape verde'   => 'cv', 'swaziland'                => 'sz',
+            'macedonia'      => 'mk', 'burma'        => 'mm', 'palestine'                => 'ps',
+            'korea'          => 'kr', 'south korea'  => 'kr', 'north korea'              => 'kp',
+            'unknown'        => '', 'global / other' => '', 'localhost / internal'       => '',
+            'local'          => '', 'direct'         => '', '-'                          => '',
         ];
 
         if (isset($aliases[$value])) {
@@ -43,7 +42,7 @@ class CountryFlag
             return $code === '' ? null : $code;
         }
 
-        // Cloudflare / GeoIP country codes arrive as two-letter uppercase strings.
+        //  / GeoIP country codes arrive as two-letter uppercase strings.
         if (preg_match('/^[a-z]{2}$/', $value)) {
             $code = strtoupper($value);
             return in_array($code, self::codes(), true) ? $code : null;
@@ -90,7 +89,7 @@ class CountryFlag
         if (self::$map === null) {
             self::$map = [];
             foreach (explode('|', self::COUNTRIES) as $entry) {
-                [$code, $name] = explode(':', $entry, 2);
+                [$code, $name]                = explode(':', $entry, 2);
                 self::$map[strtolower($name)] = $code;
             }
         }
@@ -111,8 +110,8 @@ class CountryFlag
         // JSON \u escapes are limited to 4 hex digits, so encode the
         // supplementary code point as a UTF-16 surrogate pair.
         $offset = $codepoint - 0x10000;
-        $high = 0xD800 + ($offset >> 10);
-        $low = 0xDC00 + ($offset & 0x3FF);
+        $high   = 0xD800 + ($offset >> 10);
+        $low    = 0xDC00 + ($offset & 0x3FF);
 
         return json_decode('"\u' . dechex($high) . '\u' . dechex($low) . '"') ?? '';
     }

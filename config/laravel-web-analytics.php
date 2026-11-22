@@ -10,7 +10,7 @@ return [
     | testing environments if you do not want to record requests.
     |
     */
-    'enabled' => env('WEB_ANALYTICS_ENABLED', true),
+    'enabled'               => env('WEB_ANALYTICS_ENABLED', true),
 
     /*
     |--------------------------------------------------------------------------
@@ -21,7 +21,7 @@ return [
     | Default: lwa_logs
     |
     */
-    'table_name' => env('WEB_ANALYTICS_TABLE_NAME', 'lwa_logs'),
+    'table_name'            => env('WEB_ANALYTICS_TABLE_NAME', 'lwa_logs'),
 
     /*
     |--------------------------------------------------------------------------
@@ -32,7 +32,7 @@ return [
     | Defaults to 'web-analytics' with 'web' and 'auth' middlewares.
     |
     */
-    'route' => [
+    'route'                 => [
         'prefix'     => env('WEB_ANALYTICS_ROUTE_PREFIX', 'web-analytics'),
         'middleware' => ['web', 'auth'],
     ],
@@ -46,7 +46,7 @@ return [
     | and new traffic logs via Server-Sent Events.
     |
     */
-    'stream_interval' => env('WEB_ANALYTICS_STREAM_INTERVAL', 2),
+    'stream_interval'       => env('WEB_ANALYTICS_STREAM_INTERVAL', 2),
 
     /*
     |--------------------------------------------------------------------------
@@ -67,20 +67,20 @@ return [
     | Choose which types of incoming requests to capture.
     |
     */
-    'capture' => [
-        'web'       => env('WEB_ANALYTICS_CAPTURE_WEB', true),
-        'api'       => env('WEB_ANALYTICS_CAPTURE_API', true),
-        'ajax'      => env('WEB_ANALYTICS_CAPTURE_AJAX', true),
+    'capture'               => [
+        'web'                     => env('WEB_ANALYTICS_CAPTURE_WEB', true),
+        'api'                     => env('WEB_ANALYTICS_CAPTURE_API', true),
+        'ajax'                    => env('WEB_ANALYTICS_CAPTURE_AJAX', true),
         /*
          | false  -> skip all detected bots/crawlers (recommended)
          | true   -> capture everything, including scrapers and CLI tooling
          | 'known'-> capture only recognised search-engine/social crawlers
          */
-        'bots'      => env('WEB_ANALYTICS_CAPTURE_BOTS', false),
+        'bots'                    => env('WEB_ANALYTICS_CAPTURE_BOTS', false),
 
         /*
          | Only enable when you are certain the immediate peer is a trusted
-         | reverse proxy (e.g. Cloudflare). Otherwise CF-Connecting-IP and
+         | reverse proxy (e.g. ). Otherwise CF-Connecting-IP and
          | X-Forwarded-For can be spoofed by any client to poison analytics.
          | Prefer configuring Laravel's trusted proxies instead.
          */
@@ -98,7 +98,7 @@ return [
     |   'fingerprint' -> cookieless daily hash of IP + UA + date + salt
     |
     */
-    'privacy' => [
+    'privacy'               => [
         'respect_dnt'         => env('WEB_ANALYTICS_RESPECT_DNT', true),
         'visitor_id_strategy' => env('WEB_ANALYTICS_VISITOR_ID_STRATEGY', 'session'),
         'fingerprint_salt'    => env('WEB_ANALYTICS_FINGERPRINT_SALT', ''),
@@ -113,7 +113,7 @@ return [
     | and IPv6 addresses mask the interface IDs.
     |
     */
-    'anonymize_ip' => env('WEB_ANALYTICS_ANONYMIZE_IP', false),
+    'anonymize_ip'          => env('WEB_ANALYTICS_ANONYMIZE_IP', false),
 
     /*
     |--------------------------------------------------------------------------
@@ -124,7 +124,7 @@ return [
     | Wildcards (*) are supported.
     |
     */
-    'ignored_paths' => [
+    'ignored_paths'         => [
         'livewire/*',
         'broadcasting/auth',
         'web-analytics*',
@@ -159,8 +159,8 @@ return [
     | Custom path to server access log file if you wish to inspect server files.
     |
     */
-    'server_log_path' => env('WEB_ANALYTICS_SERVER_LOG_PATH', null),
-    'max_lines'       => env('WEB_ANALYTICS_MAX_LINES', 50000),
+    'server_log_path'       => env('WEB_ANALYTICS_SERVER_LOG_PATH', null),
+    'max_lines'             => env('WEB_ANALYTICS_MAX_LINES', 50000),
 
     /*
     |--------------------------------------------------------------------------
@@ -170,7 +170,7 @@ return [
     | Number of days to retain logs. Run `php artisan lwa:prune` in your scheduler.
     |
     */
-    'retention_days' => env('WEB_ANALYTICS_RETENTION_DAYS', 30),
+    'retention_days'        => env('WEB_ANALYTICS_RETENTION_DAYS', 30),
 
     /*
     |--------------------------------------------------------------------------
@@ -182,7 +182,7 @@ return [
     | wanted (the buttons are still visible but return 403).
     |
     */
-    'settings' => [
+    'settings'              => [
         'destructive_actions_enabled' => env('WEB_ANALYTICS_DESTRUCTIVE_ACTIONS', true),
     ],
 
@@ -191,12 +191,12 @@ return [
     | GeoIP / City Lookup Provider
     |--------------------------------------------------------------------------
     |
-    | Supported: 'cloudflare' (header-based, no HTTP call), 'ip-api'
+    | Supported: '' (header-based, no HTTP call), 'ip-api'
     |
     */
-    'geoip' => [
-        'enabled' => env('WEB_ANALYTICS_GEOIP_ENABLED', true),
-        'provider' => env('WEB_ANALYTICS_GEOIP_PROVIDER', 'cloudflare'), // 'cloudflare', 'ip-api'
+    'geoip'                 => [
+        'enabled'  => env('WEB_ANALYTICS_GEOIP_ENABLED', true),
+        'provider' => env('WEB_ANALYTICS_GEOIP_PROVIDER', ''), // '', 'ip-api'
         'timeout'  => env('WEB_ANALYTICS_GEOIP_TIMEOUT', 1),
     ],
 
@@ -205,11 +205,11 @@ return [
     | Alert Notifications (Spikes & 5xx Server Errors)
     |--------------------------------------------------------------------------
     |
-    | Trigger instant alerts to Slack, Telegram, or Discord webhook when 
+    | Trigger instant alerts to Slack, Telegram, or Discord webhook when
     | an error spike or traffic threshold is reached.
     |
     */
-    'alerts' => [
+    'alerts'                => [
         'enabled'                         => env('WEB_ANALYTICS_ALERTS_ENABLED', false),
         'webhook_url'                     => env('WEB_ANALYTICS_ALERT_WEBHOOK', null),
         'channel'                         => env('WEB_ANALYTICS_ALERT_CHANNEL', 'telegram'), // 'telegram', 'slack', 'discord'
@@ -235,9 +235,9 @@ return [
     |                    - request header: request()->header('X-Tenant-ID')
     |
     */
-    'multi_tenancy' => [
-        'enabled'         => env('WEB_ANALYTICS_MULTI_TENANCY', false),
-        'tenant_resolver' => null,
+    'multi_tenancy'         => [
+        'enabled'                    => env('WEB_ANALYTICS_MULTI_TENANCY', false),
+        'tenant_resolver'            => null,
 
         /*
          | Optional opt-in authorizer for cross-tenant dashboard views.

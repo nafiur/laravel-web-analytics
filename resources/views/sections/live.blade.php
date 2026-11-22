@@ -2,7 +2,7 @@
                 <!-- TAB 5: REAL-TIME LIVE STREAM (SSE)             -->
                 <!-- ============================================== -->
                 <div id="tab-live" class="tab-pane space-y-4">
-                    <div class="bg-white dark:bg-[#111827] border border-slate-200 dark:border-slate-800 rounded-lg p-3.5 shadow-sm flex items-center justify-between">
+                    <div class="lwa-surface border lwa-border rounded-lg p-3.5 shadow-sm flex items-center justify-between">
                         <div class="flex items-center gap-3">
                             <span class="live-dot"></span>
                             <div>
@@ -10,10 +10,19 @@
                                 <div class="text-[11px] text-slate-400">Streaming live requests via Server-Sent Events (SSE)</div>
                             </div>
                         </div>
-                        <div class="text-right text-[11px] text-slate-400" id="lastUpdatedClock">Listening for requests...</div>
+                        <div class="flex flex-col items-end gap-1">
+                            <div class="flex items-center gap-1.5 text-[11px]" id="lwaConnectionBadge" role="status" aria-live="polite">
+                                <span class="w-2 h-2 rounded-full bg-amber-500" id="lwaConnectionDot"></span>
+                                <span id="lwaConnectionText" class="text-amber-600 dark:text-amber-400">Connecting…</span>
+                            </div>
+                            <button type="button" id="lwaReconnectBtn"
+                                class="hidden text-[11px] text-blue-600 dark:text-blue-400 hover:underline"
+                                onclick="window.lwaStartSSE && window.lwaStartSSE()">Retry connection</button>
+                            <div class="text-right text-[11px] text-slate-400" id="lastUpdatedClock">Listening for requests...</div>
+                        </div>
                     </div>
 
-                    <div class="bg-white dark:bg-[#111827] border border-slate-200 dark:border-slate-800 rounded-lg shadow-sm overflow-hidden">
+                    <div class="lwa-surface border lwa-border rounded-lg shadow-sm overflow-hidden">
                         <div class="overflow-x-auto">
                             <table class="w-full text-xs text-left">
                                 <thead class="bg-slate-50 dark:bg-slate-800/60 text-slate-500 border-b border-slate-200 dark:border-slate-700/60">

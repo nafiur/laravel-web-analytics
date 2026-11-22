@@ -17,11 +17,11 @@ A modern, fast, and self-hosted Web Traffic & Visitor Analytics Dashboard for La
 ## ⚡ Highlights & Key Features
 
 - 🚀 **Real-Time Live Stream (SSE)**: Live active visitor count and instant real-time traffic feed without WebSockets, Node.js, or Pusher. Each stream response is short-lived and paced by EventSource, so no PHP worker is held open while waiting for new traffic.
-- 🧭 **Cloudflare-Style Navigation**: Sidebar with Overview, Requests, Visitors, Performance, Live Stream and Setting. Each section has its own Blade view, and the Settings screen is hidden from the analytics tab bar.
-- 🎨 **Tailwind CSS UI with Dark Mode**: Modern, responsive dashboard powered by Tailwind CSS Play CDN (zero build step / zero npm dependencies). Includes a 1-click persistent Dark/Light mode toggle.
+- 🧭 **-Style Navigation**: Sidebar with Overview, Requests, Visitors, Performance, Live Stream and Setting. Each section has its own Blade view, and the Settings screen is hidden from the analytics tab bar.
+- 🎨 **Tailwind CSS UI with Dark Mode**: Modern, responsive dashboard powered by Tailwind CSS Play CDN (zero build step / zero npm dependencies). Uses CSS design tokens (`--lwa-*`, `[data-theme="dark"]`), Lucide outline icons, visible focus states, skeleton loaders, explicit empty/error states, and a 1-click persistent Dark/Light/System preference.
 - 📊 **Comprehensive Metrics**: Total Requests, Unique Visitors, Bandwidth (Data Transferred in GB/MB), Avg Response Time, Error Rate.
 - 🧪 **Built-In Live Traffic Simulator**: Easily generate realistic live traffic every second with `php artisan lwa:live` to demo and test live streaming.
-- 🌍 **GeoIP & Location Provider**: Automatic country/city resolution with fallback support for Cloudflare headers and `ip-api`.
+- 🌍 **GeoIP & Location Provider**: Automatic country/city resolution with fallback support for  headers and `ip-api`.
 - 🚨 **Instant Error Alerts**: Telegram, Slack, or Discord webhook alerts on 5xx responses (deduplicated per URL/IP) and on error-rate spikes above a configurable threshold. Disabled by default.
 - 📥 **Export to CSV**: Download filtered analytics logs into structured CSV format via high-performance chunked streams.
 - 🧹 **Automatic Log Pruning**: Includes an Artisan command (`php artisan lwa:prune`) to maintain a clean database and prevent disk bloat.
@@ -170,13 +170,15 @@ Set `WEB_ANALYTICS_DESTRUCTIVE_ACTIONS=false` to disable the prune/empty actions
 
 By default the dashboard reads the `lwa_logs` database table. The **Data source** selector can switch to `?source=file`, which parses a web-server access log from `WEB_ANALYTICS_SERVER_LOG_PATH` (or a detected default path). Configure `WEB_ANALYTICS_MAX_LINES` to bound how much of the file is read.
 
+The header's refresh button reloads the current report through `lwa_data` and shows a retry toast on failure. The Live Stream tab displays its SSE connection state (connected / reconnecting / disconnected) with a manual retry action.
+
 Client IP resolution uses Laravel's trusted-proxy configuration. Only enable `WEB_ANALYTICS_TRUST_FORWARDED_HEADERS=true` if the immediate peer is a trusted reverse proxy; otherwise `CF-Connecting-IP` / `X-Forwarded-For` can be spoofed by clients.
 
 ---
 
-## 🧭 Dashboard Views & Cloudflare-Style Navigation
+## 🧭 Dashboard Views & -Style Navigation
 
-The dashboard features a clean, tabbed Cloudflare-style layout with segmented controls:
+The dashboard features a clean, tabbed -style layout with segmented controls:
 
 | Tab | Key Insights & Visualizations |
 |-----|-------------------------------|
@@ -286,7 +288,7 @@ return [
      */
     'geoip' => [
         'enabled'  => env('WEB_ANALYTICS_GEOIP_ENABLED', true),
-        'provider' => env('WEB_ANALYTICS_GEOIP_PROVIDER', 'cloudflare'), // 'cloudflare', 'ip-api'
+        'provider' => env('WEB_ANALYTICS_GEOIP_PROVIDER', ''), // '', 'ip-api'
         'timeout'  => env('WEB_ANALYTICS_GEOIP_TIMEOUT', 1),
     ],
 

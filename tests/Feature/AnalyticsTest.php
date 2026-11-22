@@ -157,6 +157,19 @@ class AnalyticsTest extends TestCase
         $this->assertNotEmpty($series['timestamps'][0]);
     }
 
+    public function test_dashboard_ships_design_tokens_and_explicit_ui_states(): void
+    {
+        $content = $this->get('/web-analytics')->getContent();
+
+        foreach ([
+            '--lwa-bg:', '[data-theme="dark"]', 'data-lucide="menu"',
+            'lwaConnectionBadge', 'lwa-skeleton', 'lwaErrorToast',
+            'lwaRefreshBtn', 'themeToggle',
+        ] as $needle) {
+            $this->assertStringContainsString($needle, $content);
+        }
+    }
+
     public function test_settings_page_includes_alerts_and_export_sections(): void
     {
         $content = $this->get('/web-analytics')->getContent();
