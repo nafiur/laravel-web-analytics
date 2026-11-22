@@ -54,26 +54,9 @@
                                 <div class="p-4 border-b border-slate-100 dark:border-slate-800">
                                     <h2 class="text-sm font-semibold text-slate-900 dark:text-white"
                                         data-i18n="settings">Settings</h2>
-                                    <p class="text-[11px] text-slate-400 mt-0.5">
-                                        {{ auth()->user()?->email ?? 'Guest' }} · {{ __('Member since') }}
-                                        {{ auth()->user()?->created_at?->format('F Y') ?? '—' }}
-                                    </p>
+                                    <p class="text-[11px] text-slate-400 mt-0.5">Analytics preferences for this browser</p>
                                 </div>
                                 <div class="divide-y divide-slate-100 dark:divide-slate-800 text-xs">
-                                    <div class="flex items-center justify-between gap-4 px-4 py-3">
-                                        <span class="text-slate-600 dark:text-slate-300" data-i18n="displayName">Display
-                                            name</span>
-                                        <span
-                                            class="font-medium text-slate-900 dark:text-slate-100">{{ auth()->user()?->name ?? 'Admin' }}</span>
-                                    </div>
-                                    <div class="flex items-center justify-between gap-4 px-4 py-3">
-                                        <span class="text-slate-600 dark:text-slate-300" data-i18n="email">Email</span>
-                                        <span
-                                            class="flex items-center gap-2 font-medium text-slate-900 dark:text-slate-100">
-                                            <span class="w-1.5 h-1.5 rounded-full bg-emerald-500"></span>
-                                            {{ auth()->user()?->email ?? '—' }}
-                                        </span>
-                                    </div>
                                     <div class="flex items-center justify-between gap-4 px-4 py-3">
                                         <span class="text-slate-600 dark:text-slate-300"
                                             data-i18n="language">Language</span>
@@ -81,6 +64,16 @@
                                             class="text-xs px-2.5 py-1.5 border border-slate-200 dark:border-slate-700 rounded-md bg-white dark:bg-slate-800 text-slate-700 dark:text-slate-200 focus:outline-none focus:ring-1 focus:ring-blue-500">
                                             <option value="en">🇺🇸 English</option>
                                             <option value="bn">🇧🇩 বাংলা</option>
+                                            <option value="hi">🇮🇳 हिन्दी</option>
+                                            <option value="es">🇪🇸 Español</option>
+                                            <option value="fr">🇫🇷 Français</option>
+                                            <option value="de">🇩🇪 Deutsch</option>
+                                            <option value="pt">🇵🇹 Português</option>
+                                            <option value="ar">🇸🇦 العربية</option>
+                                            <option value="zh">🇨🇳 中文</option>
+                                            <option value="ja">🇯🇵 日本語</option>
+                                            <option value="ur">🇵🇰 اردو</option>
+                                            <option value="id">🇮🇩 Indonesian</option>
                                         </select>
                                     </div>
                                     <div class="flex items-center justify-between gap-4 px-4 py-3">
@@ -101,9 +94,24 @@
                                             <option value="UTC">UTC</option>
                                             <option value="Asia/Dhaka">GMT+6 — Dhaka</option>
                                             <option value="Asia/Kolkata">GMT+5:30 — Kolkata</option>
+                                            <option value="Asia/Karachi">GMT+5 — Karachi</option>
+                                            <option value="Asia/Kathmandu">GMT+5:45 — Kathmandu</option>
+                                            <option value="Asia/Dubai">GMT+4 — Dubai</option>
+                                            <option value="Asia/Riyadh">GMT+3 — Riyadh</option>
                                             <option value="Asia/Singapore">GMT+8 — Singapore</option>
+                                            <option value="Asia/Shanghai">GMT+8 — Shanghai</option>
+                                            <option value="Asia/Tokyo">GMT+9 — Tokyo</option>
+                                            <option value="Asia/Jakarta">GMT+7 — Jakarta</option>
                                             <option value="Europe/London">GMT+0 — London</option>
+                                            <option value="Europe/Paris">GMT+1 — Paris</option>
+                                            <option value="Europe/Berlin">GMT+1 — Berlin</option>
                                             <option value="America/New_York">GMT-5 — New York</option>
+                                            <option value="America/Chicago">GMT-6 — Chicago</option>
+                                            <option value="America/Denver">GMT-7 — Denver</option>
+                                            <option value="America/Los_Angeles">GMT-8 — Los Angeles</option>
+                                            <option value="America/Sao_Paulo">GMT-3 — São Paulo</option>
+                                            <option value="Australia/Sydney">GMT+10 — Sydney</option>
+                                            <option value="Pacific/Auckland">GMT+12 — Auckland</option>
                                         </select>
                                     </div>
                                     <div class="flex items-center justify-between gap-4 px-4 py-3">

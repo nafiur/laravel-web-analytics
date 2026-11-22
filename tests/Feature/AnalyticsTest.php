@@ -138,10 +138,12 @@ class AnalyticsTest extends TestCase
             'settings-general', 'settings-dashboard', 'settings-collection',
             'settings-maintenance', 'settings-about', 'settingLanguage',
             'settingAppearance', 'settingTimezone', '/web-analytics/settings/prune',
-            '/web-analytics/settings/empty',
+            '/web-analytics/settings/empty', 'value="hi"', 'Asia/Tokyo',
         ] as $needle) {
             $this->assertStringContainsString($needle, $content);
         }
+
+        $this->assertStringNotContainsString('Display name', $content);
     }
 
     public function test_time_series_exposes_timestamps_and_granularity(): void

@@ -452,7 +452,7 @@
                 en: {
                     settings: 'Settings', dashboard: 'Dashboard', collection: 'Collection', maintenance: 'Data maintenance',
                     general: 'General', language: 'Language', appearance: 'Appearance', timezone: 'Timezone',
-                    displayName: 'Display name', email: 'Email', defaultRange: 'Default time range',
+                    defaultRange: 'Default time range',
                     overview: 'Overview', requests: 'Requests', visitors: 'Visitors', performance: 'Performance',
                     liveStream: 'Live Stream', security: 'Security', addFilter: 'Add filter', export: 'Export',
                     totalRequests: 'Total requests', dataTransfer: 'Total data transfer', visits: 'Total visits',
@@ -463,13 +463,103 @@
                 bn: {
                     settings: 'সেটিংস', dashboard: 'ড্যাশবোর্ড', collection: 'সংগ্রহ', maintenance: 'ডাটা রক্ষণাবেক্ষণ',
                     general: 'সাধারণ', language: 'ভাষা', appearance: 'অ্যাপিয়ারেন্স', timezone: 'সময় অঞ্চল',
-                    displayName: 'প্রদর্শন নাম', email: 'ইমেইল', defaultRange: 'ডিফল্ট সময় সীমা',
+                    defaultRange: 'ডিফল্ট সময় সীমা',
                     overview: 'ওভারভিউ', requests: 'রিকোয়েস্ট', visitors: 'ভিজিটর', performance: 'পারফরম্যান্স',
                     liveStream: 'লাইভ স্ট্রিম', security: 'নিরাপত্তা', addFilter: 'ফিল্টার যোগ করুন', export: 'এক্সপোর্ট',
                     totalRequests: 'মোট রিকোয়েস্ট', dataTransfer: 'মোট ডাটা ট্রান্সফার', visits: 'মোট ভিজিট',
                     successRate: 'সফলতার হার (2xx)', errorRate: '5xx ত্রুটির হার', topPaths: 'শীর্ষ পাথ',
                     topCountries: 'শীর্ষ দেশ', topIps: 'শীর্ষ ক্লায়েন্ট আইপি', recentRequests: 'সাম্প্রতিক রিকোয়েস্ট',
                     prune: 'মুছুন', emptyTable: 'টেবিল খালি করুন'
+                },
+                hi: {
+                    settings: 'सेटिंग्स', dashboard: 'डैशबोर्ड', collection: 'संग्रह', maintenance: 'डेटा रखरखाव',
+                    general: 'सामान्य', language: 'भाषा', appearance: 'रूप', timezone: 'समय क्षेत्र', defaultRange: 'डिफ़ॉल्ट समय सीमा',
+                    overview: 'अवलोकन', requests: 'अनुरोध', visitors: 'आगंतुक', performance: 'प्रदर्शन', liveStream: 'लाइव स्ट्रीम',
+                    security: 'सुरक्षा', addFilter: 'फ़िल्टर जोड़ें', export: 'निर्यात', totalRequests: 'कुल अनुरोध',
+                    dataTransfer: 'कुल डेटा स्थानांतरण', visits: 'कुल विज़िट', successRate: 'सफलता दर (2xx)', errorRate: '5xx त्रुटि दर',
+                    topPaths: 'शीर्ष पथ', topCountries: 'शीर्ष देश', topIps: 'शीर्ष IP', recentRequests: 'हाल के अनुरोध',
+                    prune: 'पुराने हटाएँ', emptyTable: 'तालिका खाली करें'
+                },
+                es: {
+                    settings: 'Ajustes', dashboard: 'Panel', collection: 'Recopilación', maintenance: 'Mantenimiento de datos',
+                    general: 'General', language: 'Idioma', appearance: 'Apariencia', timezone: 'Zona horaria', defaultRange: 'Rango de tiempo predeterminado',
+                    overview: 'Resumen', requests: 'Solicitudes', visitors: 'Visitantes', performance: 'Rendimiento', liveStream: 'Transmisión en vivo',
+                    security: 'Seguridad', addFilter: 'Añadir filtro', export: 'Exportar', totalRequests: 'Solicitudes totales',
+                    dataTransfer: 'Transferencia total de datos', visits: 'Visitas totales', successRate: 'Tasa de éxito (2xx)', errorRate: 'Tasa de errores 5xx',
+                    topPaths: 'Rutas principales', topCountries: 'Países principales', topIps: 'IP principales', recentRequests: 'Solicitudes recientes',
+                    prune: 'Depurar', emptyTable: 'Vaciar tabla'
+                },
+                fr: {
+                    settings: 'Paramètres', dashboard: 'Tableau de bord', collection: 'Collecte', maintenance: 'Maintenance des données',
+                    general: 'Général', language: 'Langue', appearance: 'Apparence', timezone: 'Fuseau horaire', defaultRange: 'Plage de temps par défaut',
+                    overview: 'Aperçu', requests: 'Requêtes', visitors: 'Visiteurs', performance: 'Performances', liveStream: 'Flux en direct',
+                    security: 'Sécurité', addFilter: 'Ajouter un filtre', export: 'Exporter', totalRequests: 'Requêtes totales',
+                    dataTransfer: 'Transfert total de données', visits: 'Visites totales', successRate: 'Taux de réussite (2xx)', errorRate: "Taux d'erreurs 5xx",
+                    topPaths: 'Chemins principaux', topCountries: 'Pays principaux', topIps: 'IP principales', recentRequests: 'Requêtes récentes',
+                    prune: 'Nettoyer', emptyTable: 'Vider la table'
+                },
+                de: {
+                    settings: 'Einstellungen', dashboard: 'Dashboard', collection: 'Sammlung', maintenance: 'Datenwartung',
+                    general: 'Allgemein', language: 'Sprache', appearance: 'Darstellung', timezone: 'Zeitzone', defaultRange: 'Standardzeitraum',
+                    overview: 'Übersicht', requests: 'Anfragen', visitors: 'Besucher', performance: 'Leistung', liveStream: 'Live-Stream',
+                    security: 'Sicherheit', addFilter: 'Filter hinzufügen', export: 'Exportieren', totalRequests: 'Anfragen gesamt',
+                    dataTransfer: 'Datenübertragung gesamt', visits: 'Besuche gesamt', successRate: 'Erfolgsquote (2xx)', errorRate: '5xx-Fehlerrate',
+                    topPaths: 'Top-Pfade', topCountries: 'Top-Länder', topIps: 'Top-IPs', recentRequests: 'Letzte Anfragen',
+                    prune: 'Bereinigen', emptyTable: 'Tabelle leeren'
+                },
+                pt: {
+                    settings: 'Configurações', dashboard: 'Painel', collection: 'Coleta', maintenance: 'Manutenção de dados',
+                    general: 'Geral', language: 'Idioma', appearance: 'Aparência', timezone: 'Fuso horário', defaultRange: 'Intervalo padrão',
+                    overview: 'Visão geral', requests: 'Solicitações', visitors: 'Visitantes', performance: 'Desempenho', liveStream: 'Transmissão ao vivo',
+                    security: 'Segurança', addFilter: 'Adicionar filtro', export: 'Exportar', totalRequests: 'Solicitações totais',
+                    dataTransfer: 'Transferência total de dados', visits: 'Visitas totais', successRate: 'Taxa de sucesso (2xx)', errorRate: 'Taxa de erros 5xx',
+                    topPaths: 'Principais caminhos', topCountries: 'Principais países', topIps: 'Principais IPs', recentRequests: 'Solicitações recentes',
+                    prune: 'Limpar antigos', emptyTable: 'Esvaziar tabela'
+                },
+                ar: {
+                    settings: 'الإعدادات', dashboard: 'لوحة التحكم', collection: 'التجميع', maintenance: 'صيانة البيانات',
+                    general: 'عام', language: 'اللغة', appearance: 'المظهر', timezone: 'المنطقة الزمنية', defaultRange: 'النطاق الزمني الافتراضي',
+                    overview: 'نظرة عامة', requests: 'الطلبات', visitors: 'الزوار', performance: 'الأداء', liveStream: 'البث المباشر',
+                    security: 'الأمان', addFilter: 'إضافة عامل تصفية', export: 'تصدير', totalRequests: 'إجمالي الطلبات',
+                    dataTransfer: 'إجمالي نقل البيانات', visits: 'إجمالي الزيارات', successRate: 'معدل النجاح (2xx)', errorRate: 'معدل أخطاء 5xx',
+                    topPaths: 'أبرز المسارات', topCountries: 'أبرز الدول', topIps: 'أبرز عناوين IP', recentRequests: 'الطلبات الأخيرة',
+                    prune: 'تنظيف', emptyTable: 'إفراغ الجدول'
+                },
+                zh: {
+                    settings: '设置', dashboard: '仪表盘', collection: '采集', maintenance: '数据维护',
+                    general: '常规', language: '语言', appearance: '外观', timezone: '时区', defaultRange: '默认时间范围',
+                    overview: '概览', requests: '请求', visitors: '访客', performance: '性能', liveStream: '实时流',
+                    security: '安全', addFilter: '添加筛选', export: '导出', totalRequests: '总请求数',
+                    dataTransfer: '总数据传输量', visits: '总访问量', successRate: '成功率 (2xx)', errorRate: '5xx 错误率',
+                    topPaths: '热门路径', topCountries: '热门国家', topIps: '热门 IP', recentRequests: '最近请求',
+                    prune: '清理', emptyTable: '清空表'
+                },
+                ja: {
+                    settings: '設定', dashboard: 'ダッシュボード', collection: '収集', maintenance: 'データメンテナンス',
+                    general: '一般', language: '言語', appearance: '外観', timezone: 'タイムゾーン', defaultRange: '既定の期間',
+                    overview: '概要', requests: 'リクエスト', visitors: '訪問者', performance: 'パフォーマンス', liveStream: 'ライブストリーム',
+                    security: 'セキュリティ', addFilter: 'フィルターを追加', export: 'エクスポート', totalRequests: '総リクエスト数',
+                    dataTransfer: '総転送量', visits: '総訪問数', successRate: '成功率 (2xx)', errorRate: '5xx エラー率',
+                    topPaths: '人気パス', topCountries: '人気国', topIps: '人気 IP', recentRequests: '最近のリクエスト',
+                    prune: '古いデータを削除', emptyTable: 'テーブルを空にする'
+                },
+                ur: {
+                    settings: 'ترتیبات', dashboard: 'ڈیش بورڈ', collection: 'مجموعہ', maintenance: 'ڈیٹا کی دیکھ بھال',
+                    general: 'عمومی', language: 'زبان', appearance: 'ظاہری شکل', timezone: 'ٹائم زون', defaultRange: 'طے شدہ مدت',
+                    overview: 'جائزہ', requests: 'درخواستیں', visitors: 'زائرین', performance: 'کارکردگی', liveStream: 'لائیو اسٹریم',
+                    security: 'سیکیورٹی', addFilter: 'فلٹر شامل کریں', export: 'برآمد', totalRequests: 'کل درخواستیں',
+                    dataTransfer: 'کل ڈیٹا منتقلی', visits: 'کل وزٹ', successRate: 'کامیابی کی شرح (2xx)', errorRate: '5xx غلطی کی شرح',
+                    topPaths: 'سرفہرست راستے', topCountries: 'سرفہرست ممالک', topIps: 'سرفہرست IP', recentRequests: 'حالیہ درخواستیں',
+                    prune: 'پرانی حذف کریں', emptyTable: 'ٹیبل خالی کریں'
+                },
+                id: {
+                    settings: 'Pengaturan', dashboard: 'Dasbor', collection: 'Koleksi', maintenance: 'Pemeliharaan data',
+                    general: 'Umum', language: 'Bahasa', appearance: 'Tampilan', timezone: 'Zona waktu', defaultRange: 'Rentang waktu default',
+                    overview: 'Ringkasan', requests: 'Permintaan', visitors: 'Pengunjung', performance: 'Kinerja', liveStream: 'Streaming langsung',
+                    security: 'Keamanan', addFilter: 'Tambah filter', export: 'Ekspor', totalRequests: 'Total permintaan',
+                    dataTransfer: 'Total transfer data', visits: 'Total kunjungan', successRate: 'Tingkat keberhasilan (2xx)', errorRate: 'Tingkat error 5xx',
+                    topPaths: 'Jalur teratas', topCountries: 'Negara teratas', topIps: 'IP teratas', recentRequests: 'Permintaan terbaru',
+                    prune: 'Bersihkan', emptyTable: 'Kosongkan tabel'
                 }
             };
 
@@ -491,6 +581,7 @@
                     const key = el.getAttribute('data-i18n');
                     if (dict[key]) el.textContent = dict[key];
                 });
+                document.documentElement.dir = (lang === 'ar' || lang === 'ur') ? 'rtl' : 'ltr';
                 if (languageSelect) languageSelect.value = lang;
             }
 
