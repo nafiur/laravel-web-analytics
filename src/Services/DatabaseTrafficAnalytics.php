@@ -15,7 +15,7 @@ class DatabaseTrafficAnalytics
     public function getDashboardData(string $timeRange = '24h', ?string $customStart = null, ?string $customEnd = null, ?string $tenantId = null): array
     {
         if ($tenantId === null && TenantResolver::isEnabled()) {
-            $tenantId = TenantResolver::resolve();
+            $tenantId = TenantResolver::resolveTrusted();
         }
 
         $cutoff = $this->resolveCutoffTime($timeRange, $customStart, $customEnd);
@@ -67,7 +67,8 @@ class DatabaseTrafficAnalytics
         $totalTableRecords = LwaLogs::forTenant($tenantId)->count();
 
         // Active Live Visitors in the last 5 minutes (Hybrid Session / User / IP)
-        $fiveMinutesAgo = now()->subMinutes(5);
+        $activeWindow = max(1, (int) config('laravel-web-analytics.active_visitor_window', 5));
+        $fiveMinutesAgo = now()->subMinutes($activeWindow);
         $liveQuery = LwaLogs::forTenant($tenantId)->where('created_at', '>=', $fiveMinutesAgo);
         $liveActiveVisitors = (clone $liveQuery)
             ->distinct()
@@ -176,6 +177,7 @@ class DatabaseTrafficAnalytics
         // Sparklines
         $sparklineRequests = $timeSeries['requests'] ?: [0];
         $sparklineBytes = $timeSeries['bandwidth_mb'] ?: [0];
+        $sparklineVisitors = $timeSeries['visitors'] ?: [0];
 
         return [
             'summary' => [
@@ -185,8 +187,8 @@ class DatabaseTrafficAnalytics
                 'total_bytes_fmt'     => $this->formatBytes($totalBytes),
                 'unique_visitors'     => $uniqueVisitors,
                 'unique_visitors_fmt' => $this->formatNumber($uniqueVisitors),
-                'live_visitors'       => max(1, $liveActiveVisitors),
-                'live_visitors_fmt'   => number_format(max(1, $liveActiveVisitors)),
+                'live_visitors'       => $liveActiveVisitors,
+                'live_visitors_fmt'   => number_format($liveActiveVisitors),
                 'live_requests_5m'    => $liveActiveRequests5m,
                 'avg_response_time'   => $avgResponseTime,
                 'error_rate'          => $errorRate,
@@ -205,6 +207,7 @@ class DatabaseTrafficAnalytics
             'sparklines' => [
                 'requests' => $sparklineRequests,
                 'bytes'    => $sparklineBytes,
+                'visitors' => $sparklineVisitors,
             ],
             'breakdowns'        => $breakdowns,
             'recent_logs'       => $recentLogs,
@@ -218,7 +221,7 @@ class DatabaseTrafficAnalytics
      */
     protected function buildTimeSeries(string $timeRange, ?Carbon $start, ?Carbon $end, ?string $tenantId = null): array
     {
-        $isHourly = in_array($timeRange, ['6h', '12h', '24h', 'today']);
+        $isHourly = in_array($timeRange, ['1h', '6h', '12h', '24h', 'today'], true);
         $query = LwaLogs::query();
         if ($tenantId !== null && $tenantId !== '') {
             $query->where('tenant_id', $tenantId);
@@ -246,6 +249,7 @@ class DatabaseTrafficAnalytics
             COUNT(*) as req_count,
             COALESCE(SUM(bytes_sent), 0) as byte_sum,
             COALESCE(AVG(response_time_ms), 0) as avg_latency,
+            COUNT(DISTINCT COALESCE(session_id, ip_address)) as visitor_count,
             SUM(CASE WHEN status_code >= 200 AND status_code < 300 THEN 1 ELSE 0 END) as s2xx,
             SUM(CASE WHEN status_code >= 300 AND status_code < 400 THEN 1 ELSE 0 END) as s3xx,
             SUM(CASE WHEN status_code >= 400 AND status_code < 500 THEN 1 ELSE 0 END) as s4xx,
@@ -255,30 +259,85 @@ class DatabaseTrafficAnalytics
         ->orderBy('bucket_time', 'ASC')
         ->get();
 
+        $emptyBucket = [
+            'req_count'     => 0,
+            'byte_sum'      => 0,
+            'avg_latency'   => 0,
+            'visitor_count' => 0,
+            's2xx'          => 0,
+            's3xx'          => 0,
+            's4xx'          => 0,
+            's5xx'          => 0,
+        ];
+
+        $bucketMap = [];
+        foreach ($rows as $row) {
+            $bucketMap[(string) $row->bucket_time] = [
+                'req_count'     => (int) $row->req_count,
+                'byte_sum'      => (int) $row->byte_sum,
+                'avg_latency'   => (float) $row->avg_latency,
+                'visitor_count' => (int) $row->visitor_count,
+                's2xx'          => (int) $row->s2xx,
+                's3xx'          => (int) $row->s3xx,
+                's4xx'          => (int) $row->s4xx,
+                's5xx'          => (int) $row->s5xx,
+            ];
+        }
+
+        // Fill empty periods so charts preserve real time gaps. Cap the number
+        // of buckets to keep "all time" dashboards from generating huge arrays.
+        $keys = array_keys($bucketMap);
+        if (!empty($keys)) {
+            try {
+                $first = $start ? $start->copy() : Carbon::parse($keys[0]);
+                $last = $end ? $end->copy() : Carbon::parse(end($keys));
+                $first = $isHourly ? $first->startOfHour() : $first->startOfDay();
+                $last = $isHourly ? $last->startOfHour() : $last->startOfDay();
+
+                $cursor = $first->copy();
+                $filled = [];
+                $cap = 400;
+                while ($cursor->lte($last) && count($filled) < $cap) {
+                    $key = $cursor->format($isHourly ? 'Y-m-d H:00' : 'Y-m-d');
+                    $filled[$key] = $bucketMap[$key] ?? $emptyBucket;
+                    $isHourly ? $cursor->addHour() : $cursor->addDay();
+                }
+
+                if (count($filled) < $cap) {
+                    $bucketMap = $filled;
+                }
+            } catch (\Throwable $e) {
+                // Fall back to the sparse buckets when parsing fails.
+            }
+        }
+        ksort($bucketMap);
+
         $labels = [];
         $requests = [];
         $bandwidthMb = [];
         $latencies = [];
+        $visitors = [];
         $status2xx = [];
         $status3xx = [];
         $status4xx = [];
         $status5xx = [];
 
-        foreach ($rows as $row) {
+        foreach ($bucketMap as $key => $bucket) {
             try {
-                $dt = Carbon::parse($row->bucket_time);
+                $dt = Carbon::parse($key);
                 $labels[] = $isHourly ? $dt->format('H:i') : $dt->format('d M');
             } catch (\Throwable $e) {
-                $labels[] = (string) $row->bucket_time;
+                $labels[] = (string) $key;
             }
 
-            $requests[] = (int) $row->req_count;
-            $bandwidthMb[] = round(((int) $row->byte_sum) / (1024 * 1024), 2);
-            $latencies[] = round((float) $row->avg_latency, 2);
-            $status2xx[] = (int) $row->s2xx;
-            $status3xx[] = (int) $row->s3xx;
-            $status4xx[] = (int) $row->s4xx;
-            $status5xx[] = (int) $row->s5xx;
+            $requests[] = $bucket['req_count'];
+            $bandwidthMb[] = round($bucket['byte_sum'] / (1024 * 1024), 2);
+            $latencies[] = round($bucket['avg_latency'], 2);
+            $visitors[] = $bucket['visitor_count'];
+            $status2xx[] = $bucket['s2xx'];
+            $status3xx[] = $bucket['s3xx'];
+            $status4xx[] = $bucket['s4xx'];
+            $status5xx[] = $bucket['s5xx'];
         }
 
         if (empty($labels)) {
@@ -286,6 +345,7 @@ class DatabaseTrafficAnalytics
             $requests = [0];
             $bandwidthMb = [0];
             $latencies = [0];
+            $visitors = [0];
             $status2xx = [0];
             $status3xx = [0];
             $status4xx = [0];
@@ -297,6 +357,7 @@ class DatabaseTrafficAnalytics
             'requests'     => $requests,
             'bandwidth_mb' => $bandwidthMb,
             'latency'      => $latencies,
+            'visitors'     => $visitors,
             'status_2xx'   => $status2xx,
             'status_3xx'   => $status3xx,
             'status_4xx'   => $status4xx,
@@ -374,6 +435,10 @@ class DatabaseTrafficAnalytics
         $end = null;
 
         switch ($range) {
+            case '1h':
+                $start = $now->copy()->subHour();
+                $end = $now->copy();
+                break;
             case '6h':
                 $start = $now->copy()->subHours(6);
                 $end = $now->copy();

@@ -393,6 +393,13 @@
 
                     <!-- Right Controls: Add Filter, Range Dropdown, Export -->
                     <div class="flex items-center gap-2">
+                        <!-- Data source switcher -->
+                        <select onchange="switchDataSource(this.value)" title="Analytics data source"
+                                class="text-xs px-2 py-1.5 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-md text-slate-700 dark:text-slate-300 focus:outline-none">
+                            <option value="database" {{ ($source ?? 'database') === 'database' ? 'selected' : '' }}>Database</option>
+                            <option value="file" {{ ($source ?? 'database') === 'file' ? 'selected' : '' }}>Server log file</option>
+                        </select>
+
                         <!-- Add Filter Button -->
                         <button type="button" onclick="document.getElementById('quickFilterInput').classList.toggle('hidden'); document.getElementById('quickFilterInput').focus();"
                                 class="inline-flex items-center gap-1 px-3 py-1.5 text-xs font-medium text-slate-700 dark:text-slate-300 bg-white dark:bg-slate-800 hover:bg-slate-50 dark:hover:bg-slate-700 border border-slate-200 dark:border-slate-700 rounded-md shadow-sm transition">
@@ -410,8 +417,12 @@
                                 <span id="rangeLabel">
                                     @if(($timeRange ?? '24h') === '1h') Last 1 hour
                                     @elseif(($timeRange ?? '24h') === '6h') Last 6 hours
+                                    @elseif(($timeRange ?? '24h') === '12h') Last 12 hours
+                                    @elseif(($timeRange ?? '24h') === 'today') Today
                                     @elseif(($timeRange ?? '24h') === '7d') Last 7 days
                                     @elseif(($timeRange ?? '24h') === '30d') Last 30 days
+                                    @elseif(($timeRange ?? '24h') === 'all') All time
+                                    @elseif(($timeRange ?? '24h') === 'custom') Custom range
                                     @else Last 24 hours
                                     @endif
                                 </span>
@@ -422,13 +433,25 @@
                                 <a href="{{ route('lwa_dashboard', ['range' => '1h']) }}" class="block px-3 py-1.5 text-xs text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-700">Last 1 hour</a>
                                 <a href="{{ route('lwa_dashboard', ['range' => '6h']) }}" class="block px-3 py-1.5 text-xs text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-700">Last 6 hours</a>
                                 <a href="{{ route('lwa_dashboard', ['range' => '24h']) }}" class="block px-3 py-1.5 text-xs font-semibold text-blue-600 dark:text-blue-400 hover:bg-slate-100 dark:hover:bg-slate-700">Last 24 hours</a>
+                                <a href="{{ route('lwa_dashboard', ['range' => 'today']) }}" class="block px-3 py-1.5 text-xs text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-700">Today</a>
                                 <a href="{{ route('lwa_dashboard', ['range' => '7d']) }}" class="block px-3 py-1.5 text-xs text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-700">Last 7 days</a>
                                 <a href="{{ route('lwa_dashboard', ['range' => '30d']) }}" class="block px-3 py-1.5 text-xs text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-700">Last 30 days</a>
+                                <a href="{{ route('lwa_dashboard', ['range' => 'all']) }}" class="block px-3 py-1.5 text-xs text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-700">All time</a>
+                                <button type="button" onclick="document.getElementById('customRangeFields').classList.toggle('hidden')" class="w-full text-left block px-3 py-1.5 text-xs text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-700">Custom range...</button>
+                            </div>
+                            <div id="customRangeFields" class="absolute right-0 mt-1 w-64 rounded-md bg-white dark:bg-slate-800 shadow-lg border border-slate-200 dark:border-slate-700 z-50 p-2.5 {{ ($timeRange ?? '24h') === 'custom' ? '' : 'hidden' }}">
+                                <div class="text-[11px] font-semibold text-slate-600 dark:text-slate-300 mb-2">Custom date range</div>
+                                <div class="flex items-center gap-1.5">
+                                    <input type="date" id="customStartDate" value="{{ $customStart ?? '' }}" class="w-full text-[11px] px-1.5 py-1 border border-slate-200 dark:border-slate-700 rounded bg-white dark:bg-slate-900 text-slate-700 dark:text-slate-200">
+                                    <span class="text-slate-400 text-xs">to</span>
+                                    <input type="date" id="customEndDate" value="{{ $customEnd ?? '' }}" class="w-full text-[11px] px-1.5 py-1 border border-slate-200 dark:border-slate-700 rounded bg-white dark:bg-slate-900 text-slate-700 dark:text-slate-200">
+                                </div>
+                                <button type="button" onclick="applyCustomRange()" class="mt-2 w-full px-2 py-1 text-[11px] font-semibold text-white bg-[#0051c3] hover:bg-[#003d94] rounded">Apply</button>
                             </div>
                         </div>
 
                         <!-- Export to CSV -->
-                        <a href="{{ route('lwa_export', array_filter(['range' => $timeRange ?? '24h', 'tenant_id' => $tenantId ?? null])) }}" 
+                        <a href="{{ route('lwa_export', array_filter(['range' => $timeRange ?? '24h', 'tenant_id' => $tenantId ?? null, 'start_date' => $customStart ?? null, 'end_date' => $customEnd ?? null])) }}" 
                            class="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium text-slate-700 dark:text-slate-300 bg-white dark:bg-slate-800 hover:bg-slate-50 dark:hover:bg-slate-700 border border-slate-200 dark:border-slate-700 rounded-md shadow-sm transition"
                            title="Export filtered logs to CSV">
                             <i class="bx bx-download text-sm"></i> Export
@@ -452,9 +475,6 @@
                                 <div class="text-[11px] font-medium text-slate-500 dark:text-slate-400">Total requests</div>
                                 <div class="flex items-baseline gap-2 mt-1">
                                     <span class="text-2xl font-bold text-slate-900 dark:text-white" id="kpiRequests">{{ $analytics['summary']['total_requests_fmt'] ?? '0' }}</span>
-                                    <span class="text-[11px] font-medium text-rose-500 dark:text-rose-400 flex items-center">
-                                        <i class="bx bx-down-arrow-alt text-xs"></i> 30.9%
-                                    </span>
                                 </div>
                             </div>
                             <div id="sparklineRequests" class="mt-2 h-7 w-full"></div>
@@ -466,9 +486,6 @@
                                 <div class="text-[11px] font-medium text-slate-500 dark:text-slate-400">Total data transfer</div>
                                 <div class="flex items-baseline gap-2 mt-1">
                                     <span class="text-2xl font-bold text-slate-900 dark:text-white" id="kpiBytes">{{ $analytics['summary']['total_bytes_fmt'] ?? '0 B' }}</span>
-                                    <span class="text-[11px] font-medium text-rose-500 dark:text-rose-400 flex items-center">
-                                        <i class="bx bx-down-arrow-alt text-xs"></i> 78.6%
-                                    </span>
                                 </div>
                             </div>
                             <div id="sparklineBytes" class="mt-2 h-7 w-full"></div>
@@ -480,9 +497,6 @@
                                 <div class="text-[11px] font-medium text-slate-500 dark:text-slate-400">Total visits</div>
                                 <div class="flex items-baseline gap-2 mt-1">
                                     <span class="text-2xl font-bold text-slate-900 dark:text-white" id="kpiVisits">{{ $analytics['summary']['unique_visitors_fmt'] ?? '0' }}</span>
-                                    <span class="text-[11px] font-medium text-emerald-600 dark:text-emerald-400 flex items-center">
-                                        <i class="bx bx-up-arrow-alt text-xs"></i> 170.4%
-                                    </span>
                                 </div>
                             </div>
                             <div id="sparklineVisits" class="mt-2 h-7 w-full"></div>
@@ -494,9 +508,6 @@
                                 <div class="text-[11px] font-medium text-slate-500 dark:text-slate-400">Success rate (2xx)</div>
                                 <div class="flex items-baseline gap-2 mt-1">
                                     <span class="text-2xl font-bold text-slate-900 dark:text-white" id="kpiSuccessRate">{{ $analytics['summary']['success_rate'] ?? '100' }}%</span>
-                                    <span class="text-[11px] font-medium text-emerald-600 dark:text-emerald-400 flex items-center">
-                                        <i class="bx bx-up-arrow-alt text-xs"></i> 99.8%
-                                    </span>
                                 </div>
                             </div>
                             <div class="mt-2 h-7 flex items-center text-[10px] text-slate-400">
@@ -511,9 +522,6 @@
                                 <div class="flex items-baseline gap-2 mt-1">
                                     <span class="text-2xl font-bold text-slate-900 dark:text-white" id="kpi5xxRate">
                                         {{ number_format(($analytics['summary']['total_requests'] ?? 0) > 0 ? (($analytics['summary']['status_counts']['5xx'] ?? 0) / $analytics['summary']['total_requests']) * 100 : 0, 2) }}%
-                                    </span>
-                                    <span class="text-[11px] font-medium text-emerald-600 dark:text-emerald-400 flex items-center">
-                                        <i class="bx bx-down-arrow-alt text-xs"></i> 0.0%
                                     </span>
                                 </div>
                             </div>
@@ -639,10 +647,10 @@
                         </div>
 
                         <div class="bg-white dark:bg-[#111827] border border-slate-200 dark:border-slate-800 rounded-lg p-4 shadow-sm">
-                            <div class="text-xs font-medium text-slate-500 dark:text-slate-400">Active Live Visitors (Last 5m)</div>
+                            <div class="text-xs font-medium text-slate-500 dark:text-slate-400">Active Live Visitors (Last {{ config('laravel-web-analytics.active_visitor_window', 5) }}m)</div>
                             <div class="flex items-center gap-2 mt-1">
                                 <span class="live-dot"></span>
-                                <span class="text-2xl font-bold text-emerald-600 dark:text-emerald-400" id="liveVisitorTabCounter">{{ $analytics['summary']['live_visitors_fmt'] ?? '1' }}</span>
+                                <span class="text-2xl font-bold text-emerald-600 dark:text-emerald-400" id="liveVisitorTabCounter">{{ $analytics['summary']['live_visitors_fmt'] ?? '0' }}</span>
                             </div>
                             <div class="text-[11px] text-slate-400 mt-1">Real-time active users currently browsing</div>
                         </div>
@@ -917,11 +925,29 @@
             }
         })();
 
+        // 5. Custom range & source switchers
+        function applyCustomRange() {
+            const start = document.getElementById('customStartDate')?.value;
+            const end = document.getElementById('customEndDate')?.value;
+            const url = new URL("{{ route('lwa_dashboard') }}", window.location.origin);
+            url.searchParams.set('range', 'custom');
+            if (start) url.searchParams.set('start_date', start);
+            if (end) url.searchParams.set('end_date', end);
+            window.location.href = url.toString();
+        }
+
+        function switchDataSource(source) {
+            const url = new URL(window.location.href);
+            url.searchParams.set('source', source);
+            window.location.href = url.toString();
+        }
+
         // ============ APEXCHARTS CONFIGURATION ============
         const timeLabels = {!! json_encode($analytics['time_series']['labels'] ?? ['No Data']) !!};
         const requestsData = {!! json_encode($analytics['time_series']['requests'] ?? [0]) !!};
         const bandwidthData = {!! json_encode($analytics['time_series']['bandwidth_mb'] ?? [0]) !!};
         const latencyData = {!! json_encode($analytics['time_series']['latency'] ?? [0]) !!};
+        const visitorsData = {!! json_encode($analytics['sparklines']['visitors'] ?? $analytics['time_series']['visitors'] ?? [0]) !!};
 
         const status2xx = {!! json_encode($analytics['time_series']['status_2xx'] ?? [0]) !!};
         const status3xx = {!! json_encode($analytics['time_series']['status_3xx'] ?? [0]) !!};
@@ -1113,13 +1139,13 @@
 
         renderSparkline('#sparklineRequests', requestsData, '#0051c3');
         renderSparkline('#sparklineBytes', bandwidthData, '#0051c3');
-        renderSparkline('#sparklineVisits', requestsData, '#0051c3');
+        renderSparkline('#sparklineVisits', visitorsData, '#0051c3');
 
         // ============ REAL-TIME SSE STREAM ============
         (function() {
             let lastTrafficId = {{ \Nafiur\WebAnalytics\Models\LwaLogs::forTenant($tenantId ?? null)->max('id') ?? 0 }};
             let sseSource = null;
-            let currentTenantId = "{{ $tenantId ?? '' }}";
+            let currentTenantId = {!! json_encode((string) ($tenantId ?? '')) !!};
 
             function startSSE() {
                 if (!window.EventSource) return;

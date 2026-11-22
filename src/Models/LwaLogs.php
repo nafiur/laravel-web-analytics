@@ -15,7 +15,6 @@ class LwaLogs extends Model
         'status_code'      => 'integer',
         'response_time_ms' => 'float',
         'bytes_sent'       => 'integer',
-        'user_id'          => 'integer',
         'created_at'       => 'datetime',
         'updated_at'       => 'datetime',
     ];

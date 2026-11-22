@@ -65,6 +65,10 @@ class TrackWebTraffic
             if ($request->ajax() && !config('laravel-web-analytics.capture.ajax', true)) {
                 return;
             }
+            if (!$request->is('api/*') && !$request->expectsJson() && !$request->ajax()
+                && !config('laravel-web-analytics.capture.web', true)) {
+                return;
+            }
 
             $startTime = $request->attributes->get('_lwa_start_time', defined('LARAVEL_START') ? constant('LARAVEL_START') : microtime(true));
             $durationMs = round((microtime(true) - $startTime) * 1000, 2);
@@ -116,9 +120,14 @@ class TrackWebTraffic
             $rawReferrer = $request->headers->get('referer');
             $referrer = $rawReferrer ? substr($rawReferrer, 0, 490) : 'Direct';
 
-            // Alert on server errors (5xx)
-            if ($response->getStatusCode() >= 500) {
-                AlertService::notifyErrorSpike($response->getStatusCode(), $request->fullUrl(), $ip);
+            // Alerts (disabled by default). Counters and dedupe keep webhook
+            // traffic bounded even during an outage.
+            if (config('laravel-web-analytics.alerts.enabled', false)) {
+                AlertService::recordRequest($response->getStatusCode() >= 500);
+                AlertService::maybeNotifySpike($request->fullUrl(), $ip);
+                if ($response->getStatusCode() >= 500) {
+                    AlertService::notifyErrorSpike($response->getStatusCode(), $request->fullUrl(), $ip);
+                }
             }
 
             // Resolve tenant identifier if multi-tenancy is enabled
@@ -187,19 +196,23 @@ class TrackWebTraffic
      */
     protected function resolveClientIp(Request $request): string
     {
-        $headers = ['HTTP_CF_CONNECTING_IP', 'HTTP_X_REAL_IP'];
-        foreach ($headers as $header) {
-            $candidate = $request->server($header);
-            if ($candidate && filter_var($candidate, FILTER_VALIDATE_IP)) {
-                return $candidate;
+        // Forwarded headers are only honored when explicitly trusted. Laravel's
+        // Request::ip() already respects the application's trusted-proxy config.
+        if (config('laravel-web-analytics.capture.trust_forwarded_headers', false)) {
+            $headers = ['HTTP_CF_CONNECTING_IP', 'HTTP_X_REAL_IP'];
+            foreach ($headers as $header) {
+                $candidate = $request->server($header);
+                if ($candidate && filter_var($candidate, FILTER_VALIDATE_IP)) {
+                    return $candidate;
+                }
             }
-        }
 
-        if ($forwarded = $request->server('HTTP_X_FORWARDED_FOR')) {
-            $parts = explode(',', $forwarded);
-            $candidate = trim($parts[0]);
-            if (filter_var($candidate, FILTER_VALIDATE_IP)) {
-                return $candidate;
+            if ($forwarded = $request->server('HTTP_X_FORWARDED_FOR')) {
+                $parts = explode(',', $forwarded);
+                $candidate = trim($parts[0]);
+                if (filter_var($candidate, FILTER_VALIDATE_IP)) {
+                    return $candidate;
+                }
             }
         }
 

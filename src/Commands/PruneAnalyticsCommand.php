@@ -22,7 +22,10 @@ class PruneAnalyticsCommand extends Command
      */
     public function handle(): int
     {
-        $days = (int) ($this->option('days') ?: config('laravel-web-analytics.retention_days', 30));
+        $daysOption = $this->option('days');
+        $days = max(1, (int) ($daysOption !== null && $daysOption !== ''
+            ? $daysOption
+            : config('laravel-web-analytics.retention_days', 30)));
         $tenantId = $this->option('tenant');
 
         $msg = "Pruning web analytics logs older than {$days} days";

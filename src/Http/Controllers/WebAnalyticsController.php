@@ -22,6 +22,48 @@ class WebAnalyticsController extends Controller
     }
 
     /**
+     * Resolve the tenant used to scope dashboard data.
+     *
+     * Explicit tenant IDs are ignored unless an authorizer callback has been
+     * configured. This prevents cross-tenant data exposure via query strings
+     * or spoofable headers.
+     */
+    protected function resolveDashboardTenant(Request $request): ?string
+    {
+        $trusted = TenantResolver::isEnabled()
+            ? TenantResolver::resolveTrusted($request)
+            : null;
+
+        $requested = $request->input('tenant_id');
+        if (!is_scalar($requested) || $requested === '') {
+            return $trusted;
+        }
+
+        $requested = (string) $requested;
+        $authorizer = config('laravel-web-analytics.multi_tenancy.tenant_override_authorizer');
+
+        try {
+            if (is_callable($authorizer)) {
+                if (call_user_func($authorizer, $requested, $trusted, $request) === true) {
+                    return $requested;
+                }
+            } elseif (is_string($authorizer) && class_exists($authorizer)) {
+                $instance = app($authorizer);
+                $allowed = method_exists($instance, 'authorize')
+                    ? $instance->authorize($requested, $trusted, $request)
+                    : (is_callable($instance) ? $instance($requested, $trusted, $request) : false);
+                if ($allowed === true) {
+                    return $requested;
+                }
+            }
+        } catch (\Throwable $e) {
+            // Fail closed: never grant cross-tenant access on authorizer errors.
+        }
+
+        return $trusted;
+    }
+
+    /**
      * Display the Web Analytics Dashboard.
      */
     public function index(Request $request)
@@ -30,7 +72,7 @@ class WebAnalyticsController extends Controller
         $customStart = $request->input('start_date');
         $customEnd = $request->input('end_date');
         $source = $request->input('source', 'database'); // 'database' or 'file'
-        $tenantId = $request->input('tenant_id') ?: TenantResolver::resolve($request);
+        $tenantId = $this->resolveDashboardTenant($request);
 
         if ($source === 'file') {
             $analytics = $this->logParser->getDashboardData($timeRange, $customStart, $customEnd);
@@ -72,7 +114,7 @@ class WebAnalyticsController extends Controller
         $customStart = $request->input('start_date');
         $customEnd = $request->input('end_date');
         $source = $request->input('source', 'database');
-        $tenantId = $request->input('tenant_id') ?: TenantResolver::resolve($request);
+        $tenantId = $this->resolveDashboardTenant($request);
 
         if ($source === 'file') {
             $analytics = $this->logParser->getDashboardData($timeRange, $customStart, $customEnd);
@@ -96,22 +138,24 @@ class WebAnalyticsController extends Controller
             session_write_close();
         }
 
-        $tenantId = $request->input('tenant_id') ?: TenantResolver::resolve($request);
+        $tenantId = $this->resolveDashboardTenant($request);
 
         $lastId = (int) $request->input('last_id', 0);
+        if ($lastId <= 0) {
+            $lastId = (int) ($request->header('Last-Event-ID') ?: 0);
+        }
         if ($lastId <= 0) {
             $lastId = (int) (LwaLogs::forTenant($tenantId)->max('id') ?? 0);
         }
 
         return response()->stream(function () use ($lastId, $tenantId) {
             $currentLastId = $lastId;
-            $iterations = 0;
-            $maxIterations = 25; // Stream for ~25s, then EventSource reconnects cleanly
+            $streamStartedAt = microtime(true);
+            $maxDuration = 50; // seconds; EventSource reconnects cleanly afterwards
+            $formatter = new DatabaseTrafficAnalytics();
+            $activeWindow = max(1, (int) config('laravel-web-analytics.active_visitor_window', 5));
 
-            while ($iterations < $maxIterations) {
-                if (connection_aborted()) {
-                    break;
-                }
+            while (!connection_aborted() && (microtime(true) - $streamStartedAt) < $maxDuration) {
 
                 // Check for new incoming requests scoped by tenant
                 $newLogs = LwaLogs::forTenant($tenantId)
@@ -131,7 +175,7 @@ class WebAnalyticsController extends Controller
                             'path'             => $log->path,
                             'status_code'      => $log->status_code,
                             'response_time_ms' => $log->response_time_ms,
-                            'bytes_sent_fmt'   => (new DatabaseTrafficAnalytics())->formatBytes($log->bytes_sent),
+                            'bytes_sent_fmt'   => $formatter->formatBytes($log->bytes_sent),
                             'ip_address'       => $log->ip_address,
                             'browser'          => $log->browser,
                             'os'               => $log->os,
@@ -153,31 +197,32 @@ class WebAnalyticsController extends Controller
                         'last_id' => $currentLastId,
                     ]) . "\n\n";
 
-                    // Send updated live stats scoped by tenant
-                    $liveVisitors = LwaLogs::forTenant($tenantId)
-                        ->where('created_at', '>=', now()->subMinutes(config('laravel-web-analytics.active_visitor_window', 5)))
-                        ->distinct()
-                        ->count(DB::raw('COALESCE(session_id, ip_address)'));
-                    $totalCount = LwaLogs::forTenant($tenantId)->count();
-
-                    echo "event: stats\n";
-                    echo "data: " . json_encode([
-                        'live_visitors'  => max(1, $liveVisitors),
-                        'total_requests' => $totalCount,
-                    ]) . "\n\n";
                 } else {
                     // Lightweight keepalive ping
                     echo "event: ping\n";
                     echo "data: {\"time\":\"" . now()->toIso8601String() . "\",\"last_id\":{$currentLastId}}\n\n";
                 }
 
+                // Emit stats on every tick so the live visitor count can decay
+                // even when no new requests are arriving.
+                $liveVisitors = LwaLogs::forTenant($tenantId)
+                    ->where('created_at', '>=', now()->subMinutes($activeWindow))
+                    ->distinct()
+                    ->count(DB::raw('COALESCE(session_id, ip_address)'));
+                $totalCount = LwaLogs::forTenant($tenantId)->count();
+
+                echo "event: stats\n";
+                echo "data: " . json_encode([
+                    'live_visitors'  => $liveVisitors,
+                    'total_requests' => $totalCount,
+                ]) . "\n\n";
+
                 if (ob_get_level() > 0) {
                     ob_flush();
                 }
                 flush();
 
-                sleep((int) config('laravel-web-analytics.stream_interval', 2));
-                $iterations++;
+                sleep(max(1, (int) config('laravel-web-analytics.stream_interval', 2)));
             }
         }, 200, [
             'Content-Type'      => 'text/event-stream',
@@ -194,7 +239,7 @@ class WebAnalyticsController extends Controller
     {
         $timeRange = $request->input('range', '24h');
         $fileName = 'web_analytics_report_' . date('Y-m-d_His') . '.csv';
-        $tenantId = $request->input('tenant_id') ?: TenantResolver::resolve($request);
+        $tenantId = $this->resolveDashboardTenant($request);
 
         $cutoff = (new DatabaseTrafficAnalytics())->resolveCutoffTime($timeRange, $request->input('start_date'), $request->input('end_date'));
         $query = LwaLogs::forTenant($tenantId);
@@ -231,7 +276,7 @@ class WebAnalyticsController extends Controller
             $file = fopen('php://output', 'w');
             fputcsv($file, $columns);
 
-            $query->chunk(500, function ($logs) use ($file, $sanitize) {
+            $query->chunkById(500, function ($logs) use ($file, $sanitize) {
                 foreach ($logs as $log) {
                     fputcsv($file, [
                         $log->id,

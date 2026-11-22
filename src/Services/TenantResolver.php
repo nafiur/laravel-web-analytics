@@ -15,9 +15,24 @@ class TenantResolver
     }
 
     /**
-     * Resolve the current tenant identifier.
+     * Resolve a tenant from trusted, server-side framework context only.
+     *
+     * Request headers, query parameters and route parameters are deliberately
+     * excluded: they are client-controlled and must never be used to authorize
+     * access to a tenant's analytics data.
      */
-    public static function resolve(?Request $request = null): ?string
+    public static function resolveTrusted(?Request $request = null): ?string
+    {
+        return self::resolve($request, true);
+    }
+
+    /**
+     * Resolve the current tenant identifier.
+     *
+     * @param bool $trustedOnly When true, client-controlled request signals
+     *                          (headers, attributes, route params) are ignored.
+     */
+    public static function resolve(?Request $request = null, bool $trustedOnly = false): ?string
     {
         if (!self::isEnabled()) {
             return null;
@@ -152,7 +167,8 @@ class TenantResolver
         } catch (\Throwable $e) {}
 
         // 8. Auto-detect from Request (Route param, header, or attribute)
-        if ($request) {
+        // These are client-controlled and are skipped in trusted-only mode.
+        if ($request && !$trustedOnly) {
             try {
                 if ($header = $request->header('X-Tenant-ID') ?: $request->header('X-Tenant') ?: $request->header('X-Store-ID')) {
                     return (string) $header;

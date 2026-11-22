@@ -28,7 +28,8 @@ class GeoIpService
         if ($provider === 'ip-api') {
             return Cache::remember("lwa_geo_{$ip}", 86400, function () use ($ip, $default) {
                 try {
-                    $response = Http::timeout(2)->get("http://ip-api.com/json/{$ip}?fields=status,country,countryCode,city");
+                    $response = Http::timeout(max(1, (int) config('laravel-web-analytics.geoip.timeout', 1)))
+                        ->get("http://ip-api.com/json/{$ip}?fields=status,country,countryCode,city");
                     if ($response->successful() && $response->json('status') === 'success') {
                         return [
                             'country_code' => $response->json('countryCode'),

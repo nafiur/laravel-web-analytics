@@ -236,8 +236,9 @@ class WebAnalyticsLogParser
         $methodsCount = [];
 
         // Time Series Buckets (by hour or by day depending on range)
-        $isHourly = in_array($timeRange, ['24h', 'today', '12h', '6h']);
+        $isHourly = in_array($timeRange, ['1h', '6h', '12h', '24h', 'today'], true);
         $timeSeriesBuckets = [];
+        $bucketVisitorIps = [];
 
         foreach ($records as $r) {
             $totalBytes += $r['bytes'];
@@ -299,6 +300,54 @@ class WebAnalyticsLogParser
             if (isset($timeSeriesBuckets[$bucketKey][$stGroup])) {
                 $timeSeriesBuckets[$bucketKey][$stGroup]++;
             }
+
+            if (!isset($bucketVisitorIps[$bucketKey])) {
+                $bucketVisitorIps[$bucketKey] = [];
+            }
+            $bucketVisitorIps[$bucketKey][$r['ip']] = true;
+        }
+
+        // Fill empty periods so charts preserve real time gaps (capped).
+        if (!empty($timeSeriesBuckets)) {
+            $bucketKeys = array_keys($timeSeriesBuckets);
+            try {
+                $first = Carbon::parse($bucketKeys[0]);
+                $last = Carbon::parse(end($bucketKeys));
+                $first = $isHourly ? $first->startOfHour() : $first->startOfDay();
+                $last = $isHourly ? $last->startOfHour() : $last->startOfDay();
+
+                $cursor = $first->copy();
+                $filled = [];
+                $cap = 400;
+                while ($cursor->lte($last) && count($filled) < $cap) {
+                    $key = $cursor->format($isHourly ? 'Y-m-d H:00' : 'Y-m-d');
+                    if (!isset($timeSeriesBuckets[$key])) {
+                        $timeSeriesBuckets[$key] = [
+                            'label'     => $isHourly ? $cursor->format('H:i') : $cursor->format('d M'),
+                            'full_time' => $key,
+                            'requests'  => 0,
+                            'bytes'     => 0,
+                            '2xx'       => 0,
+                            '3xx'       => 0,
+                            '4xx'       => 0,
+                            '5xx'       => 0,
+                        ];
+                    }
+                    $filled[] = $key;
+                    $isHourly ? $cursor->addHour() : $cursor->addDay();
+                }
+
+                if (count($filled) < $cap) {
+                    foreach ($timeSeriesBuckets as $key => $bucket) {
+                        if (!in_array($key, $filled, true)) {
+                            unset($timeSeriesBuckets[$key]);
+                            unset($bucketVisitorIps[$key]);
+                        }
+                    }
+                }
+            } catch (\Throwable $e) {
+                // Keep sparse buckets on parsing failures.
+            }
         }
 
         // Sort time series chronologically
@@ -311,6 +360,10 @@ class WebAnalyticsLogParser
         // Sparklines data (last 12-24 points)
         $sparklineRequests = array_values(array_column($timeSeriesBuckets, 'requests'));
         $sparklineBytes = array_values(array_map(fn($b) => round($b / (1024 * 1024), 2), array_column($timeSeriesBuckets, 'bytes')));
+        $sparklineVisitors = array_values(array_map(
+            fn($key) => count($bucketVisitorIps[$key] ?? []),
+            array_keys($timeSeriesBuckets)
+        ));
 
         // Recent Logs (latest 20)
         $recentLogs = [];
@@ -401,8 +454,8 @@ class WebAnalyticsLogParser
                 'total_bytes_fmt'      => $this->formatBytes($totalBytes),
                 'unique_visitors'      => count($uniqueIps),
                 'unique_visitors_fmt'  => $this->formatNumber(count($uniqueIps)),
-                'live_visitors'        => max(1, count($uniqueIps)),
-                'live_visitors_fmt'    => number_format(max(1, count($uniqueIps))),
+                'live_visitors'        => count($uniqueIps),
+                'live_visitors_fmt'    => number_format(count($uniqueIps)),
                 'live_requests_5m'     => min($totalRequests, 20),
                 'avg_response_time'    => 0,
                 'error_rate'           => $errorRate,
@@ -419,6 +472,8 @@ class WebAnalyticsLogParser
                 'labels'    => array_values(array_column($timeSeriesBuckets, 'label')),
                 'requests'  => array_values(array_column($timeSeriesBuckets, 'requests')),
                 'bandwidth_mb' => array_values(array_map(fn($b) => round($b / (1024 * 1024), 2), array_column($timeSeriesBuckets, 'bytes'))),
+                'latency'   => array_fill(0, count($timeSeriesBuckets), 0),
+                'visitors'  => $sparklineVisitors,
                 'status_2xx'=> array_values(array_column($timeSeriesBuckets, '2xx')),
                 'status_3xx'=> array_values(array_column($timeSeriesBuckets, '3xx')),
                 'status_4xx'=> array_values(array_column($timeSeriesBuckets, '4xx')),
@@ -427,6 +482,7 @@ class WebAnalyticsLogParser
             'sparklines' => [
                 'requests' => $sparklineRequests,
                 'bytes'    => $sparklineBytes,
+                'visitors' => $sparklineVisitors,
             ],
             'breakdowns' => [
                 'top_paths'         => $this->formatBreakdownList($pathsCount, $totalRequests, 12),
@@ -471,6 +527,9 @@ class WebAnalyticsLogParser
         $end = null;
 
         switch ($range) {
+            case '1h':
+                $start = $now->copy()->subHour();
+                break;
             case '6h':
                 $start = $now->copy()->subHours(6);
                 break;
@@ -484,10 +543,10 @@ class WebAnalyticsLogParser
                 $start = $now->copy()->subHours(24);
                 break;
             case '7d':
-                $start = $now->copy()->subDays(7);
+                $start = $now->copy()->subDays(7)->startOfDay();
                 break;
             case '30d':
-                $start = $now->copy()->subDays(30);
+                $start = $now->copy()->subDays(30)->startOfDay();
                 break;
             case 'custom':
                 if ($customStart) {
@@ -647,6 +706,8 @@ class WebAnalyticsLogParser
                 'labels'     => [],
                 'requests'   => [],
                 'bandwidth_mb' => [],
+                'latency'    => [],
+                'visitors'   => [],
                 'status_2xx' => [],
                 'status_3xx' => [],
                 'status_4xx' => [],
@@ -655,6 +716,7 @@ class WebAnalyticsLogParser
             'sparklines' => [
                 'requests' => [],
                 'bytes'    => [],
+                'visitors' => [],
             ],
             'breakdowns' => [
                 'top_paths'        => [],

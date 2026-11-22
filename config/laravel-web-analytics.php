@@ -68,10 +68,18 @@ return [
     |
     */
     'capture' => [
-        'web'       => true,
+        'web'       => env('WEB_ANALYTICS_CAPTURE_WEB', true),
         'api'       => env('WEB_ANALYTICS_CAPTURE_API', true),
-        'ajax'      => true,
+        'ajax'      => env('WEB_ANALYTICS_CAPTURE_AJAX', true),
         'bots'      => env('WEB_ANALYTICS_CAPTURE_BOTS', false), // Set to false to avoid crawler noise
+
+        /*
+         | Only enable when you are certain the immediate peer is a trusted
+         | reverse proxy (e.g. Cloudflare). Otherwise CF-Connecting-IP and
+         | X-Forwarded-For can be spoofed by any client to poison analytics.
+         | Prefer configuring Laravel's trusted proxies instead.
+         */
+        'trust_forwarded_headers' => env('WEB_ANALYTICS_TRUST_FORWARDED_HEADERS', false),
     ],
 
     /*
@@ -147,13 +155,13 @@ return [
     | GeoIP / City Lookup Provider
     |--------------------------------------------------------------------------
     |
-    | Supported: 'cloudflare', 'ip-api', 'maxmind'
+    | Supported: 'cloudflare' (header-based, no HTTP call), 'ip-api'
     |
     */
     'geoip' => [
-        'enabled'         => env('WEB_ANALYTICS_GEOIP_ENABLED', true),
-        'provider'        => env('WEB_ANALYTICS_GEOIP_PROVIDER', 'cloudflare'), // 'cloudflare', 'ip-api'
-        'maxmind_db_path' => env('WEB_ANALYTICS_MAXMIND_DB', function_exists('storage_path') ? storage_path('app/GeoLite2-City.mmdb') : null),
+        'enabled' => env('WEB_ANALYTICS_GEOIP_ENABLED', true),
+        'provider' => env('WEB_ANALYTICS_GEOIP_PROVIDER', 'cloudflare'), // 'cloudflare', 'ip-api'
+        'timeout'  => env('WEB_ANALYTICS_GEOIP_TIMEOUT', 1),
     ],
 
     /*
@@ -193,7 +201,19 @@ return [
     */
     'multi_tenancy' => [
         'enabled'         => env('WEB_ANALYTICS_MULTI_TENANCY', false),
-        'tenant_column'   => 'tenant_id',
         'tenant_resolver' => null,
+
+        /*
+         | Optional opt-in authorizer for cross-tenant dashboard views.
+         |
+         | By default the dashboard ignores ?tenant_id= and X-Tenant-ID and only
+         | uses the tenant resolved from trusted server-side context. Set this to
+         | a callable (or a class exposing authorize()/__invoke()) that returns
+         | true when the current user may view the requested tenant, e.g.:
+         |
+         |   'tenant_override_authorizer' => fn ($requested, $resolved, $request) =>
+         |       auth()->user()?->is_admin === true,
+         */
+        'tenant_override_authorizer' => null,
     ],
 ];

@@ -22,10 +22,10 @@ A modern, fast, and self-hosted Web Traffic & Visitor Analytics Dashboard for La
 - 📊 **Comprehensive Metrics**: Total Requests, Unique Visitors, Bandwidth (Data Transferred in GB/MB), Avg Response Time, Error Rate.
 - 🧪 **Built-In Live Traffic Simulator**: Easily generate realistic live traffic every second with `php artisan lwa:live` to demo and test live streaming.
 - 🌍 **GeoIP & Location Provider**: Automatic country/city resolution with fallback support for Cloudflare headers and `ip-api`.
-- 🚨 **Instant Error Alerts**: Automatic Telegram, Slack, or Discord webhook alerts when 5xx server errors or traffic spikes occur.
+- 🚨 **Instant Error Alerts**: Telegram, Slack, or Discord webhook alerts on 5xx responses (deduplicated per URL/IP) and on error-rate spikes above a configurable threshold. Disabled by default.
 - 📥 **Export to CSV**: Download filtered analytics logs into structured CSV format via high-performance chunked streams.
 - 🧹 **Automatic Log Pruning**: Includes an Artisan command (`php artisan lwa:prune`) to maintain a clean database and prevent disk bloat.
-- ⚡ **Zero Latency Impact**: Non-blocking telemetry tracking using Laravel's `terminate()` hook, recording traffic *after* the HTTP response has been sent to the user.
+- ⚡ **Post-Response Telemetry**: Tracking runs in Laravel's `terminate()` hook, after the HTTP response is sent. Optional GeoIP lookups and webhook alerts still occupy the worker for up to their configured timeouts (1s / 3s by default); keep alerts disabled unless needed.
 - 🗄️ **Lightweight & Decoupled Storage**: Stores telemetry in the `lwa_logs` table without coupling to any specific User model, with GDPR-compliant IP anonymization options.
 - 🏢 **Multi-Tenancy Ready**: Native support for single-database multi-tenant applications (`stancl/tenancy`, `spatie/laravel-multitenancy`, or custom resolvers) with tenant-scoped dashboards and streams.
 
@@ -46,7 +46,7 @@ Install the package via Composer:
 composer require nafiur/laravel-web-analytics
 ```
 
-Publish configuration, migration, and views:
+Publish configuration and (optionally) views:
 
 ```bash
 php artisan vendor:publish --provider="Nafiur\WebAnalytics\WebAnalyticsServiceProvider"
@@ -58,14 +58,11 @@ Or publish selectively:
 # Publish configuration
 php artisan vendor:publish --tag=laravel-web-analytics-config
 
-# Publish migrations
-php artisan vendor:publish --tag=web-analytics-migrations
-
 # Publish views (optional, to customize dashboard UI)
 php artisan vendor:publish --tag=web-analytics-views
 ```
 
-Run database migrations to create the `lwa_logs` table:
+Migrations are auto-loaded by the service provider, so do **not** publish them — publishing would register the same migrations from two paths. Run database migrations to create the `lwa_logs` table:
 
 ```bash
 php artisan migrate
@@ -141,6 +138,12 @@ route('lwa_stream');
 route('lwa_export', ['range' => '24h']);
 ```
 
+### Data source & client IP
+
+By default the dashboard reads the `lwa_logs` database table. The **Data source** selector can switch to `?source=file`, which parses a web-server access log from `WEB_ANALYTICS_SERVER_LOG_PATH` (or a detected default path). Configure `WEB_ANALYTICS_MAX_LINES` to bound how much of the file is read.
+
+Client IP resolution uses Laravel's trusted-proxy configuration. Only enable `WEB_ANALYTICS_TRUST_FORWARDED_HEADERS=true` if the immediate peer is a trusted reverse proxy; otherwise `CF-Connecting-IP` / `X-Forwarded-For` can be spoofed by clients.
+
 ---
 
 ## 🧭 Dashboard Views & Cloudflare-Style Navigation
@@ -157,12 +160,16 @@ The dashboard features a clean, tabbed Cloudflare-style layout with segmented co
 
 ### Time Range Filtering
 Select from predefined or custom time ranges via the segmented dropdown:
+- **`1h`**: Last hour with hourly breakdown.
+- **`6h`** / **`12h`**: Last 6 or 12 hours.
 - **`24h`** (Default): Last 24 hours with clean hourly breakdown.
 - **`today`**: Today from midnight to current time.
 - **`7d`**: Last 7 days with daily trends.
 - **`30d`**: Last 30 days historical telemetry.
 - **`all`**: Complete all-time records.
-- **`custom`**: Choose custom `start_date` and `end_date` for arbitrary historical or forecasted periods.
+- **`custom`**: Choose custom `start_date` and `end_date` from the dashboard's range menu.
+
+Empty periods are zero-filled in charts so time gaps stay visible.
 
 ---
 
@@ -227,19 +234,20 @@ return [
      * Capture Settings (Web & API)
      */
     'capture' => [
-        'web'       => true,
-        'api'       => env('WEB_ANALYTICS_CAPTURE_API', true),
-        'ajax'      => true,
-        'bots'      => env('WEB_ANALYTICS_CAPTURE_BOTS', false),
+        'web'                     => env('WEB_ANALYTICS_CAPTURE_WEB', true),
+        'api'                     => env('WEB_ANALYTICS_CAPTURE_API', true),
+        'ajax'                    => env('WEB_ANALYTICS_CAPTURE_AJAX', true),
+        'bots'                    => env('WEB_ANALYTICS_CAPTURE_BOTS', false),
+        'trust_forwarded_headers' => env('WEB_ANALYTICS_TRUST_FORWARDED_HEADERS', false),
     ],
 
     /*
      * GeoIP & Location Provider
      */
     'geoip' => [
-        'enabled'         => env('WEB_ANALYTICS_GEOIP_ENABLED', true),
-        'provider'        => env('WEB_ANALYTICS_GEOIP_PROVIDER', 'cloudflare'), // 'cloudflare', 'ip-api'
-        'maxmind_db_path' => env('WEB_ANALYTICS_MAXMIND_DB', storage_path('app/GeoLite2-City.mmdb')),
+        'enabled'  => env('WEB_ANALYTICS_GEOIP_ENABLED', true),
+        'provider' => env('WEB_ANALYTICS_GEOIP_PROVIDER', 'cloudflare'), // 'cloudflare', 'ip-api'
+        'timeout'  => env('WEB_ANALYTICS_GEOIP_TIMEOUT', 1),
     ],
 
     /*
@@ -287,9 +295,9 @@ return [
      * Multi-Tenancy Support
      */
     'multi_tenancy' => [
-        'enabled'         => env('WEB_ANALYTICS_MULTI_TENANCY', false),
-        'tenant_column'   => 'tenant_id',
-        'tenant_resolver' => null, // Auto-detects stancl, spatie, or auth user
+        'enabled'                    => env('WEB_ANALYTICS_MULTI_TENANCY', false),
+        'tenant_resolver'            => null, // Auto-detects stancl, spatie, or auth user
+        'tenant_override_authorizer' => null, // Opt-in cross-tenant dashboard access
     ],
 ];
 ```
@@ -297,6 +305,8 @@ return [
 ---
 
 ## 🧹 Database Maintenance (Pruning)
+
+> Upgrading from an earlier release: `user_id` is now a nullable string column (up to 64 chars) so UUID / string user keys are supported. Existing installs must alter the column manually if they store non-integer identifiers.
 
 To keep your database lean, run the included prune command:
 
@@ -326,7 +336,7 @@ Click the **Export to CSV** button on the dashboard or directly access:
 GET /web-analytics/export?range=24h
 ```
 
-Supported ranges: `1h`, `6h`, `24h`, `7d`, `30d`.
+Supported ranges: `1h`, `6h`, `12h`, `24h`, `today`, `7d`, `30d`, `all`, `custom` (with `start_date` / `end_date`).
 
 ---
 
@@ -358,27 +368,54 @@ When enabled, the package automatically detects active tenants from:
 - **[stancl/tenancy](https://tenancyforlaravel.com/)**: `tenant('id')`
 - **[spatie/laravel-multitenancy](https://spatie.be/docs/laravel-multitenancy)**: `Tenant::current()?->id`
 - **Authenticated User**: `auth()->user()?->tenant_id` or `auth()->user()?->tenant?->id`
-- **Request Headers / Route**: `X-Tenant-ID` header or `{tenant}` route parameter
+- **Session / Request**: session keys or `X-Tenant-ID` header (telemetry tagging only — see below)
 
-### 3. Custom Tenant Resolver
+### 3. Dashboard Tenant Scoping (Security)
+
+Dashboard routes (`lwa_dashboard`, `lwa_data`, `lwa_stream`, `lwa_export`) **ignore** `?tenant_id=` and `X-Tenant-ID` by default. They only use tenant IDs resolved from trusted server-side context, so a user cannot view another tenant's analytics by editing the URL.
+
+For admin dashboards that legitimately need cross-tenant views, opt in with an authorizer callback that returns `true` only when the current user is allowed:
+
+```php
+'multi_tenancy' => [
+    'enabled'                    => true,
+    'tenant_resolver'            => null,
+    'tenant_override_authorizer' => fn ($requested, $resolved, $request) =>
+        $request->user()?->is_admin === true,
+],
+```
+
+The request value is accepted only when the callback returns exactly `true`; errors fail closed.
+
+### 4. Custom Tenant Resolver
 You can define a custom resolver callback in `config/laravel-web-analytics.php`:
 
 ```php
 'multi_tenancy' => [
     'enabled'         => env('WEB_ANALYTICS_MULTI_TENANCY', false),
-    'tenant_column'   => 'tenant_id',
     'tenant_resolver' => function ($request) {
         return session('current_tenant_uuid');
     },
 ],
 ```
 
-### 4. Tenant-Scoped Pruning
+### 5. Tenant-Scoped Pruning
 Prune logs for a specific tenant:
 
 ```bash
 php artisan lwa:prune --days=30 --tenant=tenant-uuid
 ```
+
+---
+
+## 🧪 Testing
+
+```bash
+composer install
+vendor/bin/phpunit
+```
+
+The test suite uses Orchestra Testbench with an in-memory SQLite database, so the `pdo_sqlite` PHP extension is required.
 
 ---
 

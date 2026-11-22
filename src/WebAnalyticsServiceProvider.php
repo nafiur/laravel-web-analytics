@@ -33,18 +33,14 @@ class WebAnalyticsServiceProvider extends ServiceProvider
                 __DIR__ . '/../config/laravel-web-analytics.php' => config_path('laravel-web-analytics.php'),
             ], 'laravel-web-analytics-config');
 
-            // Publish Migrations
-            $this->publishes([
-                __DIR__ . '/../database/migrations/' => database_path('migrations'),
-            ], 'web-analytics-migrations');
-
             // Publish Views
             $this->publishes([
                 __DIR__ . '/../resources/views' => resource_path('views/vendor/web-analytics'),
             ], 'web-analytics-views');
         }
 
-        // Load Migrations
+        // Migrations are auto-loaded on install. Do not also publish them,
+        // otherwise the same migration can be registered from two locations.
         $this->loadMigrationsFrom(__DIR__ . '/../database/migrations');
 
         // Load Views (support both 'web-analytics' and 'laravel-web-analytics' namespaces)

@@ -19,7 +19,7 @@ return new class extends Migration
                 $table->string('ip_address', 45)->nullable()->index();
                 $table->string('session_id', 100)->nullable()->index();
                 $table->string('tenant_id', 100)->nullable()->index();
-                $table->unsignedBigInteger('user_id')->nullable()->index();
+                $table->string('user_id', 64)->nullable()->index();
                 $table->string('method', 10)->default('GET');
                 $table->text('path')->nullable();
                 $table->text('full_url')->nullable();
