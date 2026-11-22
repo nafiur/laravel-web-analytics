@@ -191,6 +191,23 @@ return [
 
     /*
     |--------------------------------------------------------------------------
+    | v3 Schema (opt-in during migration)
+    |--------------------------------------------------------------------------
+    |
+    | When false (default), the v3 analytics tables are not created and the
+    | v2 request-log pipeline remains the only active store. Enable it only
+    | after reviewing the v3 blueprint and before running the upgrade command.
+    |
+    */
+    'v3' => [
+        'enabled'                  => env('WEB_ANALYTICS_V3_ENABLED', false),
+        'website_id'               => env('WEB_ANALYTICS_WEBSITE_ID', null),
+        'session_timeout_minutes'  => env('WEB_ANALYTICS_V3_SESSION_TIMEOUT', 30),
+        'bounce_max_duration_seconds' => env('WEB_ANALYTICS_V3_BOUNCE_MAX_SECONDS', 0),
+    ],
+
+    /*
+    |--------------------------------------------------------------------------
     | Settings Page
     |--------------------------------------------------------------------------
     |

@@ -34,6 +34,19 @@ A modern, fast, and self-hosted Web Traffic & Visitor Analytics Dashboard for La
 
 ---
 
+## 🚧 v3 preview (opt-in)
+
+The v3 data model is additive and disabled by default. Enable it only after reading the architecture blueprint:
+
+```env
+WEB_ANALYTICS_V3_ENABLED=true
+WEB_ANALYTICS_WEBSITE_ID=1
+```
+
+This creates separate `lwa_websites`, `lwa_visitors`, `lwa_sessions`, `lwa_pageviews`, `lwa_events`, hourly/daily rollup and upgrade-checkpoint tables. The legacy `lwa_logs` table is untouched; the v2 collector remains active until the upgrade command is available.
+
+Blueprint: `laravel-web-analytics-v3-blueprint.md` (on the planning desktop).
+
 ## 🎨 Design System
 
 | Topic | Choice |
