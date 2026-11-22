@@ -3,6 +3,13 @@
         const lwaStreamMode = {!! json_encode(config('laravel-web-analytics.stream.mode', 'sse')) !!};
         const lwaPollingInterval = {!! json_encode(config('laravel-web-analytics.stream.polling_interval', 5)) !!};
         const lwaDataUrl = "{{ route('lwa_data') }}";
+        const lwaInitialMapMarkers = {!! json_encode(collect($analytics['recent_logs'] ?? [])
+            ->filter(fn ($log) => !empty($log['latitude']) && !empty($log['longitude']))
+            ->map(fn ($log) => [
+                'lat'   => $log['latitude'],
+                'lng'   => $log['longitude'],
+                'label' => $log['city'] ?: ($log['country'] ?? 'Visitor'),
+            ])->values()->all()) !!};
 
         function lwaChart(selector, options) {
             const el = document.querySelector(selector);
@@ -536,38 +543,53 @@
         // Charts whose x-axis is the shared time series (used by timezone settings)
         window.lwaTimeCharts = [chartOverviewTraffic, chartRequests, chartBandwidth, chartStatus, chartLatency].filter(Boolean);
 
-        // ============ OFFLINE GEOIP LIVE MAP ============
+        // ============ OFFLINE GEOIP VISITOR MAPS ============
         (function() {
-            let map = null;
-            let located = 0;
+            const maps = {};
+            const counts = {};
 
             window.lwaInitLiveMap = function() {
-                if (!window.jsVectorMap || !document.getElementById('lwaLiveMap') || map) return;
-                try {
-                    map = new jsVectorMap({
-                        selector: '#lwaLiveMap',
-                        map: 'world',
-                        zoomButtons: true,
-                        regionStyle: {
-                            initial: { fill: '#cbd5e1', stroke: '#ffffff', strokeWidth: 0.5 },
-                            hover: { fill: '#94a3b8' }
-                        },
-                        markerStyle: { initial: { fill: '#4f46e5', stroke: '#ffffff', strokeWidth: 1, r: 5 } },
-                        markers: []
-                    });
-                } catch (err) { /* map library unavailable */ }
+                if (!window.jsVectorMap) return;
+
+                document.querySelectorAll('[data-lwa-map]').forEach(function(el) {
+                    const id = el.getAttribute('data-lwa-map');
+                    if (!id || maps[id]) return;
+
+                    try {
+                        maps[id] = new jsVectorMap({
+                            selector: '#' + id,
+                            map: 'world',
+                            zoomButtons: true,
+                            regionStyle: {
+                                initial: { fill: '#cbd5e1', stroke: '#ffffff', strokeWidth: 0.5 },
+                                hover: { fill: '#94a3b8' }
+                            },
+                            markerStyle: { initial: { fill: '#4f46e5', stroke: '#ffffff', strokeWidth: 1, r: 5 } },
+                            markers: []
+                        });
+                        counts[id] = 0;
+
+                        (window.lwaInitialMapMarkers || []).forEach(function(marker) {
+                            window.lwaAddMapMarker(marker.lat, marker.lng, marker.label, id);
+                        });
+                    } catch (err) { /* map library unavailable */ }
+                });
             };
 
-            window.lwaAddMapMarker = function(lat, lng, label) {
-                if (!map || !lat || !lng) return;
-                try {
-                    map.addMarker({ latLng: [Number(lat), Number(lng)], name: label || 'Visitor' });
-                    located++;
-                    const count = document.getElementById('lwaMapCount');
-                    const empty = document.getElementById('lwaMapEmpty');
-                    if (count) count.textContent = located + ' located';
-                    if (empty) empty.classList.add('hidden');
-                } catch (err) { /* ignore bad coordinates */ }
+            window.lwaAddMapMarker = function(lat, lng, label, targetId) {
+                if (!lat || !lng) return;
+
+                Object.keys(maps).forEach(function(id) {
+                    if (targetId && id !== targetId) return;
+                    try {
+                        maps[id].addMarker({ latLng: [Number(lat), Number(lng)], name: label || 'Visitor' });
+                        counts[id] = (counts[id] || 0) + 1;
+                        const count = document.getElementById(id + 'Count');
+                        const empty = document.getElementById(id + 'Empty');
+                        if (count) count.textContent = counts[id] + ' located';
+                        if (empty) empty.classList.add('hidden');
+                    } catch (err) { /* ignore bad coordinates */ }
+                });
             };
         })();
 

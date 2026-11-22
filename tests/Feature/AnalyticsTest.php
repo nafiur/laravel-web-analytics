@@ -239,7 +239,10 @@ class AnalyticsTest extends TestCase
             $this->assertStringContainsString($needle, $content);
         }
 
+        $overview = $this->get(route('lwa_overview'))->getContent();
         $this->assertStringContainsString('lwaConnectionBadge', $this->get(route('lwa_realtime'))->getContent());
+        $this->assertStringContainsString('lwaOverviewMap', $overview);
+        $this->assertStringContainsString('data-lwa-map="lwaOverviewMap"', $overview);
     }
 
     public function test_ip_breakdown_and_stream_include_country_flags(): void

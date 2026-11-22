@@ -34,6 +34,13 @@
                         @endforeach
                     </div>
 
+                    <!-- Visitor geography (uses the same offline GeoIP data as Real-time) -->
+                    @include('web-analytics::partials.visitors-map', [
+                        'mapId' => 'lwaOverviewMap',
+                        'title' => 'Visitors Map',
+                        'subtitle' => 'Approximate visitor locations from the latest requests in this period',
+                    ])
+
                     <!-- Traffic overview + top pages -->
                     <div class="grid grid-cols-1 lg:grid-cols-2 gap-4">
                         <div class="lwa-surface border lwa-border rounded-lg p-4 shadow-sm">
