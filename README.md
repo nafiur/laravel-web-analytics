@@ -127,8 +127,10 @@ Theme colors are exposed as CSS custom properties (`--lwa-*`) with `[data-theme=
 
 ## 📋 Requirements
 
-- PHP `^8.1 | ^8.2 | ^8.3 | ^8.4 | ^8.5`
-- Laravel `^9.0 | ^10.0 | ^11.0 | ^12.0 | ^13.0`
+- PHP `^8.2 | ^8.3 | ^8.4 | ^8.5`
+- Laravel `^11.0 | ^12.0 | ^13.0`
+
+> v2 applications on older PHP/Laravel versions should stay on the 2.x line and follow [UPGRADE.md](UPGRADE.md) when moving to v3.
 
 ---
 
