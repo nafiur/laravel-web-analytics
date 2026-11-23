@@ -24,7 +24,7 @@ All notable changes to this project are documented here. The format is based on 
 - **Token management** — `lwa:token` (`analytics:token`) lists, issues, rotates and revokes API tokens.
 - **Event reports** — Events & Goals / Conversions pages list actually recorded events instead of placeholder numbers.
 - **Documentation** — `ARCHITECTURE.md`, `UPGRADE.md` and this changelog.
-- **Testing** — PHPUnit + Orchestra Testbench; CI matrix across PHP 8.2–8.5 with SQLite, MySQL 8 and PostgreSQL 16, plus PHP 8.1 syntax checks.
+- **Testing** — PHPUnit + Orchestra Testbench; CI matrix across PHP 8.2–8.5 with SQLite, MySQL 8 and PostgreSQL 16, plus PHP 8.1 syntax checks. Full suite verified locally on all three databases (SQLite, MySQL 8, PostgreSQL 14+).
 
 ### Changed
 
