@@ -556,13 +556,20 @@
                     if (!id || maps[id]) return;
 
                     try {
+                        let highlighted = [];
+                        try {
+                            highlighted = JSON.parse(el.getAttribute('data-highlight-countries') || '[]');
+                        } catch (err) { highlighted = []; }
+
                         maps[id] = new jsVectorMap({
                             selector: '#' + id,
                             map: 'world',
                             zoomButtons: true,
+                            selectedRegions: highlighted,
                             regionStyle: {
                                 initial: { fill: '#cbd5e1', stroke: '#ffffff', strokeWidth: 0.5 },
-                                hover: { fill: '#94a3b8' }
+                                hover: { fill: '#94a3b8' },
+                                selected: { fill: '#f6821f' }
                             },
                             markerStyle: { initial: { fill: '#4f46e5', stroke: '#ffffff', strokeWidth: 1, r: 5 } },
                             markers: []

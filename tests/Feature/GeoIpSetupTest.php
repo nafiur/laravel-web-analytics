@@ -24,6 +24,25 @@ class GeoIpSetupTest extends TestCase
         $this->assertStringContainsString('city-level precision', $pending);
     }
 
+    public function test_map_receives_top_country_codes_for_highlighting(): void
+    {
+        $html = view('web-analytics::partials.visitors-map', [
+            'mapId' => 'highlightMap',
+            'analytics' => [
+                'breakdowns' => [
+                    'top_countries' => [
+                        ['name' => 'Bangladesh'],
+                        ['name' => 'United States'],
+                    ],
+                ],
+            ],
+        ])->render();
+
+        $this->assertStringContainsString('data-highlight-countries=', $html);
+        $this->assertStringContainsString('BD', $html);
+        $this->assertStringContainsString('US', $html);
+    }
+
     public function test_geoip_command_reports_reader_and_database_status(): void
     {
         $this->artisan('lwa:geoip')
