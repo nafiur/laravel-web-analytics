@@ -249,6 +249,10 @@ return [
         'provider'        => env('WEB_ANALYTICS_GEOIP_PROVIDER', ''), // '', 'ip-api', 'maxmind'
         'timeout'         => env('WEB_ANALYTICS_GEOIP_TIMEOUT', 1),
         'maxmind_db_path' => env('WEB_ANALYTICS_MAXMIND_DB', function_exists('storage_path') ? storage_path('app/GeoLite2-City.mmdb') : null),
+        'license_key'     => env('MAXMIND_LICENSE_KEY', null),
+        'account_id'      => env('MAXMIND_ACCOUNT_ID', null),
+        'auto_download'   => env('WEB_ANALYTICS_GEOIP_AUTO_DOWNLOAD', false),
+        'update_days'     => env('WEB_ANALYTICS_GEOIP_UPDATE_DAYS', 7),
     ],
 
     /*

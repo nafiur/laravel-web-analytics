@@ -15,6 +15,26 @@ class GeoIpSetupTest extends TestCase
             ->assertExitCode(1); // optional reader/db are not installed in the test suite
     }
 
+    public function test_auto_mode_is_disabled_by_config(): void
+    {
+        config()->set('laravel-web-analytics.geoip.auto_download', false);
+
+        $this->artisan('lwa:geoip', ['--auto' => true])
+            ->expectsOutputToContain('Automatic GeoIP download is disabled')
+            ->assertExitCode(0);
+    }
+
+    public function test_auto_mode_skips_when_no_license_is_configured(): void
+    {
+        config()->set('laravel-web-analytics.geoip.auto_download', true);
+        config()->set('laravel-web-analytics.geoip.license_key', null);
+        config()->set('laravel-web-analytics.geoip.maxmind_db_path', '/tmp/nonexistent-lwa-geoip.mmdb');
+
+        $this->artisan('lwa:geoip', ['--auto' => true])
+            ->expectsOutputToContain('no MAXMIND_LICENSE_KEY')
+            ->assertExitCode(0);
+    }
+
     public function test_geoip_alias_is_registered(): void
     {
         $this->artisan('analytics:geoip')->assertExitCode(1);

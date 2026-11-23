@@ -453,6 +453,10 @@ return [
         'provider'        => env('WEB_ANALYTICS_GEOIP_PROVIDER', ''), // '', 'ip-api', 'maxmind'
         'timeout'         => env('WEB_ANALYTICS_GEOIP_TIMEOUT', 1),
         'maxmind_db_path' => env('WEB_ANALYTICS_MAXMIND_DB', storage_path('app/GeoLite2-City.mmdb')),
+        'license_key'     => env('MAXMIND_LICENSE_KEY', null),
+        'account_id'      => env('MAXMIND_ACCOUNT_ID', null),
+        'auto_download'   => env('WEB_ANALYTICS_GEOIP_AUTO_DOWNLOAD', false),
+        'update_days'     => env('WEB_ANALYTICS_GEOIP_UPDATE_DAYS', 7),
     ],
 
     /*
@@ -545,6 +549,8 @@ php artisan lwa:geoip --install       # installs maxmind-db/reader
 php artisan lwa:geoip --download --license-key=YOUR_KEY
 # if your account requires an account ID:
 php artisan lwa:geoip --download --account-id=YOUR_ACCOUNT_ID
+# scheduled/auto mode (uses .env credentials, downloads only when missing or stale):
+php artisan lwa:geoip --auto
 # alias: php artisan analytics:geoip
 ```
 
@@ -555,7 +561,21 @@ WEB_ANALYTICS_GEOIP_PROVIDER=maxmind
 WEB_ANALYTICS_MAXMIND_DB=/absolute/path/to/GeoLite2-City.mmdb
 MAXMIND_LICENSE_KEY=your-key         # only needed for --download
 MAXMIND_ACCOUNT_ID=your-id           # only if your account requires it
+WEB_ANALYTICS_GEOIP_AUTO_DOWNLOAD=true
+WEB_ANALYTICS_GEOIP_UPDATE_DAYS=7
 ```
+
+### Automatic updates
+
+Set `WEB_ANALYTICS_GEOIP_AUTO_DOWNLOAD=true` and schedule the auto mode in `routes/console.php`:
+
+```php
+use Illuminate\Support\Facades\Schedule;
+
+Schedule::command('lwa:geoip --auto')->weekly();
+```
+
+It downloads only when the database file is missing or older than `WEB_ANALYTICS_GEOIP_UPDATE_DAYS` (default 7). With no license key configured, it logs a warning and exits successfully, so the scheduler stays green. When auto-download is disabled, `--auto` is a no-op.
 
 ### Full setup sequence
 

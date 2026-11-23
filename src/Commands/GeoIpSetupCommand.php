@@ -17,12 +17,17 @@ class GeoIpSetupCommand extends Command
                             {--download : Download GeoLite2-City.mmdb using a MaxMind license key}
                             {--license-key= : MaxMind license key (or set MAXMIND_LICENSE_KEY)}
                             {--account-id= : MaxMind account ID (or set MAXMIND_ACCOUNT_ID), if required}
-                            {--path= : Override the target .mmdb path}';
+                            {--path= : Override the target .mmdb path}
+                             {--auto : Scheduled mode - download only when the database is missing or stale}';
 
     protected $description = 'Set up offline MaxMind GeoIP for the visitors map';
 
     public function handle(): int
     {
+        if ($this->option('auto')) {
+            return $this->autoUpdate();
+        }
+
         $this->output->title('Laravel Web Analytics — Offline GeoIP setup');
 
         if ($this->option('install')) {
@@ -62,6 +67,47 @@ class GeoIpSetupCommand extends Command
         return self::SUCCESS;
     }
 
+    /**
+     * Scheduled mode: respect the config switch and only download when the
+     * database is missing or older than the configured interval.
+     */
+    private function autoUpdate(): int
+    {
+        if (!config('laravel-web-analytics.geoip.auto_download', false)) {
+            $this->line('Automatic GeoIP download is disabled (WEB_ANALYTICS_GEOIP_AUTO_DOWNLOAD).');
+
+            return self::SUCCESS;
+        }
+
+        $path = (string) config('laravel-web-analytics.geoip.maxmind_db_path', '');
+        if ($path === '') {
+            $this->output->warning('WEB_ANALYTICS_MAXMIND_DB is not configured.');
+
+            return self::SUCCESS;
+        }
+
+        $days = max(1, (int) config('laravel-web-analytics.geoip.update_days', 7));
+        $stale = !is_file($path) || (time() - filemtime($path)) > ($days * 86400);
+
+        if (!$stale) {
+            $this->line('GeoIP database is up to date (' . round((time() - filemtime($path)) / 86400, 1) . ' days old).');
+
+            return self::SUCCESS;
+        }
+
+        $license = (string) (config('laravel-web-analytics.geoip.license_key') ?: env('MAXMIND_LICENSE_KEY', ''));
+        if ($license === '') {
+            $this->output->warning('GeoIP database is stale but no MAXMIND_LICENSE_KEY is configured.');
+
+            return self::SUCCESS;
+        }
+
+        $accountId = (string) (config('laravel-web-analytics.geoip.account_id') ?: env('MAXMIND_ACCOUNT_ID', ''));
+        $ok = $this->downloadDatabase($path, $license, $accountId);
+
+        return $ok ? self::SUCCESS : self::FAILURE;
+    }
+
     private function installReader(): void
     {
         if (class_exists(\MaxMind\Db\Reader::class)) {
@@ -80,20 +126,20 @@ class GeoIpSetupCommand extends Command
         }
     }
 
-    private function downloadDatabase(string $path): void
+    private function downloadDatabase(string $path, ?string $license = null, ?string $accountId = null): bool
     {
-        $license = (string) ($this->option('license-key') ?: env('MAXMIND_LICENSE_KEY', ''));
+        $license ??= (string) ($this->option('license-key') ?: config('laravel-web-analytics.geoip.license_key') ?: env('MAXMIND_LICENSE_KEY', ''));
         if ($license === '') {
             $this->output->error('A MaxMind license key is required (--license-key or MAXMIND_LICENSE_KEY).');
-            return;
+            return false;
         }
         if ($path === '') {
             $this->output->error('Configure WEB_ANALYTICS_MAXMIND_DB or pass --path first.');
-            return;
+            return false;
         }
 
         $archive = tempnam(sys_get_temp_dir(), 'lwa_maxmind_') . '.tar.gz';
-        $accountId = (string) ($this->option('account-id') ?: env('MAXMIND_ACCOUNT_ID', ''));
+        $accountId ??= (string) ($this->option('account-id') ?: config('laravel-web-analytics.geoip.account_id') ?: env('MAXMIND_ACCOUNT_ID', ''));
         $url = 'https://download.maxmind.com/app/geoip_download?edition_id=GeoLite2-City'
             . '&license_key=' . urlencode($license)
             . ($accountId !== '' ? '&account_id=' . urlencode($accountId) : '')
@@ -141,8 +187,12 @@ class GeoIpSetupCommand extends Command
             }
 
             $this->line('GeoLite2-City.mmdb installed at ' . $path);
+
+            return true;
         } catch (\Throwable $e) {
             $this->output->error('GeoIP download failed: ' . $e->getMessage());
+
+            return false;
         } finally {
             @unlink($archive);
             if (isset($tar)) {
