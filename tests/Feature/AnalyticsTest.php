@@ -177,7 +177,7 @@ class AnalyticsTest extends TestCase
             'lwa_visitors'    => 'Top Client IPs',
             'lwa_sources'     => 'Top Referrers',
             'lwa_pages'       => 'Top Paths by Bandwidth',
-            'lwa_geography'   => 'GeoIP location is approximate',
+            'lwa_geography'   => 'lwaGeographyMap',
             'lwa_devices'     => 'Device Types',
             'lwa_campaigns'   => 'UTM Campaigns',
             'lwa_events'      => 'No events recorded yet',
