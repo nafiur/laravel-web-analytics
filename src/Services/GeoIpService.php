@@ -11,7 +11,7 @@ class GeoIpService
      *
      * @return array{country_code: ?string, country_name: ?string, city: ?string, latitude: ?float, longitude: ?float}
      */
-    public static function resolve(string $ip): array
+    public static function resolve(string $ip, ?string $countryHint = null): array
     {
         $default = [
             'country_code' => null,
@@ -23,17 +23,17 @@ class GeoIpService
 
         // Skip private or local IPs
         if (filter_var($ip, FILTER_VALIDATE_IP, FILTER_FLAG_NO_PRIV_RANGE | FILTER_FLAG_NO_RES_RANGE) === false) {
-            return $default;
+            return self::withFallback($default, $countryHint);
         }
 
         $provider = config('laravel-web-analytics.geoip.provider', '');
 
         if ($provider === 'maxmind') {
-            return self::resolveMaxMind($ip, $default);
+            return self::withFallback(self::resolveMaxMind($ip, $default), $countryHint);
         }
 
         if ($provider === 'ip-api') {
-            return Cache::remember("lwa_geo_{$ip}", 86400, function () use ($ip, $default) {
+            return self::withFallback(Cache::remember("lwa_geo_{$ip}", 86400, function () use ($ip, $default) {
                 try {
                     $response = Http::timeout(max(1, (int) config('laravel-web-analytics.geoip.timeout', 1)))
                         ->get("http://ip-api.com/json/{$ip}?fields=status,country,countryCode,city,lat,lon");
@@ -50,10 +50,35 @@ class GeoIpService
                     // Fail silently to prevent slowing down requests
                 }
                 return $default;
-            });
+            }), $countryHint);
         }
 
-        return $default;
+        return self::withFallback($default, $countryHint);
+    }
+
+    /**
+     * Fill missing coordinates from an approximate country centroid when a
+     * country hint is available (Cloudflare headers, stored country, etc.).
+     *
+     * @param array<string, mixed> $result
+     * @return array<string, mixed>
+     */
+    private static function withFallback(array $result, ?string $countryHint): array
+    {
+        if ($result['latitude'] !== null && $result['longitude'] !== null) {
+            return $result;
+        }
+
+        $centroid = CountryCoordinates::for($countryHint);
+        if ($centroid !== null) {
+            $result['latitude'] = $centroid['latitude'];
+            $result['longitude'] = $centroid['longitude'];
+            if ($result['country_code'] === null) {
+                $result['country_code'] = CountryFlag::code($countryHint);
+            }
+        }
+
+        return $result;
     }
 
     /** @param array<string, mixed> $default */

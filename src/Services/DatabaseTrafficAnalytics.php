@@ -140,7 +140,7 @@ class DatabaseTrafficAnalytics
             ->limit(20)
             ->get()
             ->map(function ($log) {
-                $geo = GeoIpService::resolve((string) $log->ip_address);
+                $geo = GeoIpService::resolve((string) $log->ip_address, $log->country);
                 $isAuth = !empty($log->user_id);
                 $userName = $isAuth ? "User #{$log->user_id}" : 'Guest';
                 return [
@@ -196,7 +196,7 @@ class DatabaseTrafficAnalytics
             ->limit(30)
             ->get()
             ->map(function ($log) {
-                $geo = GeoIpService::resolve((string) $log->ip_address);
+                $geo = GeoIpService::resolve((string) $log->ip_address, $log->country);
                 $isAuth = !empty($log->user_id);
                 $userName = $isAuth ? "User #{$log->user_id}" : 'Guest';
                 return [

@@ -18,6 +18,7 @@ All notable changes to this project are documented here. The format is based on 
 - **Benchmarking** — read-only `lwa:benchmark` command comparing aggregate vs raw scan timings.
 - **Preflight** — `lwa:doctor` (`analytics:doctor`, `--json`, `--repair`) prints an installer-style readiness report and can create missing advanced tables; guards across UI/API/commands handle unmigrated installs.
 - **GeoIP setup** — `lwa:geoip` (`analytics:geoip`) reports/checks offline MaxMind readiness and can install the optional reader or download GeoLite2-City.mmdb with a license key.
+- **Keyless map fallback** — country code/name resolves to an approximate country centroid, so visitors can be plotted without a MaxMind key, database or external API.
 - **Event reports** — Events & Goals / Conversions pages list actually recorded events instead of placeholder numbers.
 - **Documentation** — `ARCHITECTURE.md`, `UPGRADE.md` and this changelog.
 - **Testing** — PHPUnit + Orchestra Testbench; CI matrix across PHP 8.2–8.5 with SQLite, MySQL 8 and PostgreSQL 16, plus PHP 8.1 syntax checks.

@@ -117,6 +117,19 @@ class ServicesTest extends TestCase
         $this->assertStringContainsString('`1.2.3.4`', $text);
     }
 
+    public function test_country_hint_gives_keyless_approximate_coordinates(): void
+    {
+        config()->set('laravel-web-analytics.geoip.provider', 'maxmind');
+        config()->set('laravel-web-analytics.geoip.maxmind_db_path', '/nonexistent/GeoLite2-City.mmdb');
+
+        $geo = GeoIpService::resolve('8.8.8.8', 'Bangladesh');
+
+        $this->assertNotNull($geo['latitude']);
+        $this->assertNotNull($geo['longitude']);
+        $this->assertSame('BD', $geo['country_code']);
+        $this->assertNull(GeoIpService::resolve('8.8.8.8', 'Unknown')['latitude']);
+    }
+
     public function test_maxmind_provider_falls_back_safely_without_reader(): void
     {
         config()->set('laravel-web-analytics.geoip.provider', 'maxmind');

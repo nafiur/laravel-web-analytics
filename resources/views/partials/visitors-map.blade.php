@@ -2,7 +2,7 @@
     <div class="flex items-center justify-between mb-2">
         <div>
             <div class="text-xs font-semibold text-slate-800 dark:text-slate-200">{{ $title ?? 'Visitors Map' }}</div>
-            <p class="text-[11px] text-slate-400">{{ $subtitle ?? 'Approximate location from GeoIP data — no external API calls at lookup time' }}</p>
+            <p class="text-[11px] text-slate-400">{{ $subtitle ?? 'Approximate location — country-level when GeoIP data is limited, no external API calls at lookup time' }}</p>
         </div>
         <span id="{{ $mapId }}Count" class="text-[11px] font-mono text-slate-500">0 located</span>
     </div>

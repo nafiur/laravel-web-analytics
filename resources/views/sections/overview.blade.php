@@ -38,7 +38,7 @@
                     @include('web-analytics::partials.visitors-map', [
                         'mapId' => 'lwaOverviewMap',
                         'title' => 'Visitors Map',
-                        'subtitle' => 'Approximate visitor locations from the latest requests in this period',
+                        'subtitle' => 'Approximate visitor locations — country centroid when precise GeoIP is unavailable',
                     ])
 
                     <!-- Traffic overview + top pages -->

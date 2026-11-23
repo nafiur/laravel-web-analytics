@@ -296,7 +296,7 @@ class WebAnalyticsController extends Controller
 
             if ($newLogs->isNotEmpty()) {
                 $formattedLogs = $newLogs->map(function ($log) use ($formatter) {
-                    $geo = GeoIpService::resolve((string) $log->ip_address);
+                    $geo = GeoIpService::resolve((string) $log->ip_address, $log->country);
                     $isAuth = !empty($log->user_id);
                     $userName = $isAuth ? "User #{$log->user_id}" : 'Guest';
                     return [

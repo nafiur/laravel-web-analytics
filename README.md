@@ -552,7 +552,11 @@ WEB_ANALYTICS_MAXMIND_DB=/absolute/path/to/GeoLite2-City.mmdb
 MAXMIND_LICENSE_KEY=your-key         # only needed for --download
 ```
 
-`--download` fetches `GeoLite2-City.mmdb` from MaxMind once at setup time using the license key; all lookups afterwards are **local**, with no external API call. Country, city and coordinates are cached per IP and plotted on the map. Without the optional reader/database, the package degrades gracefully and the map explains what is missing. The map library ships its own world shape data, so no map tile API is called either.
+`--download` fetches `GeoLite2-City.mmdb` from MaxMind once at setup time using the license key; all lookups afterwards are **local**, with no external API call. Country, city and coordinates are cached per IP and plotted on the map.
+
+**No license key?** The map still works with a keyless fallback: when a country code/name is known (Cloudflare `CF_IPCOUNTRY` header or stored country), `CountryCoordinates` resolves an approximate **country centroid** so visitors appear on the map without any API call or database download. It is country-level only (never city-level) and is labelled as approximate in the UI. With the MaxMind reader/database installed, real coordinates take precedence automatically.
+
+The map library ships its own world shape data, so no map tile API is called either.
 
 ## 📡 SSE limits & polling fallback
 
