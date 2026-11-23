@@ -194,6 +194,16 @@ class AnalyticsTest extends TestCase
         }
     }
 
+    public function test_country_breakdowns_render_flags_on_all_report_pages(): void
+    {
+        LwaLogs::create($this->log(['country' => 'BD', 'path' => '/country-flag']));
+
+        foreach (['lwa_overview', 'lwa_visitors', 'lwa_geography'] as $route) {
+            $content = $this->get(route($route))->getContent();
+            $this->assertStringContainsString('🇧🇩', $content, "Missing flag on {$route}");
+        }
+    }
+
     public function test_live_feed_shows_country_flags(): void
     {
         LwaLogs::create($this->log([

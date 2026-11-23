@@ -1,6 +1,15 @@
 @php
-    $highlightCountries = collect($analytics['breakdowns']['top_countries'] ?? [])
-        ->map(fn ($item) => \Nafiur\WebAnalytics\Services\CountryFlag::code($item['name'] ?? null))
+    $topCountryItems = collect($analytics['breakdowns']['top_countries'] ?? [])
+        ->map(fn ($item) => [
+            'name' => $item['name'] ?? '',
+            'flag' => \Nafiur\WebAnalytics\Services\CountryFlag::emoji($item['name'] ?? null),
+        ])
+        ->filter(fn ($item) => $item['name'] !== '')
+        ->take(8)
+        ->values()
+        ->all();
+    $highlightCountries = collect($topCountryItems)
+        ->map(fn ($item) => \Nafiur\WebAnalytics\Services\CountryFlag::code($item['name']))
         ->filter()
         ->unique()
         ->values()
@@ -22,4 +31,14 @@
             Country-level locations are plotted from visitor country data. For city-level precision, install <code class="font-mono">maxmind-db/reader</code> and configure a local GeoLite2-City.mmdb.
         @endif
     </p>
+    @if(!empty($topCountryItems))
+        <div class="flex flex-wrap items-center gap-2 mt-3">
+            @foreach($topCountryItems as $item)
+                <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[11px] bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300">
+                    @if($item['flag'] !== '')<span aria-hidden="true">{{ $item['flag'] }}</span>@endif
+                    <span>{{ $item['name'] }}</span>
+                </span>
+            @endforeach
+        </div>
+    @endif
 </div>

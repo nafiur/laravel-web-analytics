@@ -9,6 +9,7 @@
                 'lat'   => $log['latitude'],
                 'lng'   => $log['longitude'],
                 'label' => $log['city'] ?: ($log['country'] ?? 'Visitor'),
+                'flag'  => $log['flag'] ?? '',
             ])->values()->all()) !!};
 
         function lwaChart(selector, options) {
@@ -577,19 +578,20 @@
                         counts[id] = 0;
 
                         (window.lwaInitialMapMarkers || []).forEach(function(marker) {
-                            window.lwaAddMapMarker(marker.lat, marker.lng, marker.label, id);
+                            window.lwaAddMapMarker(marker.lat, marker.lng, marker.label, id, marker.flag);
                         });
                     } catch (err) { /* map library unavailable */ }
                 });
             };
 
-            window.lwaAddMapMarker = function(lat, lng, label, targetId) {
+            window.lwaAddMapMarker = function(lat, lng, label, targetId, flag) {
                 if (!lat || !lng) return;
 
                 Object.keys(maps).forEach(function(id) {
                     if (targetId && id !== targetId) return;
                     try {
-                        maps[id].addMarker({ latLng: [Number(lat), Number(lng)], name: label || 'Visitor' });
+                        const name = (flag ? flag + ' ' : '') + (label || 'Visitor');
+                        maps[id].addMarker({ latLng: [Number(lat), Number(lng)], name: name });
                         counts[id] = (counts[id] || 0) + 1;
                         const count = document.getElementById(id + 'Count');
                         if (count) count.textContent = counts[id] + ' located';
@@ -651,7 +653,7 @@
                                     if (log.id > lastTrafficId) {
                                         prependLiveFeedRow(log);
                                         if (log.latitude && log.longitude && window.lwaAddMapMarker) {
-                                            window.lwaAddMapMarker(log.latitude, log.longitude, log.city || log.country || log.ip_address);
+                                            window.lwaAddMapMarker(log.latitude, log.longitude, log.city || log.country || log.ip_address, null, log.flag);
                                         }
                                         lastTrafficId = log.id;
                                     }
@@ -687,7 +689,7 @@
                             parsed.logs.forEach(function(log) {
                                 prependLiveFeedRow(log);
                                 if (log.latitude && log.longitude && window.lwaAddMapMarker) {
-                                    window.lwaAddMapMarker(log.latitude, log.longitude, log.city || log.country || log.ip_address);
+                                    window.lwaAddMapMarker(log.latitude, log.longitude, log.city || log.country || log.ip_address, null, log.flag);
                                 }
                             });
                         }
