@@ -554,7 +554,35 @@ Never pass a real license key inline on a shared shell or commit it — use `MAX
 WEB_ANALYTICS_GEOIP_PROVIDER=maxmind
 WEB_ANALYTICS_MAXMIND_DB=/absolute/path/to/GeoLite2-City.mmdb
 MAXMIND_LICENSE_KEY=your-key         # only needed for --download
+MAXMIND_ACCOUNT_ID=your-id           # only if your account requires it
 ```
+
+### Full setup sequence
+
+```bash
+composer update nafiur/laravel-web-analytics -W
+php artisan optimize:clear
+
+# put MAXMIND_LICENSE_KEY (and optionally MAXMIND_ACCOUNT_ID) in .env first
+php artisan lwa:geoip --download
+php artisan lwa:geoip            # must report Database file OK
+php artisan view:clear
+```
+
+GeoLite2 is refreshed periodically by MaxMind — re-run `php artisan lwa:geoip --download` occasionally to update the local database.
+
+### Download troubleshooting
+
+If the download fails, check outbound HTTPS to MaxMind without exposing the key in command history:
+
+```bash
+read -rs MM_KEY
+curl -sS -o /tmp/lwa.tar.gz -w 'HTTP %{http_code}\n' \
+  "https://download.maxmind.com/app/geoip_download?edition_id=GeoLite2-City&license_key=${MM_KEY}&suffix=tar.gz"
+file /tmp/lwa.tar.gz     # must say "gzip compressed data"
+```
+
+An `HTTP 200` with a gzip file means the key is fine; the package command will then succeed. `401/403` means the key (or account ID) is invalid/revoked. If you cannot download at all, the keyless country-centroid fallback still plots approximate visitor locations from Cloudflare country headers.
 
 `--download` fetches `GeoLite2-City.mmdb` from MaxMind once at setup time using the license key; all lookups afterwards are **local**, with no external API call. Country, city and coordinates are cached per IP and plotted on the map.
 
