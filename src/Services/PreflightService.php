@@ -43,6 +43,20 @@ class PreflightService
         $failures = count(array_filter($checks, fn ($c) => $c['status'] === 'fail'));
         $warnings = count(array_filter($checks, fn ($c) => $c['status'] === 'warn'));
 
+        $missingTables = false;
+        foreach ($checks as $check) {
+            if (str_contains($check['detail'], 'Missing:')) {
+                $missingTables = true;
+                break;
+            }
+        }
+
+        $next = $failures > 0
+            ? ($missingTables
+                ? 'Run php artisan migrate, then re-run php artisan lwa:doctor'
+                : 'Fix the failed checks, then re-run php artisan lwa:doctor')
+            : 'Safe to run: php artisan lwa:upgrade --dry-run';
+
         return [
             'checks'  => $checks,
             'summary' => [
@@ -50,9 +64,7 @@ class PreflightService
                 'passed'   => count(array_filter($checks, fn ($c) => $c['status'] === 'ok')),
                 'warnings' => $warnings,
                 'failures' => $failures,
-                'next'     => $failures > 0
-                    ? 'Fix the failed checks, then re-run php artisan lwa:doctor'
-                    : 'Safe to run: php artisan lwa:upgrade --dry-run',
+                'next'     => $next,
             ],
         ];
     }
@@ -170,8 +182,8 @@ class PreflightService
     private function upgradeStateCheck(): array
     {
         try {
-            if (!SchemaGuard::missing() && !Schema::hasTable('lwa_upgrade_checkpoints')) {
-                return $this->check('Upgrade checkpoint', 'ok', 'No advanced tables to inspect');
+            if (in_array('lwa_upgrade_checkpoints', SchemaGuard::missing(), true)) {
+                return $this->check('Upgrade checkpoint', 'warn', 'Waiting for advanced tables — run php artisan migrate');
             }
 
             $checkpoint = AnalyticsModels\UpgradeCheckpoint::where('name', 'legacy_logs')->first();
