@@ -22,6 +22,7 @@ class WebAnalyticsServiceProvider extends ServiceProvider
 
         $this->app->bind(StorageDriver::class, EloquentStorageDriver::class);
         $this->app->bind(Collector::class, AnalyticsCollector::class);
+        $this->app->singleton('lwa.analytics', \Nafiur\WebAnalytics\Services\AnalyticsManager::class);
     }
 
     /**
@@ -62,6 +63,7 @@ class WebAnalyticsServiceProvider extends ServiceProvider
 
         // Register Routes
         $this->registerRoutes();
+        $this->registerApiRoutes();
     }
 
     /**
@@ -74,6 +76,21 @@ class WebAnalyticsServiceProvider extends ServiceProvider
             'middleware' => config('laravel-web-analytics.route.middleware', ['web', 'auth']),
         ], function () {
             $this->loadRoutesFrom(__DIR__ . '/../routes/web.php');
+        });
+    }
+
+    /**
+     * Register token-authenticated reporting API routes.
+     */
+    protected function registerApiRoutes(): void
+    {
+        $this->app['router']->aliasMiddleware('lwa.api', \Nafiur\WebAnalytics\Http\Middleware\AuthenticateApiToken::class);
+
+        Route::group([
+            'prefix'    => config('laravel-web-analytics.route.prefix', 'web-analytics') . '/api/v1',
+            'middleware' => ['api'],
+        ], function () {
+            $this->loadRoutesFrom(__DIR__ . '/../routes/api.php');
         });
     }
 }

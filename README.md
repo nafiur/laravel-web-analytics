@@ -52,6 +52,31 @@ This creates separate `lwa_websites`, `lwa_visitors`, `lwa_sessions`, `lwa_pagev
 
 Blueprint: `laravel-web-analytics-v3-blueprint.md` (on the planning desktop).
 
+## 🧩 Developer API (advanced analytics enabled)
+
+```php
+use Nafiur\WebAnalytics\Facades\Analytics;
+
+Analytics::pageview('/products', ['title' => 'Products']);
+Analytics::event('purchase', ['plan' => 'pro'], 1500.0);
+Analytics::track('button_clicked', ['button' => 'buy']);
+Analytics::goal('registration');
+
+$summary = Analytics::summary('30d');
+$series = Analytics::timeseries('7d');
+```
+
+Issue an API token for the REST endpoints:
+
+```php
+use Nafiur\WebAnalytics\Models\Analytics\ApiToken;
+
+[$token, $plainToken] = ApiToken::issue($websiteId, ' dashboard', ['read', 'write']);
+// store $plainToken securely — only its hash is kept
+```
+
+Send it as `Authorization: Bearer <token>`. Abilities: `read`, `write`, `admin`, or `*`. Tokens support expiry and are tracked with `last_used_at`.
+
 ## 🎨 Design System
 
 | Topic | Choice |
@@ -179,6 +204,10 @@ The package defines routes with the `lwa_` prefix to avoid conflicts with your a
 | `POST /web-analytics/settings/prune` | `lwa_settings_prune` | Prune rows older than N days |
 | `POST /web-analytics/settings/empty` | `lwa_settings_empty` | Empty the telemetry table (requires `confirm=DELETE`) |
 | `POST /web-analytics/settings/test-alert` | `lwa_settings_test_alert` | Send a test alert through the configured channel |
+| `GET /web-analytics/api/v1/summary` | `lwa_api_summary` | JSON summary (bearer token, `read`) |
+| `GET /web-analytics/api/v1/timeseries` | `lwa_api_timeseries` | JSON time series (bearer token, `read`) |
+| `POST /web-analytics/api/v1/events` | `lwa_api_event` | Track a custom event (bearer token, `write`) |
+| `GET /web-analytics/api/v1/websites` | `lwa_api_websites` | List websites (bearer token, `admin`) |
 
 Every sidebar section also has its own bookmarkable URL:
 

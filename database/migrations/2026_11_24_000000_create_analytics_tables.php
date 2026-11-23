@@ -127,6 +127,19 @@ return new class extends Migration
             });
         }
 
+        if (!Schema::hasTable('lwa_api_tokens')) {
+            Schema::create('lwa_api_tokens', function (Blueprint $table) {
+                $table->id();
+                $table->unsignedBigInteger('website_id')->index();
+                $table->string('name');
+                $table->string('token_hash')->unique();
+                $table->json('abilities')->nullable();
+                $table->timestamp('expires_at')->nullable();
+                $table->timestamp('last_used_at')->nullable();
+                $table->timestamps();
+            });
+        }
+
         if (!Schema::hasTable('lwa_upgrade_checkpoints')) {
             Schema::create('lwa_upgrade_checkpoints', function (Blueprint $table) {
                 $table->id();
@@ -145,7 +158,7 @@ return new class extends Migration
         }
 
         foreach ([
-            'lwa_upgrade_checkpoints', 'lwa_daily_stats', 'lwa_hourly_stats',
+            'lwa_api_tokens', 'lwa_upgrade_checkpoints', 'lwa_daily_stats', 'lwa_hourly_stats',
             'lwa_events', 'lwa_pageviews', 'lwa_sessions', 'lwa_visitors', 'lwa_websites',
         ] as $tableName) {
             Schema::dropIfExists($tableName);
