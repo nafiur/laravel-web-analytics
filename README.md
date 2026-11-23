@@ -567,6 +567,8 @@ php artisan lwa:geoip --auto
 
 Never pass a real license key inline on a shared shell or commit it — use `MAXMIND_LICENSE_KEY` (and optionally `MAXMIND_ACCOUNT_ID`) in `.env`. If a key is ever exposed, revoke it in the MaxMind portal immediately.
 
+Non-secret values (`analytics.enabled`, `geoip.provider`, `geoip.maxmind_db_path`, `geoip.auto_download`) can also be set by editing the published `config/laravel-web-analytics.php`. Keep the license key/account ID in `.env` and reference them with `env()` in config. After any config change, run `php artisan optimize:clear` (or `config:clear`) — otherwise the cached config keeps the old values.
+
 ```env
 WEB_ANALYTICS_GEOIP_PROVIDER=maxmind
 WEB_ANALYTICS_MAXMIND_DB=/absolute/path/to/GeoLite2-City.mmdb
