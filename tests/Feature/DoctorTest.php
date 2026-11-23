@@ -38,6 +38,20 @@ class DoctorTest extends TestCase
         $this->assertGreaterThanOrEqual(1, $report['summary']['failures']);
     }
 
+    public function test_doctor_can_repair_missing_advanced_tables(): void
+    {
+        foreach (SchemaGuard::REQUIRED_TABLES as $table) {
+            Schema::drop($table);
+        }
+
+        $exit = Artisan::call('lwa:doctor', ['--repair' => true, '--json' => true]);
+        $report = json_decode(Artisan::output(), true);
+
+        $this->assertSame(0, $exit);
+        $this->assertNotSame('fail', $report['summary']['status']);
+        $this->assertTrue(Schema::hasTable('lwa_websites'));
+    }
+
     public function test_doctor_alias_is_registered(): void
     {
         $this->artisan('analytics:doctor')->assertExitCode(0);

@@ -14,10 +14,10 @@ return new class extends Migration
 {
     public function up(): void
     {
-        if (!$this->schemaEnabled()) {
-            return;
-        }
-
+        // Always create the additive tables. A guarded migration would still be
+        // recorded as "run" by Laravel while creating nothing, which makes it
+        // impossible to enable the schema later with a plain `artisan migrate`.
+        // The config flag controls the collector/API, not table existence.
         if (!Schema::hasTable('lwa_websites')) {
             Schema::create('lwa_websites', function (Blueprint $table) {
                 $table->id();
