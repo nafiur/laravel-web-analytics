@@ -22,6 +22,7 @@ class UpgradeTest extends TestCase
         $result = app(UpgradeService::class)->run(['dry_run' => true]);
 
         $this->assertSame(3, $result['read']);
+        $this->assertSame(3, $result['pending_since_id']);
         $this->assertSame(0, Pageview::count());
         $this->assertSame(0, AnalyticsSession::count());
     }

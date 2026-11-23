@@ -52,7 +52,8 @@ class UpgradeAnalyticsCommand extends Command
             ->all());
 
         if ($result['dry_run'] ?? false) {
-            $this->comment('Dry run — no data was written.');
+            $this->comment('Dry run — no data was written. "read" is the total legacy row count; '
+                . '"pending_since_id" is what the next real run will import.');
         } else {
             $this->info('Upgrade backfill complete. Re-run to process any new legacy rows.');
         }

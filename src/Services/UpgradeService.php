@@ -104,7 +104,14 @@ class UpgradeService
         });
 
         if ($dryRun) {
-            return $counts + ['website' => $website->domain, 'dry_run' => 1];
+            $pending = LwaLogs::where('id', '>', $checkpoint->last_id)->count();
+
+            return $counts + [
+                'website'           => $website->domain,
+                'pending_since_id'  => $pending,
+                'checkpoint_last_id'=> (int) $checkpoint->last_id,
+                'dry_run'           => 1,
+            ];
         }
 
         $websiteId = (int) $website->id;
