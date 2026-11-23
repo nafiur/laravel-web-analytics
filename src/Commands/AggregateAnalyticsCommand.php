@@ -19,6 +19,13 @@ class AggregateAnalyticsCommand extends Command
 
     public function handle(AggregationService $aggregation): int
     {
+        $missing = \Nafiur\WebAnalytics\Services\SchemaGuard::missing();
+        if (!empty($missing)) {
+            $this->error('Advanced analytics tables are missing: ' . implode(', ', $missing));
+            $this->line('Run: WEB_ANALYTICS_SCHEMA_ENABLED=true, then php artisan migrate');
+            return self::FAILURE;
+        }
+
         $granularity = $this->option('granularity') === 'daily' ? 'daily' : 'hourly';
         $from = $this->option('from') ? Carbon::parse($this->option('from')) : now()->subDays(2);
         $to = $this->option('to') ? Carbon::parse($this->option('to')) : now();

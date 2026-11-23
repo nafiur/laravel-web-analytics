@@ -22,6 +22,16 @@ class UpgradeAnalyticsCommand extends Command
 
     public function handle(UpgradeService $upgrade): int
     {
+        $missing = \Nafiur\WebAnalytics\Services\SchemaGuard::missing();
+        if (!empty($missing)) {
+            $this->error('Advanced analytics tables are missing: ' . implode(', ', $missing));
+            $this->line('Enable the schema and migrate before running the upgrade:');
+            $this->line('  WEB_ANALYTICS_SCHEMA_ENABLED=true');
+            $this->line('  php artisan optimize:clear');
+            $this->line('  php artisan migrate');
+            return self::FAILURE;
+        }
+
         $result = $upgrade->run([
             'dry_run'        => (bool) $this->option('dry-run'),
             'chunk'          => (int) $this->option('chunk'),

@@ -19,6 +19,13 @@ class BenchmarkAnalyticsCommand extends Command
 
     public function handle(MetricService $metrics, WebsiteResolver $resolver): int
     {
+        $missing = \Nafiur\WebAnalytics\Services\SchemaGuard::missing();
+        if (!empty($missing)) {
+            $this->error('Advanced analytics tables are missing: ' . implode(', ', $missing));
+            $this->line('Run: WEB_ANALYTICS_SCHEMA_ENABLED=true, then php artisan migrate');
+            return self::FAILURE;
+        }
+
         $websiteId = (int) ($this->option('website') ?: $resolver->currentId() ?: 0);
         if ($websiteId <= 0) {
             $this->error('No website found. Register one first.');

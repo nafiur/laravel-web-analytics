@@ -56,6 +56,15 @@ class UpgradeTest extends TestCase
         $this->assertSame(3, Pageview::count());
     }
 
+    public function test_upgrade_fails_cleanly_when_schema_is_missing(): void
+    {
+        \Illuminate\Support\Facades\Schema::drop('lwa_websites');
+
+        $this->artisan('lwa:upgrade')
+            ->expectsOutput('Advanced analytics tables are missing: lwa_websites')
+            ->assertExitCode(1);
+    }
+
     public function test_upgrade_command_alias_runs(): void
     {
         $this->seedLegacyLogs();

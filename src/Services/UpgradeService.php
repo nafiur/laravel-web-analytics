@@ -21,6 +21,12 @@ class UpgradeService
     /** @return array<string, int|string> */
     public function run(array $options = []): array
     {
+        $missing = SchemaGuard::missing();
+        if (!empty($missing)) {
+            return ['error' => 'Missing advanced analytics tables: ' . implode(', ', $missing)
+                . '. Set WEB_ANALYTICS_SCHEMA_ENABLED=true and run php artisan migrate first.'];
+        }
+
         $dryRun = (bool) ($options['dry_run'] ?? false);
         $chunk = max(1, (int) ($options['chunk'] ?? 1000));
         $since = !empty($options['since']) ? Carbon::parse($options['since']) : null;
