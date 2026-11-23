@@ -592,9 +592,8 @@
                         maps[id].addMarker({ latLng: [Number(lat), Number(lng)], name: label || 'Visitor' });
                         counts[id] = (counts[id] || 0) + 1;
                         const count = document.getElementById(id + 'Count');
-                        const empty = document.getElementById(id + 'Empty');
                         if (count) count.textContent = counts[id] + ' located';
-                        if (empty) empty.classList.add('hidden');
+                        document.querySelectorAll('.lwa-map-empty').forEach(function (el) { el.classList.add('hidden'); });
                     } catch (err) { /* ignore bad coordinates */ }
                 });
             };
@@ -713,6 +712,8 @@
                     try {
                         let p = JSON.parse(e.data);
                         if (p.last_id) lastTrafficId = p.last_id;
+                        const clock = document.getElementById('lastUpdatedClock');
+                        if (clock) clock.textContent = 'Listening — ' + new Date().toLocaleTimeString();
                     } catch (err) {}
                 });
 
@@ -723,9 +724,15 @@
 
                 sseSource.onerror = function() {
                     connectionFailures++;
-                    // EventSource retries automatically; surface a manual retry
-                    // after repeated failures so shared hosting stays usable.
-                    setConnectionState(connectionFailures >= 3 ? 'disconnected' : 'reconnecting');
+                    // A short-lived response ends with EOF, which browsers report
+                    // as an error on every normal reconnect. Do not flash
+                    // "Reconnecting" for a single EOF — only for repeated failures.
+                    if (connectionFailures >= 4) {
+                        setConnectionState('disconnected');
+                    } else if (connectionFailures >= 2) {
+                        setConnectionState('reconnecting');
+                    }
+                    // first failure: keep the existing "Connected" state
                 };
             }
 
