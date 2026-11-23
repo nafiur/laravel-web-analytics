@@ -58,24 +58,24 @@
                                 <div class="divide-y divide-slate-100 dark:divide-slate-800 text-xs">
                                     <div class="flex items-center justify-between gap-4 px-4 py-3">
                                         <span class="flex items-center gap-1.5">
-                                            <span id="languageFlag" class="text-sm leading-none" aria-hidden="true">ðŸ‡ºðŸ‡¸</span>
+                                            <span id="languageFlag" class="text-sm leading-none" aria-hidden="true">🇺🇸</span>
                                             <span class="text-slate-600 dark:text-slate-300"
                                                 data-i18n="language">Language</span>
                                         </span>
                                         <select id="settingLanguage"
                                             class="text-xs px-2.5 py-1.5 border border-slate-200 dark:border-slate-700 rounded-md bg-white dark:bg-slate-800 text-slate-700 dark:text-slate-200 focus:outline-none focus:ring-1 focus:ring-blue-500">
-                                            <option value="en">ðŸ‡ºðŸ‡¸ English</option>
-                                            <option value="bn">ðŸ‡§ðŸ‡© à¦¬à¦¾à¦‚à¦²à¦¾</option>
-                                            <option value="hi">ðŸ‡®ðŸ‡³ à¤¹à¤¿à¤¨à¥à¤¦à¥€</option>
-                                            <option value="es">ðŸ‡ªðŸ‡¸ EspaÃ±ol</option>
-                                            <option value="fr">ðŸ‡«ðŸ‡· FranÃ§ais</option>
-                                            <option value="de">ðŸ‡©ðŸ‡ª Deutsch</option>
-                                            <option value="pt">ðŸ‡µðŸ‡¹ PortuguÃªs</option>
-                                            <option value="ar">ðŸ‡¸ðŸ‡¦ Ø§Ù„Ø¹Ø±Ø¨ÙŠØ©</option>
-                                            <option value="zh">ðŸ‡¨ðŸ‡³ ä¸­æ–‡</option>
-                                            <option value="ja">ðŸ‡¯ðŸ‡µ æ—¥æœ¬èªž</option>
-                                            <option value="ur">ðŸ‡µðŸ‡° Ø§Ø±Ø¯Ùˆ</option>
-                                            <option value="id">ðŸ‡®ðŸ‡© Indonesian</option>
+                                            <option value="en">🇺🇸 English</option>
+                                            <option value="bn">🇧🇩 বাংলা</option>
+                                            <option value="hi">🇮🇳 हिन्दी</option>
+                                            <option value="es">🇪🇸 Español</option>
+                                            <option value="fr">🇫🇷 Français</option>
+                                            <option value="de">🇩🇪 Deutsch</option>
+                                            <option value="pt">🇵🇹 Português</option>
+                                            <option value="ar">🇸🇦 العربية</option>
+                                            <option value="zh">🇨🇳 中文</option>
+                                            <option value="ja">🇯🇵 日本語</option>
+                                            <option value="ur">🇵🇰 اردو</option>
+                                            <option value="id">🇮🇩 Indonesian</option>
                                         </select>
                                     </div>
                                     <div class="flex items-center justify-between gap-4 px-4 py-3">
@@ -175,7 +175,7 @@
                                 <div class="p-4 border-b border-slate-100 dark:border-slate-800">
                                     <h2 class="text-sm font-semibold text-slate-900 dark:text-white"
                                         data-i18n="collection">Collection</h2>
-                                    <p class="text-[11px] text-slate-400 mt-0.5">Defined in config â€” read-only</p>
+                                    <p class="text-[11px] text-slate-400 mt-0.5">Defined in config — read-only</p>
                                 </div>
                                 <div class="divide-y divide-slate-100 dark:divide-slate-800 text-xs">
                                     @php
@@ -288,7 +288,7 @@
                                 <div class="p-4 border-b border-slate-100 dark:border-slate-800">
                                     <h2 class="text-sm font-semibold text-slate-900 dark:text-white"
                                         data-i18n="maintenance">Data maintenance</h2>
-                                    <p class="text-[11px] text-slate-400 mt-0.5">{{ $logPath ?? 'Database table' }} â€”
+                                    <p class="text-[11px] text-slate-400 mt-0.5">{{ $logPath ?? 'Database table' }} —
                                         scoped to {{ $tenantId ? 'tenant ' . $tenantId : 'all tenants' }}</p>
                                 </div>
 
@@ -301,12 +301,12 @@
                                     <div class="p-3 rounded-md bg-slate-50 dark:bg-slate-800/60">
                                         <div class="text-[10px] text-slate-400">Oldest record</div>
                                         <div class="text-[11px] font-mono text-slate-700 dark:text-slate-200 mt-1">
-                                            {{ $tableStats['oldest'] ?? 'â€”' }}</div>
+                                            {{ $tableStats['oldest'] ?? '—' }}</div>
                                     </div>
                                     <div class="p-3 rounded-md bg-slate-50 dark:bg-slate-800/60">
                                         <div class="text-[10px] text-slate-400">Newest record</div>
                                         <div class="text-[11px] font-mono text-slate-700 dark:text-slate-200 mt-1">
-                                            {{ $tableStats['newest'] ?? 'â€”' }}</div>
+                                            {{ $tableStats['newest'] ?? '—' }}</div>
                                     </div>
                                     <div class="p-3 rounded-md bg-slate-50 dark:bg-slate-800/60">
                                         <div class="text-[10px] text-slate-400">Retention</div>
@@ -403,7 +403,7 @@
                             <span class="font-semibold text-slate-900 dark:text-white">Keyboard shortcuts</span>
                             <button type="button"
                                 onclick="document.getElementById('shortcutsHelp').classList.add('hidden')"
-                                class="text-slate-400 hover:text-slate-600">âœ•</button>
+                                class="text-slate-400 hover:text-slate-600">✕</button>
                         </div>
                         <div class="space-y-2 text-slate-600 dark:text-slate-300">
                             <div class="flex justify-between"><span>Show this help</span><kbd

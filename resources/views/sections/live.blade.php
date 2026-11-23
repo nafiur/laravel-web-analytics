@@ -9,7 +9,7 @@
                         <div class="flex flex-col items-end gap-1">
                             <div class="flex items-center gap-1.5 text-[11px]" id="lwaConnectionBadge" role="status" aria-live="polite">
                                 <span class="w-2 h-2 rounded-full bg-amber-500" id="lwaConnectionDot"></span>
-                                <span id="lwaConnectionText" class="text-amber-600 dark:text-amber-400">Connectingâ€¦</span>
+                                <span id="lwaConnectionText" class="text-amber-600 dark:text-amber-400">Connecting…</span>
                             </div>
                             <button type="button" id="lwaReconnectBtn"
                                 class="hidden text-[11px] text-blue-600 dark:text-blue-400 hover:underline"

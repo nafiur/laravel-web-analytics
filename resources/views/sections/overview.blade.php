@@ -45,7 +45,7 @@
                     <div class="grid grid-cols-1 lg:grid-cols-2 gap-4">
                         <div class="lwa-surface border lwa-border rounded-lg p-4 shadow-sm">
                             <div class="text-xs font-semibold text-slate-800 dark:text-slate-200">Traffic Overview</div>
-                            <p class="text-[11px] text-slate-400 mt-0.5">Requests over the selected period â€” {{ $timeRange ?? '24h' }}</p>
+                            <p class="text-[11px] text-slate-400 mt-0.5">Requests over the selected period — {{ $timeRange ?? '24h' }}</p>
                             <div class="relative mt-3">
                                 <div id="chartOverviewTraffic" class="h-64 w-full"></div>
                                 <div id="chartOverviewTrafficSkel" class="lwa-skeleton absolute inset-0 h-64 w-full"></div>

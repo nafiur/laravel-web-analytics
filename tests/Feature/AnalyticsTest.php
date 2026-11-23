@@ -209,6 +209,8 @@ class AnalyticsTest extends TestCase
         }
 
         $this->assertStringNotContainsString('Display name', $content);
+        $this->assertStringContainsString('🇧🇩 বাংলা', $content);
+        $this->assertStringNotContainsString('ðŸ', $content);
         $this->assertStringContainsString('optgroup label="Africa"', $content);
         $this->assertStringContainsString('value="Pacific/Kiritimati"', $content);
         $this->assertGreaterThan(400, substr_count($content, '<option value="'));

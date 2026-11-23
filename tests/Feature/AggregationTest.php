@@ -36,12 +36,12 @@ class AggregationTest extends TestCase
         $collector->pageview(new VisitContext(
             websiteId: $websiteId, visitorHash: 'agg-visitor', path: '/a',
             statusCode: 200, bytesSent: 100, responseTimeMs: 50,
-            occurredAt: now()->subMinutes(4)->toIso8601String(),
+            occurredAt: now()->startOfHour()->addMinutes(5)->toIso8601String(),
         ));
         $collector->pageview(new VisitContext(
             websiteId: $websiteId, visitorHash: 'agg-visitor', path: '/error',
             statusCode: 500, bytesSent: 100, responseTimeMs: 150,
-            occurredAt: now()->subMinutes(2)->toIso8601String(),
+            occurredAt: now()->startOfHour()->addMinutes(7)->toIso8601String(),
         ));
 
         app(AggregationService::class)->aggregate($websiteId, now(), 'hourly');
