@@ -16,6 +16,9 @@ All notable changes to this project are documented here. The format is based on 
 - **UI/system** — 13 route-based Blade pages with a shared layout, design tokens, Lucide icons, skeletons, explicit empty/error/loading states, 12 languages, full IANA timezone list, offline MaxMind visitors map, SSE connection states and polling fallback.
 - **Security/privacy** — DNT, cookieless fingerprint option, IP anonymization, bot filtering, sensitive query masking, CSV-injection protection, tenant/website scoping and authorized SSE.
 - **Benchmarking** — read-only `lwa:benchmark` command comparing aggregate vs raw scan timings.
+- **Preflight** — `lwa:doctor` (`analytics:doctor`, `--json`) prints an installer-style readiness report; guards across UI/API/commands handle unmigrated installs.
+- **Event reports** — Events & Goals / Conversions pages list actually recorded events instead of placeholder numbers.
+- **Documentation** — `ARCHITECTURE.md`, `UPGRADE.md` and this changelog.
 - **Testing** — PHPUnit + Orchestra Testbench; CI matrix across PHP 8.2–8.5 with SQLite, MySQL 8 and PostgreSQL 16, plus PHP 8.1 syntax checks.
 
 ### Changed
@@ -32,6 +35,8 @@ All notable changes to this project are documented here. The format is based on 
 - Duplicate `class` attribute on the CSV export link.
 - Command registration outside `runningInConsole()` so `Artisan::call()` works from HTTP contexts.
 - Fake trend percentages and fabricated live-visitor counts removed.
+- Schema migration now honours either `.env` or cached config, with debug output when tables are missing.
+- Unmigrated installs no longer crash: dashboard shows a setup page, API returns `503`, SSE emits an `error` event, commands exit with guidance.
 
 ### Deprecated
 

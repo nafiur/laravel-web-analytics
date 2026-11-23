@@ -5,6 +5,7 @@ namespace Nafiur\WebAnalytics\Http\Controllers;
 use Illuminate\Http\Request;
 use Illuminate\Routing\Controller;
 use Illuminate\Support\Facades\DB;
+use Nafiur\WebAnalytics\Models\Analytics\AnalyticEvent;
 use Nafiur\WebAnalytics\Models\Analytics\Website;
 use Nafiur\WebAnalytics\Models\LwaLogs;
 use Nafiur\WebAnalytics\Services\AlertService;
@@ -137,6 +138,20 @@ class WebAnalyticsController extends Controller
         }
         $activeWebsite = $activeWebsiteId !== null ? Website::find($activeWebsiteId) : null;
 
+        $recentEvents = [];
+        if (DatabaseReadiness::advancedReady()) {
+            $recentEvents = AnalyticEvent::latest('created_at')
+                ->limit(20)
+                ->get(['name', 'properties', 'value', 'created_at'])
+                ->map(fn ($event) => [
+                    'name'       => $event->name,
+                    'properties' => $event->properties ?? [],
+                    'value'      => $event->value,
+                    'created_at' => $event->created_at?->toIso8601String(),
+                ])
+                ->all();
+        }
+
         $timeRange = $request->input('range', '24h');
         $customStart = $request->input('start_date');
         $customEnd = $request->input('end_date');
@@ -189,7 +204,8 @@ class WebAnalyticsController extends Controller
             'activeScroll',
             'unavailableTitle',
             'websites',
-            'activeWebsite'
+            'activeWebsite',
+            'recentEvents'
         ));
     }
 

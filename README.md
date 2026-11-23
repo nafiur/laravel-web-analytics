@@ -17,18 +17,18 @@ A modern, fast, and self-hosted Web Traffic & Visitor Analytics Dashboard for La
 ## ⚡ Highlights & Key Features
 
 - 🚀 **Real-Time Live Stream (SSE)**: Live active visitor count and instant real-time traffic feed without WebSockets, Node.js, or Pusher. Each stream response is short-lived and paced by EventSource, so no PHP worker is held open while waiting for new traffic.
-- 🧭 **-Style Navigation**: Sidebar with Overview, Requests, Visitors, Performance, Live Stream and Setting. Each section has its own Blade view, and the Settings screen is hidden from the analytics tab bar.
+- 🧭 **Cloudflare-Style Navigation**: 13 sidebar sections — Overview, Real-time, Visitors, Traffic Sources, Pages & Screens, Geography, Devices & Browsers, Campaigns, Events & Goals, Conversions, Performance, Error Monitoring and Settings. Each has its own bookmarkable route and Blade page; the Settings screen has no analytics tab bar.
 - 🎨 **Tailwind CSS UI with Dark Mode**: Modern, responsive dashboard powered by Tailwind CSS Play CDN (zero build step / zero npm dependencies). Uses CSS design tokens (`--lwa-*`, `[data-theme="dark"]`), Lucide outline icons, visible focus states, skeleton loaders, explicit empty/error states, and a 1-click persistent Dark/Light/System preference.
 - 📊 **Comprehensive Metrics**: Total Requests, Unique Visitors, Bandwidth (Data Transferred in GB/MB), Avg Response Time, Error Rate.
 - 🧪 **Built-In Live Traffic Simulator**: Easily generate realistic live traffic every second with `php artisan lwa:live` to demo and test live streaming.
-- 🌍 **GeoIP & Location Provider**: Automatic country/city resolution with fallback support for  headers and `ip-api`.
+- 🌍 **GeoIP & Location Provider**: Cloudflare headers, `ip-api`, or fully offline MaxMind GeoLite2 — country/city and coordinates power flag icons and the visitors map.
 - 🚨 **Instant Error Alerts**: Telegram, Slack, or Discord webhook alerts on 5xx responses (deduplicated per URL/IP) and on error-rate spikes above a configurable threshold. Disabled by default.
 - 📥 **Export to CSV**: Download filtered analytics logs into structured CSV format via high-performance chunked streams.
 - 🧹 **Automatic Log Pruning**: Includes an Artisan command (`php artisan lwa:prune`) to maintain a clean database and prevent disk bloat.
 - ⚡ **Post-Response Telemetry**: Tracking runs in Laravel's `terminate()` hook, after the HTTP response is sent. Optional GeoIP lookups and webhook alerts still occupy the worker for up to their configured timeouts (1s / 3s by default); keep alerts disabled unless needed.
 - 🗄️ **Lightweight & Decoupled Storage**: Stores telemetry in the `lwa_logs` table without coupling to any specific User model, with GDPR-compliant IP anonymization options.
 - 🔐 **Privacy-First Tracking**: Do Not Track support and an optional cookieless, daily-salted visitor fingerprint — no cookie banner required.
-- 🎯 **UTM Campaigns**: `utm_source`, `utm_medium` and `utm_campaign` are captured automatically and shown in the Visitors tab.
+- 🎯 **UTM Campaigns**: `utm_source`, `utm_medium` and `utm_campaign` are captured automatically and shown on the dedicated Campaigns page.
 - 🏳️ **Country Flags**: IP breakdowns and the live traffic feed show emoji flags resolved from the recorded country; the Settings language picker shows the active language flag.
 - 🏢 **Multi-Tenancy Ready**: Native support for single-database multi-tenant applications (`stancl/tenancy`, `spatie/laravel-multitenancy`, or custom resolvers) with tenant-scoped dashboards and streams.
 
@@ -54,7 +54,7 @@ Run `php artisan lwa:doctor` before upgrading or enabling the schema: it prints 
 
 **Upgrade path:** run `php artisan lwa:upgrade --dry-run` first to count legacy rows, then `php artisan lwa:upgrade --website-domain=example.com` to backfill. The command is resumable via an `lwa_upgrade_checkpoints` row and never deletes legacy data unless `--prune-legacy` is passed. Re-run it to import rows logged since the previous run.
 
-Blueprint: `laravel-web-analytics-v3-blueprint.md` (on the planning desktop).
+Full design/reference: [ARCHITECTURE.md](ARCHITECTURE.md) — current-state audit, ER diagram, metric definitions, migration plan, security review and milestones. Upgrade steps: [UPGRADE.md](UPGRADE.md).
 
 ## 🧩 Developer API (advanced analytics enabled)
 
@@ -285,7 +285,7 @@ The legacy `dashboard.blade.php` simply extends the shared layout and renders th
 
 ## 🧭 Dashboard Navigation
 
-The sidebar exposes 13 sections. Items map to report panes (or scroll to a specific report on the same page) — no extra routes are required:
+The sidebar exposes 13 sections, each rendered by its own route and Blade page:
 
 | Menu item | Shows |
 |-----------|-------|
@@ -297,13 +297,13 @@ The sidebar exposes 13 sections. Items map to report panes (or scroll to a speci
 | **Geography** | Top countries (scrolls to Countries) |
 | **Devices & Browsers** | Device / OS / browser breakdowns |
 | **Campaigns** | UTM source / medium / campaign breakdowns |
-| **Events & Goals** | Unavailable — requires a custom event collector |
-| **Conversions** | Unavailable — requires configured goals |
+| **Events & Goals** | Recent custom events captured through the facade/API (name, properties, value) |
+| **Conversions** | Recorded goal/purchase events — conversion reporting is intentionally simple, no funnel guesses |
 | **Performance** | Latency, response times, bandwidth by path |
 | **Error Monitoring** | 4xx/5xx errors, slow/error paths |
 | **Settings** | Preferences, maintenance, alerts, about |
 
-> **No fabricated analytics:** Events & Goals and Conversions are intentionally shown as unavailable until an event collector exists. All other derived metrics use explicit definitions:
+> **No fabricated analytics:** no placeholder numbers are shown anywhere. Event pages show only events that were actually recorded. All derived metrics use explicit definitions:
 >
 > - **Total Visitors** — distinct IP addresses in the range (privacy-preserving device proxy)
 > - **Unique Visitors** — distinct `session_id` (IP fallback)
@@ -471,6 +471,19 @@ return [
      */
     'retention_days' => env('WEB_ANALYTICS_RETENTION_DAYS', 30),
 
+    /*
+     * Advanced analytics schema (opt-in)
+     */
+    'analytics' => [
+        'enabled'                     => env('WEB_ANALYTICS_SCHEMA_ENABLED', false),
+        'mode'                        => env('WEB_ANALYTICS_COLLECTOR_MODE', 'sync'), // 'sync' | 'queue'
+        'write_legacy'                => env('WEB_ANALYTICS_WRITE_LEGACY', true),
+        'queue'                       => env('WEB_ANALYTICS_QUEUE', null),
+        'website_id'                  => env('WEB_ANALYTICS_WEBSITE_ID', null),
+        'session_timeout_minutes'     => env('WEB_ANALYTICS_SESSION_TIMEOUT', 30),
+        'bounce_max_duration_seconds' => env('WEB_ANALYTICS_BOUNCE_MAX_SECONDS', 0),
+    ],
+
     'settings' => [
         'destructive_actions_enabled' => env('WEB_ANALYTICS_DESTRUCTIVE_ACTIONS', true),
     ],
@@ -498,7 +511,7 @@ return [
 
 ## 🗺️ Offline GeoIP & live map
 
-The Real-time page includes a vector world map. Set:
+The Overview and Real-time pages include a vector world map. Set:
 
 ```env
 WEB_ANALYTICS_GEOIP_PROVIDER=maxmind
