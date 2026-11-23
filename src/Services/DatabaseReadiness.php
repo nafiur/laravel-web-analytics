@@ -43,6 +43,12 @@ class DatabaseReadiness
         }
 
         $lines[] = 'Enable the schema if needed (WEB_ANALYTICS_SCHEMA_ENABLED=true), then run: php artisan migrate';
+        $lines[] = sprintf(
+            'Debug: env=%s, config=%s, config-cached=%s',
+            var_export(filter_var(env('WEB_ANALYTICS_SCHEMA_ENABLED', false), FILTER_VALIDATE_BOOLEAN), true),
+            var_export((bool) config('laravel-web-analytics.analytics.enabled', false), true),
+            file_exists(base_path('bootstrap/cache/config.php')) ? 'yes' : 'no'
+        );
 
         return $lines;
     }

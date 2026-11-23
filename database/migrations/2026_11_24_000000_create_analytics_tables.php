@@ -14,7 +14,7 @@ return new class extends Migration
 {
     public function up(): void
     {
-        if (!filter_var(env('WEB_ANALYTICS_SCHEMA_ENABLED', false), FILTER_VALIDATE_BOOLEAN)) {
+        if (!$this->schemaEnabled()) {
             return;
         }
 
@@ -153,7 +153,7 @@ return new class extends Migration
 
     public function down(): void
     {
-        if (!filter_var(env('WEB_ANALYTICS_SCHEMA_ENABLED', false), FILTER_VALIDATE_BOOLEAN)) {
+        if (!$this->schemaEnabled()) {
             return;
         }
 
@@ -163,5 +163,13 @@ return new class extends Migration
         ] as $tableName) {
             Schema::dropIfExists($tableName);
         }
+    }
+
+    private function schemaEnabled(): bool
+    {
+        $fromEnv = filter_var(env('WEB_ANALYTICS_SCHEMA_ENABLED', false), FILTER_VALIDATE_BOOLEAN);
+        $fromConfig = (bool) config('laravel-web-analytics.analytics.enabled', false);
+
+        return $fromEnv || $fromConfig;
     }
 };
