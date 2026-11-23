@@ -537,15 +537,22 @@ return [
 
 ## 🗺️ Offline GeoIP & live map
 
-The Overview and Real-time pages include a vector world map. Set:
+The Overview and Real-time pages include a vector world map. Offline MaxMind support is **opt-in** — it is deliberately not installed automatically during `composer require` (not every site needs it, and GeoLite2 requires a MaxMind license key). Use the setup command instead:
+
+```bash
+php artisan lwa:geoip                 # status report
+php artisan lwa:geoip --install       # installs maxmind-db/reader
+php artisan lwa:geoip --download --license-key=YOUR_KEY
+# alias: php artisan analytics:geoip
+```
 
 ```env
 WEB_ANALYTICS_GEOIP_PROVIDER=maxmind
 WEB_ANALYTICS_MAXMIND_DB=/absolute/path/to/GeoLite2-City.mmdb
-composer require maxmind-db/reader
+MAXMIND_LICENSE_KEY=your-key         # only needed for --download
 ```
 
-Lookups then happen **locally** with no external API call; country, city and coordinates are cached per IP and plotted on the live map. Without the optional reader/database, the package degrades gracefully and the map explains what is missing. The map library ships its own world shape data, so no map tile API is called either.
+`--download` fetches `GeoLite2-City.mmdb` from MaxMind once at setup time using the license key; all lookups afterwards are **local**, with no external API call. Country, city and coordinates are cached per IP and plotted on the map. Without the optional reader/database, the package degrades gracefully and the map explains what is missing. The map library ships its own world shape data, so no map tile API is called either.
 
 ## 📡 SSE limits & polling fallback
 
@@ -683,6 +690,7 @@ php artisan lwa:prune --days=30 --tenant=tenant-uuid
 | `lwa:aggregate` | — | Build hourly/daily rollups from raw events (`--website`, `--from`, `--to`, `--granularity`) |
 | `lwa:upgrade` | `analytics:upgrade` | Backfill legacy `lwa_logs` into the advanced schema (`--dry-run`, `--chunk`, `--since`, `--prune-legacy`) |
 | `lwa:doctor` | `analytics:doctor` | Installer-style preflight report (`--json` for CI, `--repair` to create missing advanced tables) |
+| `lwa:geoip` | `analytics:geoip` | Check/install offline MaxMind GeoIP support (`--install`, `--download`, `--license-key`) |
 | `lwa:live` | — | Generate simulated live traffic for demos (`--rps`, `--interval`, `--count`, `--tenant`) |
 
 ---
