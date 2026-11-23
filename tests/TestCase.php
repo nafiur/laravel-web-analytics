@@ -33,7 +33,7 @@ abstract class TestCase extends Orchestra
                 'database'  => env('DB_DATABASE', 'lwa_test'),
                 'username'  => env('DB_USERNAME', $connection === 'pgsql' ? 'postgres' : 'root'),
                 'password'  => env('DB_PASSWORD', ''),
-                'charset'   => 'utf8mb4',
+                'charset'   => $connection === 'pgsql' ? 'utf8' : 'utf8mb4',
                 'prefix'    => '',
                 'strict'    => false,
             ]);
