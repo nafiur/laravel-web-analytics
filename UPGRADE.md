@@ -11,6 +11,13 @@ php artisan lwa:doctor          # human-readable table
 php artisan lwa:doctor --json   # machine-readable report
 ```
 
+If the report shows **Advanced analytics tables — FAIL**, an earlier `migrate` may have recorded the guarded migration without creating the tables. Repair it directly (idempotent — the migration uses `Schema::hasTable` checks and never touches `lwa_logs`):
+
+```bash
+php artisan lwa:doctor --repair
+php artisan lwa:doctor           # re-check until no FAIL remains
+```
+
 Checks include PHP/Laravel versions, extensions, database connection, legacy and advanced tables, config cache, schema flag, queue/cache drivers, storage permissions, published views and pending upgrade rows. Fix every `FAIL` before continuing.
 
 1. **Back up the database** (especially `lwa_logs`) and `.env`.

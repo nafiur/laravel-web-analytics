@@ -50,9 +50,35 @@ This creates separate `lwa_websites`, `lwa_visitors`, `lwa_sessions`, `lwa_pagev
 
 If tables are missing, the dashboard shows a setup page with the `php artisan migrate` instruction, the API returns `503`, the SSE stream emits an `error` event, and commands exit with guidance — no raw stack traces.
 
-Run `php artisan lwa:doctor` before upgrading or enabling the schema: it prints an installer-style table covering PHP/Laravel versions, extensions, DB connection, table readiness, config cache, queue/cache drivers, storage permissions and pending upgrade rows. Use `--json` for CI.
+Run `php artisan lwa:doctor` before upgrading or enabling the schema: it prints an installer-style table covering PHP/Laravel versions, extensions, DB connection, table readiness, config cache, queue/cache drivers, storage permissions and pending upgrade rows. Use `--json` for CI. If advanced tables are missing because an earlier `migrate` recorded the migration while a config guard skipped it, run `php artisan lwa:doctor --repair` — it executes the additive migration directly and re-checks.
 
-**Upgrade path:** run `php artisan lwa:upgrade --dry-run` first to count legacy rows, then `php artisan lwa:upgrade --website-domain=example.com` to backfill. The command is resumable via an `lwa_upgrade_checkpoints` row and never deletes legacy data unless `--prune-legacy` is passed. Re-run it to import rows logged since the previous run.
+### Production upgrade quickstart
+
+```bash
+composer update nafiur/laravel-web-analytics -W
+php artisan optimize:clear
+
+# create/repair the advanced tables and verify
+php artisan lwa:doctor --repair
+php artisan lwa:doctor
+
+# backfill legacy telemetry
+php artisan lwa:upgrade --dry-run --website-domain=example.com
+php artisan lwa:upgrade --website-domain=example.com
+
+# build rollup tables used by the dashboard
+php artisan lwa:aggregate --granularity=hourly
+php artisan lwa:aggregate --granularity=daily
+```
+
+If views were published earlier, refresh them too:
+
+```bash
+php artisan vendor:publish --tag=web-analytics-views --force
+php artisan view:clear
+```
+
+**Upgrade path:** `lwa:upgrade` is resumable via an `lwa_upgrade_checkpoints` row and never deletes legacy data unless `--prune-legacy` is passed. Re-run it to import rows logged since the previous run. See [UPGRADE.md](UPGRADE.md) for the full guide and rollback steps.
 
 Full design/reference: [ARCHITECTURE.md](ARCHITECTURE.md) — current-state audit, ER diagram, metric definitions, migration plan, security review and milestones. Upgrade steps: [UPGRADE.md](UPGRADE.md).
 
@@ -656,7 +682,7 @@ php artisan lwa:prune --days=30 --tenant=tenant-uuid
 | `lwa:summary` | `analytics:summary` | Print the periodic digest and send it if alerts are enabled |
 | `lwa:aggregate` | — | Build hourly/daily rollups from raw events (`--website`, `--from`, `--to`, `--granularity`) |
 | `lwa:upgrade` | `analytics:upgrade` | Backfill legacy `lwa_logs` into the advanced schema (`--dry-run`, `--chunk`, `--since`, `--prune-legacy`) |
-| `lwa:doctor` | `analytics:doctor` | Installer-style preflight report (`--json` for CI) |
+| `lwa:doctor` | `analytics:doctor` | Installer-style preflight report (`--json` for CI, `--repair` to create missing advanced tables) |
 | `lwa:live` | — | Generate simulated live traffic for demos (`--rps`, `--interval`, `--count`, `--tenant`) |
 
 ---
