@@ -86,6 +86,21 @@ class ApiTest extends TestCase
         $this->assertSame(1, AnalyticEvent::where('name', 'allowed')->count());
     }
 
+    public function test_api_is_rate_limited(): void
+    {
+        config()->set('laravel-web-analytics.api.rate_limit_per_minute', 2);
+
+        $websiteId = (int) config('laravel-web-analytics.analytics.website_id');
+        [, $plain] = ApiToken::issue($websiteId, 'limited', ['read']);
+
+        $this->withHeader('Authorization', 'Bearer ' . $plain)
+            ->getJson(route('lwa_api_summary'))->assertOk();
+        $this->withHeader('Authorization', 'Bearer ' . $plain)
+            ->getJson(route('lwa_api_summary'))->assertOk();
+        $this->withHeader('Authorization', 'Bearer ' . $plain)
+            ->getJson(route('lwa_api_summary'))->assertStatus(429);
+    }
+
     public function test_api_websites_requires_admin_ability(): void
     {
         $websiteId = (int) config('laravel-web-analytics.analytics.website_id');

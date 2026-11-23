@@ -399,10 +399,16 @@ return [
         'trust_forwarded_headers' => env('WEB_ANALYTICS_TRUST_FORWARDED_HEADERS', false),
     ],
 
+    'api' => [
+        'rate_limit_per_minute' => env('WEB_ANALYTICS_API_RATE_LIMIT', 60),
+    ],
+
     'privacy' => [
-        'respect_dnt'         => env('WEB_ANALYTICS_RESPECT_DNT', true),
-        'visitor_id_strategy' => env('WEB_ANALYTICS_VISITOR_ID_STRATEGY', 'session'), // 'session' | 'fingerprint'
-        'fingerprint_salt'    => env('WEB_ANALYTICS_FINGERPRINT_SALT', ''),
+        'respect_dnt'            => env('WEB_ANALYTICS_RESPECT_DNT', true),
+        'visitor_id_strategy'    => env('WEB_ANALYTICS_VISITOR_ID_STRATEGY', 'session'), // 'session' | 'fingerprint'
+        'fingerprint_salt'       => env('WEB_ANALYTICS_FINGERPRINT_SALT', ''),
+        'masked_query_parameters'=> ['token', 'password', 'secret', 'api_key', 'email', 'card', 'cvv', /* ... */],
+        'mask_referrer'          => env('WEB_ANALYTICS_MASK_REFERRER', true),
     ],
 
     /*
@@ -479,6 +485,8 @@ return [
 - **Do Not Track:** with `WEB_ANALYTICS_RESPECT_DNT=true` (default), requests carrying `DNT: 1` are never logged.
 - **Cookieless visitors:** set `WEB_ANALYTICS_VISITOR_ID_STRATEGY=fingerprint` to identify guests with `sha256(IP|User-Agent|date|salt)` instead of the Laravel session id. Always set `WEB_ANALYTICS_FINGERPRINT_SALT` to a stable random value; otherwise the app key is used as a fallback.
 - **Bot filtering:** `WEB_ANALYTICS_CAPTURE_BOTS` accepts `false` (skip all bots — default), `true` (capture everything), or `known` (capture recognised search-engine/social crawlers but skip scrapers and CLI tooling).
+- **URL masking:** configured sensitive query parameters (tokens, passwords, emails, card data…) are replaced with `[REDACTED]` in stored URLs and referrers; UTM parameters are preserved.
+- **API protection:** bearer tokens with abilities plus per-token rate limiting (`WEB_ANALYTICS_API_RATE_LIMIT`, default 60/min).
 
 ## 🗺️ Offline GeoIP & live map
 

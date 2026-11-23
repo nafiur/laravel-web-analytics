@@ -2,6 +2,9 @@
 
 namespace Nafiur\WebAnalytics;
 
+use Illuminate\Cache\RateLimiting\Limit;
+use Illuminate\Http\Request;
+use Illuminate\Support\Facades\RateLimiter;
 use Illuminate\Support\ServiceProvider;
 use Illuminate\Support\Facades\Route;
 use Nafiur\WebAnalytics\Contracts\Collector;
@@ -86,9 +89,17 @@ class WebAnalyticsServiceProvider extends ServiceProvider
     {
         $this->app['router']->aliasMiddleware('lwa.api', \Nafiur\WebAnalytics\Http\Middleware\AuthenticateApiToken::class);
 
+        RateLimiter::for('lwa.api', function (Request $request) {
+            $key = $request->user()?->getAuthIdentifier()
+                ?: ($request->header('Authorization') ?: $request->ip());
+
+            return Limit::perMinute((int) config('laravel-web-analytics.api.rate_limit_per_minute', 60))
+                ->by('lwa_api_' . sha1((string) $key));
+        });
+
         Route::group([
             'prefix'    => config('laravel-web-analytics.route.prefix', 'web-analytics') . '/api/v1',
-            'middleware' => ['api'],
+            'middleware' => ['api', 'throttle:lwa.api'],
         ], function () {
             $this->loadRoutesFrom(__DIR__ . '/../routes/api.php');
         });

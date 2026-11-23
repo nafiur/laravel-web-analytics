@@ -115,10 +115,20 @@ return [
     |   'fingerprint' -> cookieless daily hash of IP + UA + date + salt
     |
     */
+    'api' => [
+        'rate_limit_per_minute' => env('WEB_ANALYTICS_API_RATE_LIMIT', 60),
+    ],
+
     'privacy'               => [
-        'respect_dnt'         => env('WEB_ANALYTICS_RESPECT_DNT', true),
-        'visitor_id_strategy' => env('WEB_ANALYTICS_VISITOR_ID_STRATEGY', 'session'),
-        'fingerprint_salt'    => env('WEB_ANALYTICS_FINGERPRINT_SALT', ''),
+        'respect_dnt'            => env('WEB_ANALYTICS_RESPECT_DNT', true),
+        'visitor_id_strategy'    => env('WEB_ANALYTICS_VISITOR_ID_STRATEGY', 'session'),
+        'fingerprint_salt'       => env('WEB_ANALYTICS_FINGERPRINT_SALT', ''),
+        'masked_query_parameters' => [
+            'token', 'access_token', 'refresh_token', 'api_key', 'apikey', 'key',
+            'password', 'secret', 'authorization', 'code', 'session', 'sid',
+            'email', 'phone', 'card', 'card_number', 'cvv', 'ssn',
+        ],
+        'mask_referrer'          => env('WEB_ANALYTICS_MASK_REFERRER', true),
     ],
 
     /*

@@ -12,6 +12,7 @@ use Nafiur\WebAnalytics\Services\BotDetector;
 use Nafiur\WebAnalytics\Services\GeoIpService;
 use Nafiur\WebAnalytics\Services\IpAddress;
 use Nafiur\WebAnalytics\Services\TenantResolver;
+use Nafiur\WebAnalytics\Services\UrlMasker;
 use Symfony\Component\HttpFoundation\Response;
 
 class TrackWebTraffic
@@ -131,7 +132,12 @@ class TrackWebTraffic
 
             // Referrer
             $rawReferrer = $request->headers->get('referer');
-            $referrer    = $rawReferrer ? substr($rawReferrer, 0, 490) : 'Direct';
+            $maskedFullUrl = UrlMasker::mask($request->fullUrl());
+            $referrer = $rawReferrer
+                ? substr((string) (config('laravel-web-analytics.privacy.mask_referrer', true)
+                    ? UrlMasker::mask($rawReferrer)
+                    : $rawReferrer), 0, 490)
+                : 'Direct';
 
             // UTM campaign parameters
             $utmSource   = $request->query('utm_source');
@@ -158,7 +164,7 @@ class TrackWebTraffic
                     'ip_address'       => substr($ip, 0, 45),
                     'method'           => strtoupper($request->method()),
                     'path'             => substr($path, 0, 490),
-                    'full_url'         => substr($request->fullUrl(), 0, 1000),
+                    'full_url'         => substr((string) $maskedFullUrl, 0, 1000),
                     'status_code'      => $response->getStatusCode(),
                     'response_time_ms' => $durationMs,
                     'bytes_sent'       => $bytes,
@@ -187,7 +193,7 @@ class TrackWebTraffic
                     statusCode:     $response->getStatusCode(),
                     responseTimeMs: $durationMs,
                     bytesSent:      $bytes,
-                    referrer:       $rawReferrer,
+                    referrer:       $referrer,
                     utmSource:      $utmSource !== null ? (string) $utmSource : null,
                     utmMedium:      $utmMedium !== null ? (string) $utmMedium : null,
                     utmCampaign:    $utmCampaign !== null ? (string) $utmCampaign : null,

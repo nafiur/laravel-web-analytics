@@ -92,6 +92,22 @@ class TrackingTest extends TestCase
         $this->assertDatabaseHas('lwa_logs', ['ip_address' => '192.168.1.0']);
     }
 
+    public function test_sensitive_query_parameters_are_masked(): void
+    {
+        $request = $this->request('/track?token=super-secret&utm_source=google');
+        $response = new SymfonyResponse('ok', 200, ['Content-Length' => 2]);
+        $request->headers->set('referer', 'https://ref.test/callback?access_token=abc&utm_medium=cpc');
+
+        $this->track($request, $response);
+
+        $log = \Nafiur\WebAnalytics\Models\LwaLogs::first();
+        $this->assertStringContainsString('token=%5BREDACTED%5D', $log->full_url);
+        $this->assertStringNotContainsString('super-secret', $log->full_url);
+        $this->assertStringContainsString('utm_source=google', $log->full_url);
+        $this->assertStringContainsString('access_token=%5BREDACTED%5D', $log->referrer);
+        $this->assertStringNotContainsString('abc', $log->referrer);
+    }
+
     public function test_full_private_ip_subnet_resolves_to_internal_location(): void
     {
         $this->track($this->request('/private-ip', ['REMOTE_ADDR' => '172.20.10.5']), new SymfonyResponse('x'));
