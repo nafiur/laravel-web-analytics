@@ -1,50 +1,60 @@
 # Upgrade guide — v2 request logs → advanced analytics schema
 
-The advanced analytics schema is **opt-in**. Existing v2 installations keep working unchanged unless you set `WEB_ANALYTICS_SCHEMA_ENABLED=true`.
+**Target:** v3.0.0 · **Source:** any supported v2 release on PHP 8.2+ / Laravel 11+
+
+The advanced analytics **collector and API are opt-in**. The v3 migrations themselves are additive and always create their tables — they never touch `lwa_logs`. Existing v2 dashboards keep working with no configuration changes.
+
+---
 
 ## Before you start
 
-0. **Run the preflight check** — it prints an installer-style report and tells you exactly what is missing:
+0. **Run the preflight check:**
 
 ```bash
 php artisan lwa:doctor          # human-readable table
 php artisan lwa:doctor --json   # machine-readable report
 ```
 
-If the report shows **Advanced analytics tables — FAIL**, an earlier `migrate` may have recorded the guarded migration without creating the tables. Repair it directly (idempotent — the migration uses `Schema::hasTable` checks and never touches `lwa_logs`):
+If it reports missing tables (this happened on some installs where an older, guarded migration was recorded as "run" without creating anything), repair idempotently:
 
 ```bash
 php artisan lwa:doctor --repair
 php artisan lwa:doctor           # re-check until no FAIL remains
 ```
 
-Checks include PHP/Laravel versions, extensions, database connection, legacy and advanced tables, config cache, schema flag, queue/cache drivers, storage permissions, published views and pending upgrade rows. Fix every `FAIL` before continuing.
+1. **Back up the database** — especially `lwa_logs` — and `.env`.
+2. Note your `WEB_ANALYTICS_TABLE_NAME` (default `lwa_logs`).
+3. If you plan to use `queue` collector mode, make sure a queue worker can reach the same DB/cache.
+4. Run the whole flow on staging with a production copy first.
 
-1. **Back up the database** (especially `lwa_logs`) and `.env`.
-2. Note your current `WEB_ANALYTICS_TABLE_NAME` (default `lwa_logs`).
-3. Make sure the queue worker (if you plan to use `queue` mode) can reach the same database/cache.
-4. Run the upgrade on staging first with a copy of production data.
+---
 
 ## 1. Update the package
 
 ```bash
-composer require nafiur/laravel-web-analytics:dev-dev -W   # or your tagged target version
-php artisan view:clear
+composer require nafiur/laravel-web-analytics:^3.0 -W
+# development branch alternative:
+# composer require nafiur/laravel-web-analytics:dev-dev -W
+
+php artisan optimize:clear
 ```
 
-If you published views, refresh them:
+If you published views earlier, refresh them (otherwise you will keep seeing the old UI):
 
 ```bash
 php artisan vendor:publish --tag=web-analytics-views --force
+php artisan view:clear
 ```
 
-## 2. Enable and migrate the new schema
+---
+
+## 2. Enable the collector and migrate
 
 ```env
 WEB_ANALYTICS_SCHEMA_ENABLED=true
-WEB_ANALYTICS_WEBSITE_ID=1          # optional; the upgrade command can create one
-WEB_ANALYTICS_COLLECTOR_MODE=sync   # use 'queue' only when a worker is available
-WEB_ANALYTICS_WRITE_LEGACY=true     # keep v2 logging during the transition
+WEB_ANALYTICS_COLLECTOR_MODE=sync     # use 'queue' only with a running worker
+WEB_ANALYTICS_WRITE_LEGACY=true       # keep v2 logging during transition
+# WEB_ANALYTICS_WEBSITE_ID=1          # optional; upgrade can create one from --website-domain
 ```
 
 ```bash
@@ -52,10 +62,11 @@ php artisan optimize:clear
 php artisan migrate
 ```
 
-This creates (additively, never touching `lwa_logs`):
+This creates, additively: `lwa_websites`, `lwa_visitors`, `lwa_sessions`, `lwa_pageviews`, `lwa_events`, `lwa_hourly_stats`, `lwa_daily_stats`, `lwa_upgrade_checkpoints`, `lwa_api_tokens`, plus `request_uuid` idempotency columns.
 
-`lwa_websites`, `lwa_visitors`, `lwa_sessions`, `lwa_pageviews`, `lwa_events`,
-`lwa_hourly_stats`, `lwa_daily_stats`, `lwa_upgrade_checkpoints`, `lwa_api_tokens`.
+> `optimize:clear` is mandatory after any `.env`/config change. Cached config is the most common reason for "Nothing to migrate" and missing tables.
+
+---
 
 ## 3. Dry run
 
@@ -63,43 +74,81 @@ This creates (additively, never touching `lwa_logs`):
 php artisan lwa:upgrade --dry-run --website-domain=example.com
 ```
 
-Review the reported row count. Nothing is written in dry-run mode.
+Understand the report:
+
+| Column | Meaning |
+|---|---|
+| `read` | **Total** legacy rows scanned — not the number pending |
+| `pending_since_id` | Rows the next real run will import |
+| `checkpoint_last_id` | Current resumable position |
+| `pageviews` | Always `0` in dry-run — nothing is written |
+
+---
 
 ## 4. Backfill
 
 ```bash
-php artisan lwa:upgrade --website-domain=example.com --chunk=1000
+php artisan lwa:upgrade --website-domain=example.com --chunk=2000
 ```
 
-- Idempotent and resumable via `lwa_upgrade_checkpoints`.
-- Re-run to import rows logged since the previous run.
-- Visitors are reconstructed from `session_id` (or a daily salted IP/UA hash).
+- Resumable via `lwa_upgrade_checkpoints`; re-run to import rows logged since the last run.
+- Safe to interrupt — just re-run (it resumes from `last_id`).
+- For very large tables, run it in the background so an SSH disconnect cannot stop it:
+
+```bash
+nohup php artisan lwa:upgrade --website-domain=example.com --chunk=2000 \
+  > storage/logs/lwa-upgrade.log 2>&1 &
+tail -f storage/logs/lwa-upgrade.log
+```
+
+- Visitors are reconstructed from `session_id` (or daily salted IP/UA hash).
 - Sessions use the configured 30-minute inactivity timeout.
+- Imported pageviews get a stable `request_uuid` (`legacy_<id>`), so re-runs cannot duplicate them.
+
+Check progress any time:
+
+```bash
+php artisan lwa:doctor
+# OK Upgrade checkpoint  last_id=..., N legacy row(s) pending
+```
+
+---
 
 ## 5. Build rollups
 
+The upgrade command automatically aggregates the **last 2 days hourly** and **last 90 days daily**. For older history, run explicitly:
+
 ```bash
-php artisan lwa:aggregate --granularity=hourly
-php artisan lwa:aggregate --granularity=daily
+php artisan lwa:aggregate --granularity=daily --from=2025-01-01 --to=2026-11-23
+php artisan lwa:aggregate --granularity=hourly --from=2026-11-20 --to=2026-11-23
 ```
 
-Schedule both in `routes/console.php`:
+Schedule ongoing aggregation in `routes/console.php`:
 
 ```php
+use Illuminate\Support\Facades\Schedule;
+
 Schedule::command('lwa:aggregate --granularity=hourly')->hourly();
 Schedule::command('lwa:aggregate --granularity=daily')->daily();
 Schedule::command('lwa:prune')->daily();
+Schedule::command('lwa:upgrade --website-domain=example.com')->hourly(); // import late-arriving legacy rows
+Schedule::command('lwa:geoip --auto')->weekly();                          // if using MaxMind
 ```
 
 Dashboard KPIs then come from rollup tables, not raw scans.
 
+---
+
 ## 6. Verify
 
 ```bash
+php artisan lwa:doctor
 php artisan lwa:benchmark --range=24h
 ```
 
-Compare aggregate vs raw scan timings, and confirm reported request counts look right on the Overview page.
+Check the Overview, Visitors, Geography and Real-time pages. With MaxMind configured, country/city markers are precise; without it, country-centroid fallback still plots approximate locations.
+
+---
 
 ## 7. Optional — retire legacy data
 
@@ -109,13 +158,15 @@ Only after verification:
 php artisan lwa:upgrade --prune-legacy --website-domain=example.com
 ```
 
-This deletes only `lwa_logs` rows that have already been imported (tracked by the checkpoint). Leave `WEB_ANALYTICS_WRITE_LEGACY=true` until you are fully comfortable, then set it to `false`.
+Deletes only `lwa_logs` rows already imported (tracked by the checkpoint). Keep `WEB_ANALYTICS_WRITE_LEGACY=true` until comfortable, then set it `false`.
 
-## Configuration changes
+---
 
-| New setting | Default | Purpose |
+## Configuration reference
+
+| Setting | Default | Purpose |
 |---|---|---|
-| `WEB_ANALYTICS_SCHEMA_ENABLED` | `false` | Master switch for advanced tables/collector |
+| `WEB_ANALYTICS_SCHEMA_ENABLED` | `false` | Enables collector + API (tables always exist) |
 | `WEB_ANALYTICS_COLLECTOR_MODE` | `sync` | `sync` or `queue` |
 | `WEB_ANALYTICS_WRITE_LEGACY` | `true` | Keep writing `lwa_logs` |
 | `WEB_ANALYTICS_QUEUE` | — | Optional named queue |
@@ -123,20 +174,45 @@ This deletes only `lwa_logs` rows that have already been imported (tracked by th
 | `WEB_ANALYTICS_SESSION_TIMEOUT` | `30` | Session inactivity minutes |
 | `WEB_ANALYTICS_BOUNCE_MAX_SECONDS` | `0` | Bounce duration threshold |
 | `WEB_ANALYTICS_API_RATE_LIMIT` | `60` | API requests/minute |
-| `WEB_ANALYTICS_MASK_REFERRER` | `true` | Mask sensitive referrer params |
+| `WEB_ANALYTICS_GEOIP_PROVIDER` | — | `''`, `ip-api`, `maxmind` |
+| `WEB_ANALYTICS_MAXMIND_DB` | — | Local `.mmdb` path |
+| `MAXMIND_LICENSE_KEY` / `MAXMIND_ACCOUNT_ID` | — | Secrets — keep in `.env` only |
+| `WEB_ANALYTICS_GEOIP_AUTO_DOWNLOAD` | `false` | Scheduled DB refresh |
+| `WEB_ANALYTICS_GEOIP_UPDATE_DAYS` | `7` | Refresh interval |
+
+Non-secret values can also be set in published `config/laravel-web-analytics.php`; keep secrets in `.env` and run `optimize:clear` after any change.
+
+---
+
+## Troubleshooting
+
+| Symptom | Cause / fix |
+|---|---|
+| `Nothing to migrate`, advanced tables missing | Older guarded migration was recorded as run → `php artisan lwa:doctor --repair` |
+| Dashboard shows setup page / API 503 / SSE `error` event | Required tables missing → doctor + `--repair`, then `optimize:clear` |
+| `lwa:upgrade --dry-run` shows huge `read` but tiny `pending` | Normal — `read` is the total row count; only `pending_since_id` will be imported |
+| Upgrade interrupted (`^C`) | Nothing lost — re-run; checkpoint resumes from `last_id` |
+| Pending rows never reach zero | Tracking is still active in v2 → normal; schedule `lwa:upgrade` hourly or accept a small tail |
+| `Reconnecting…` flashes on Real-time | Fixed in v3 — a single normal SSE EOF no longer flips the badge |
+| Map shows country codes as `BD BD` | Old published views — re-publish with `--force` and `view:clear` |
+| City list empty | City data requires GeoIP; configure MaxMind or Cloudflare headers |
+| Exposed MaxMind license key | Revoke it in the MaxMind portal immediately, then use `.env` only |
+
+---
 
 ## Rollback
 
 1. Set `WEB_ANALYTICS_SCHEMA_ENABLED=false` and `WEB_ANALYTICS_WRITE_LEGACY=true`.
 2. `php artisan optimize:clear`.
-3. If you published views, re-publish the v2 views or restore them from backup.
-4. To remove advanced tables: `php artisan migrate:rollback --step=1` (or drop them manually after reviewing the migration).
-5. Restore the database backup if you ran `--prune-legacy`.
+3. Re-publish/restore v2 views if you customized them.
+4. Remove advanced tables: `php artisan migrate:rollback --step=2` (two v3 migrations: idempotency keys + table creation). Verify with `php artisan lwa:doctor` afterwards.
+5. Restore the DB backup if you ran `--prune-legacy`.
 
-No v2 configuration keys were removed, so a config rollback is not strictly required.
+No v2 config keys were removed, so a config rollback is not strictly required.
 
 ## Known limitations
 
-- Events/goals/conversions only work with the collector enabled and events actually recorded; no historical events are inferred from `lwa_logs`.
-- Bounce and engagement for imported sessions are approximations based on the legacy `session_id` and timestamps.
-- Multi-website isolation is session/config based; API tokens are bound to a single website at issue time.
+- Events/goals/conversions report only events actually recorded; no historical events are inferred from `lwa_logs`.
+- Bounce and engagement for imported sessions are approximations from legacy `session_id` and timestamps.
+- Multi-website isolation is session/config based; API tokens are bound to one website at issue time.
+- `queue` collector mode requires a worker; without one use `sync`.
