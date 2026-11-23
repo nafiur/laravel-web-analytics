@@ -543,8 +543,12 @@ The Overview and Real-time pages include a vector world map. Offline MaxMind sup
 php artisan lwa:geoip                 # status report
 php artisan lwa:geoip --install       # installs maxmind-db/reader
 php artisan lwa:geoip --download --license-key=YOUR_KEY
+# if your account requires an account ID:
+php artisan lwa:geoip --download --account-id=YOUR_ACCOUNT_ID
 # alias: php artisan analytics:geoip
 ```
+
+Never pass a real license key inline on a shared shell or commit it — use `MAXMIND_LICENSE_KEY` (and optionally `MAXMIND_ACCOUNT_ID`) in `.env`. If a key is ever exposed, revoke it in the MaxMind portal immediately.
 
 ```env
 WEB_ANALYTICS_GEOIP_PROVIDER=maxmind

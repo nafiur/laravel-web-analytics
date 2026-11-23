@@ -16,6 +16,7 @@ class GeoIpSetupCommand extends Command
                             {--install : Install the optional maxmind-db/reader package}
                             {--download : Download GeoLite2-City.mmdb using a MaxMind license key}
                             {--license-key= : MaxMind license key (or set MAXMIND_LICENSE_KEY)}
+                            {--account-id= : MaxMind account ID (or set MAXMIND_ACCOUNT_ID), if required}
                             {--path= : Override the target .mmdb path}';
 
     protected $description = 'Set up offline MaxMind GeoIP for the visitors map';
@@ -92,14 +93,33 @@ class GeoIpSetupCommand extends Command
         }
 
         $archive = tempnam(sys_get_temp_dir(), 'lwa_maxmind_') . '.tar.gz';
+        $accountId = (string) ($this->option('account-id') ?: env('MAXMIND_ACCOUNT_ID', ''));
         $url = 'https://download.maxmind.com/app/geoip_download?edition_id=GeoLite2-City'
-            . '&license_key=' . urlencode($license) . '&suffix=tar.gz';
+            . '&license_key=' . urlencode($license)
+            . ($accountId !== '' ? '&account_id=' . urlencode($accountId) : '')
+            . '&suffix=tar.gz';
 
         try {
-            Http::withOptions(['sink' => $archive, 'timeout' => 180])->get($url);
+            $response = Http::withOptions(['sink' => $archive, 'timeout' => 180])->get($url);
+
+            if (!$response->successful()) {
+                $body = is_file($archive) ? (string) @file_get_contents($archive) : '';
+                $snippet = trim(substr(preg_replace('/\s+/', ' ', strip_tags($body)) ?: '', 0, 180));
+                throw new \RuntimeException('MaxMind returned HTTP ' . $response->status()
+                    . ($snippet !== '' ? ': ' . $snippet : '. Check the license key / account ID and outbound HTTPS access.'));
+            }
 
             if (!is_file($archive) || filesize($archive) < 1000) {
-                throw new \RuntimeException('Download failed or returned an empty/invalid file. Check the license key.');
+                throw new \RuntimeException('Empty download. Check outbound HTTPS access to download.maxmind.com.');
+            }
+
+            $handle = @fopen($archive, 'rb');
+            $magic = $handle ? @fread($handle, 2) : '';
+            if ($handle) {
+                fclose($handle);
+            }
+            if ($magic !== "\x1f\x8b") {
+                throw new \RuntimeException('Downloaded file is not a gzip archive — likely an error page. Verify license details.');
             }
 
             $tar = preg_replace('/\.tar\.gz$/', '.tar', $archive);
