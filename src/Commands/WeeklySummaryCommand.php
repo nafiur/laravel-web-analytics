@@ -17,6 +17,12 @@ class WeeklySummaryCommand extends Command
 
     public function handle(): int
     {
+        if (!\Nafiur\WebAnalytics\Services\DatabaseReadiness::legacyReady()
+            && !\Nafiur\WebAnalytics\Services\DatabaseReadiness::advancedReady()) {
+            $this->error('Analytics tables are missing. Run: php artisan migrate');
+            return self::FAILURE;
+        }
+
         $range = (string) $this->option('range');
         $tenantId = $this->option('tenant') ?: null;
 

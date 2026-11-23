@@ -28,6 +28,12 @@ class SimulateLiveTrafficCommand extends Command
      */
     public function handle(): int
     {
+        if (!\Nafiur\WebAnalytics\Services\DatabaseReadiness::legacyReady()) {
+            $this->error('Legacy table ' . \Nafiur\WebAnalytics\Services\DatabaseReadiness::legacyTable() . ' does not exist.');
+            $this->line('Run: php artisan migrate');
+            return self::FAILURE;
+        }
+
         $tableName = config('laravel-web-analytics.table_name', 'lwa_logs');
         $rps = max(1, (int) $this->option('rps'));
         $interval = max(1, (int) $this->option('interval'));

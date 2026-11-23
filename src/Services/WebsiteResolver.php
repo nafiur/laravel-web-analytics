@@ -13,7 +13,11 @@ class WebsiteResolver
 {
     public function currentId(): ?int
     {
-        $sessionId = session('lwa_website_id');
+        try {
+            $sessionId = session('lwa_website_id');
+        } catch (\Throwable $e) {
+            $sessionId = null; // console / no-session contexts
+        }
         if ($sessionId && Website::find($sessionId)) {
             return (int) $sessionId;
         }

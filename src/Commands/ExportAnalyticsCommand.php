@@ -21,6 +21,12 @@ class ExportAnalyticsCommand extends Command
 
     public function handle(): int
     {
+        if (!\Nafiur\WebAnalytics\Services\DatabaseReadiness::legacyReady()) {
+            $this->error('Legacy table ' . \Nafiur\WebAnalytics\Services\DatabaseReadiness::legacyTable() . ' does not exist.');
+            $this->line('Run: php artisan migrate');
+            return self::FAILURE;
+        }
+
         $format = strtolower((string) $this->option('format'));
         if ($format !== 'csv') {
             $this->error("Unsupported format [{$format}]. Only 'csv' is available.");

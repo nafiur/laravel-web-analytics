@@ -89,6 +89,7 @@ class WebAnalyticsServiceProvider extends ServiceProvider
     protected function registerApiRoutes(): void
     {
         $this->app['router']->aliasMiddleware('lwa.api', \Nafiur\WebAnalytics\Http\Middleware\AuthenticateApiToken::class);
+        $this->app['router']->aliasMiddleware('lwa.schema', \Nafiur\WebAnalytics\Http\Middleware\EnsureAnalyticsSchema::class);
 
         RateLimiter::for('lwa.api', function (Request $request) {
             $key = $request->user()?->getAuthIdentifier()
@@ -100,7 +101,7 @@ class WebAnalyticsServiceProvider extends ServiceProvider
 
         Route::group([
             'prefix'    => config('laravel-web-analytics.route.prefix', 'web-analytics') . '/api/v1',
-            'middleware' => ['api', 'throttle:lwa.api'],
+            'middleware' => ['api', 'lwa.schema', 'throttle:lwa.api'],
         ], function () {
             $this->loadRoutesFrom(__DIR__ . '/../routes/api.php');
         });

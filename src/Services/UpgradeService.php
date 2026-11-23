@@ -27,6 +27,11 @@ class UpgradeService
                 . '. Set WEB_ANALYTICS_SCHEMA_ENABLED=true and run php artisan migrate first.'];
         }
 
+        if (!DatabaseReadiness::legacyReady()) {
+            return ['error' => 'Legacy table ' . DatabaseReadiness::legacyTable()
+                . ' does not exist. Run php artisan migrate first.'];
+        }
+
         $dryRun = (bool) ($options['dry_run'] ?? false);
         $chunk = max(1, (int) ($options['chunk'] ?? 1000));
         $since = !empty($options['since']) ? Carbon::parse($options['since']) : null;

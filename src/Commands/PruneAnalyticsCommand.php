@@ -25,6 +25,12 @@ class PruneAnalyticsCommand extends Command
      */
     public function handle(PruneService $prune): int
     {
+        if (!\Nafiur\WebAnalytics\Services\DatabaseReadiness::legacyReady()) {
+            $this->error('Legacy table ' . \Nafiur\WebAnalytics\Services\DatabaseReadiness::legacyTable() . ' does not exist.');
+            $this->line('Run: php artisan migrate');
+            return self::FAILURE;
+        }
+
         $daysOption = $this->option('days');
         $days = max(1, (int) ($daysOption !== null && $daysOption !== ''
             ? $daysOption

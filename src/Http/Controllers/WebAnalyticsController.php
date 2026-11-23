@@ -9,6 +9,7 @@ use Nafiur\WebAnalytics\Models\Analytics\Website;
 use Nafiur\WebAnalytics\Models\LwaLogs;
 use Nafiur\WebAnalytics\Services\AlertService;
 use Nafiur\WebAnalytics\Services\CountryFlag;
+use Nafiur\WebAnalytics\Services\DatabaseReadiness;
 use Nafiur\WebAnalytics\Services\DatabaseTrafficAnalytics;
 use Nafiur\WebAnalytics\Services\GeoIpService;
 use Nafiur\WebAnalytics\Services\PruneService;
@@ -123,6 +124,12 @@ class WebAnalyticsController extends Controller
     {
         [$activePane, $activeScroll, $unavailableTitle] = $this->sectionView($section);
 
+        if (!DatabaseReadiness::anyReady()) {
+            return view('web-analytics::setup', [
+                'instructions' => DatabaseReadiness::setupInstructions(),
+            ]);
+        }
+
         $websites = Website::orderBy('domain')->get();
         $activeWebsiteId = app(WebsiteResolver::class)->currentId();
         if ($activeWebsiteId !== null) {
@@ -191,6 +198,13 @@ class WebAnalyticsController extends Controller
      */
     public function data(Request $request)
     {
+        if (!DatabaseReadiness::anyReady()) {
+            return response()->json([
+                'success' => false,
+                'error'   => implode(' ', DatabaseReadiness::setupInstructions()),
+            ], 503);
+        }
+
         $timeRange = $request->input('range', '24h');
         $customStart = $request->input('start_date');
         $customEnd = $request->input('end_date');
@@ -217,6 +231,16 @@ class WebAnalyticsController extends Controller
         // Close session immediately so other concurrent user requests aren't blocked by PHP session locks
         if (session_status() === PHP_SESSION_ACTIVE) {
             session_write_close();
+        }
+
+        if (!DatabaseReadiness::anyReady()) {
+            return response(
+                "event: error\ndata: " . json_encode([
+                    'message' => implode(' ', DatabaseReadiness::setupInstructions()),
+                ]) . "\n\n",
+                200,
+                ['Content-Type' => 'text/event-stream', 'Cache-Control' => 'no-cache']
+            );
         }
 
         // Optional hard cap for shared hosting with strict PHP limits.
@@ -334,6 +358,14 @@ class WebAnalyticsController extends Controller
      */
     public function export(Request $request)
     {
+        if (!DatabaseReadiness::legacyReady()) {
+            return response(
+                implode("\n", DatabaseReadiness::setupInstructions()),
+                503,
+                ['Content-Type' => 'text/plain; charset=UTF-8']
+            );
+        }
+
         $timeRange = $request->input('range', '24h');
         $fileName = 'web_analytics_report_' . date('Y-m-d_His') . '.csv';
         $tenantId = $this->resolveDashboardTenant($request);
