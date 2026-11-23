@@ -78,6 +78,11 @@ class AggregationTest extends TestCase
         $this->assertSame('Aggregated analytics', $summary['storage_type']);
     }
 
+    public function test_benchmark_command_runs_read_only(): void
+    {
+        $this->artisan('lwa:benchmark', ['--range' => '24h'])->assertExitCode(0);
+    }
+
     public function test_aggregate_command_creates_rollups(): void
     {
         $websiteId = (int) config('laravel-web-analytics.analytics.website_id');

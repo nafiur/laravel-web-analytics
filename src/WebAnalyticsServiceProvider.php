@@ -42,6 +42,7 @@ class WebAnalyticsServiceProvider extends ServiceProvider
             \Nafiur\WebAnalytics\Commands\WeeklySummaryCommand::class,
             \Nafiur\WebAnalytics\Commands\AggregateAnalyticsCommand::class,
             \Nafiur\WebAnalytics\Commands\UpgradeAnalyticsCommand::class,
+            \Nafiur\WebAnalytics\Commands\BenchmarkAnalyticsCommand::class,
         ]);
 
         // Publish Configuration

@@ -12,24 +12,24 @@ jobs:
       fail-fast: false
       matrix:
         include:
-          - connection: sqlite
-            label: SQLite
-            host: ''
-            port: ''
-            database: ':memory:'
-            username: ''
-          - connection: mysql
-            label: MySQL 8
-            host: 127.0.0.1
-            port: '3306'
-            database: lwa_test
-            username: root
-          - connection: pgsql
-            label: PostgreSQL 16
-            host: 127.0.0.1
-            port: '5432'
-            database: lwa_test
-            username: postgres
+          - php: '8.2'
+            connection: sqlite
+            label: PHP 8.2 / SQLite
+          - php: '8.3'
+            connection: sqlite
+            label: PHP 8.3 / SQLite
+          - php: '8.4'
+            connection: sqlite
+            label: PHP 8.4 / SQLite
+          - php: '8.5'
+            connection: sqlite
+            label: PHP 8.5 / SQLite
+          - php: '8.4'
+            connection: mysql
+            label: PHP 8.4 / MySQL 8
+          - php: '8.4'
+            connection: pgsql
+            label: PHP 8.4 / PostgreSQL 16
 
     name: ${{ matrix.label }}
 
@@ -67,7 +67,7 @@ jobs:
       - name: Setup PHP
         uses: shivammathur/setup-php@v2
         with:
-          php-version: '8.4'
+          php-version: ${{ matrix.php }}
           extensions: mbstring, intl, pdo_sqlite, sqlite3, pdo_mysql, pdo_pgsql
           coverage: none
 
@@ -77,28 +77,25 @@ jobs:
       - name: Validate composer.json
         run: composer validate --no-check-publish
 
-      - name: Run test suite on ${{ matrix.label }}
+      - name: Run test suite
         env:
           DB_CONNECTION: ${{ matrix.connection }}
-          DB_HOST: ${{ matrix.host }}
-          DB_PORT: ${{ matrix.port }}
-          DB_DATABASE: ${{ matrix.database }}
-          DB_USERNAME: ${{ matrix.username }}
-          DB_PASSWORD: password
+          DB_HOST: 127.0.0.1
+          DB_PORT: ${{ matrix.connection == 'mysql' && '3306' || (matrix.connection == 'pgsql' && '5432' || '') }}
+          DB_DATABASE: ${{ matrix.connection == 'sqlite' && ':memory:' || 'lwa_test' }}
+          DB_USERNAME: ${{ matrix.connection == 'pgsql' && 'postgres' || 'root' }}
+          DB_PASSWORD: ${{ matrix.connection == 'sqlite' && '' || 'password' }}
         run: vendor/bin/phpunit
 
-  syntax:
+  legacy-syntax:
     runs-on: ubuntu-latest
-    strategy:
-      matrix:
-        php: ['8.1', '8.2', '8.3', '8.5']
     steps:
       - uses: actions/checkout@v4
 
-      - name: Setup PHP
+      - name: Setup PHP 8.1 (legacy v2 syntax check)
         uses: shivammathur/setup-php@v2
         with:
-          php-version: ${{ matrix.php }}
+          php-version: '8.1'
           coverage: none
 
       - name: Lint PHP files
