@@ -34,6 +34,7 @@
                                         <th class="py-2.5 px-4 font-semibold">User</th>
                                         <th class="py-2.5 px-4 font-semibold">Path</th>
                                         <th class="py-2.5 px-4 font-semibold">Client IP</th>
+                                        <th class="py-2.5 px-4 font-semibold">Country</th>
                                         <th class="py-2.5 px-4 font-semibold">Duration</th>
                                         <th class="py-2.5 px-4 font-semibold">Size</th>
                                         <th class="py-2.5 px-4 font-semibold">Browser / OS</th>
@@ -59,6 +60,10 @@
                                                 @php($ipFlag = \Nafiur\WebAnalytics\Services\CountryFlag::emoji($log['country'] ?? null))
                                                 @if($ipFlag !== '')<span class="mr-1" aria-hidden="true">{{ $ipFlag }}</span>@endif{{ $log['ip_address'] }}
                                             </td>
+                                            <td class="py-2 px-4 whitespace-nowrap text-slate-600 dark:text-slate-300">
+                                                <span class="text-base mr-1" aria-hidden="true">{{ $ipFlag }}</span>
+                                                <span class="font-mono text-[11px]">{{ $log['country'] ?: 'Unknown' }}</span>
+                                            </td>
                                             <td class="py-2 px-4 font-mono text-slate-600 dark:text-slate-300">{{ $log['response_time_ms'] }} ms</td>
                                             <td class="py-2 px-4 text-slate-500">{{ $log['bytes_sent_fmt'] }}</td>
                                             <td class="py-2 px-4 text-slate-500 dark:text-slate-400 truncate max-w-[140px]">{{ $log['browser'] }} on {{ $log['os'] }}</td>
@@ -66,7 +71,7 @@
                                         </tr>
                                     @empty
                                         <tr>
-                                            <td colspan="9" class="py-8 text-center text-slate-400">Waiting for live requests...</td>
+                                            <td colspan="10" class="py-8 text-center text-slate-400">Waiting for live requests...</td>
                                         </tr>
                                     @endforelse
                                 </tbody>

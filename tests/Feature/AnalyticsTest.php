@@ -194,6 +194,20 @@ class AnalyticsTest extends TestCase
         }
     }
 
+    public function test_live_feed_shows_country_flags(): void
+    {
+        LwaLogs::create($this->log([
+            'country' => 'BD',
+            'path'    => '/flag-check',
+        ]));
+
+        $content = $this->get(route('lwa_realtime'))->getContent();
+
+        $this->assertStringContainsString('Country', $content);
+        $this->assertStringContainsString('🇧🇩', $content);
+        $this->assertStringContainsString('/flag-check', $content);
+    }
+
     public function test_settings_page_renders_all_sections(): void
     {
         $content = $this->get(route('lwa_settings'))->getContent();
