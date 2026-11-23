@@ -194,6 +194,23 @@ class AnalyticsTest extends TestCase
         }
     }
 
+    public function test_geography_city_breakdown_is_dynamic(): void
+    {
+        LwaLogs::create($this->log([
+            'country' => 'BD',
+            'city'    => 'Dhaka',
+            'path'    => '/city-check',
+        ]));
+
+        $content = $this->get(route('lwa_geography'))->getContent();
+
+        $this->assertStringContainsString('Dhaka', $content);
+        $this->assertStringNotContainsString('City-level reporting requires GeoIP data.', $content);
+
+        $cities = $this->getJson(route('lwa_data', ['range' => 'all']))->json('analytics.breakdowns.top_cities');
+        $this->assertSame('Dhaka', $cities[0]['name']);
+    }
+
     public function test_country_breakdowns_render_flags_on_all_report_pages(): void
     {
         LwaLogs::create($this->log(['country' => 'BD', 'path' => '/country-flag']));

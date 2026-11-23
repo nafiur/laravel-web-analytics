@@ -123,6 +123,7 @@ class DatabaseTrafficAnalytics
             'top_paths_bandwidth' => $this->getTopBandwidthBreakdown($baseQuery, 10),
             'top_ips'             => $this->getTopIpBreakdown($baseQuery, $totalRequests, 10),
             'top_countries'       => $this->getTopBreakdown($baseQuery, 'country', $totalRequests, 10),
+            'top_cities'          => $this->getTopBreakdown($baseQuery, 'city', $totalRequests, 10),
             'top_browsers'        => $this->getTopBreakdown($baseQuery, 'browser', $totalRequests, 8),
             'top_os'              => $this->getTopBreakdown($baseQuery, 'os', $totalRequests, 8),
             'top_devices'         => $this->getTopBreakdown($baseQuery, 'device', $totalRequests, 5),

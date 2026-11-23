@@ -11,9 +11,11 @@
                     </div>
                     <div class="lwa-surface border lwa-border rounded-lg p-4 shadow-sm">
                         <div class="text-xs font-semibold text-slate-800 dark:text-slate-200 mb-3">Top Cities</div>
-                        <div class="text-[11px] text-slate-400">
-                            City-level reporting requires GeoIP data. Configure a Cloudflare header or the offline MaxMind provider to populate this breakdown.
-                        </div>
+                        @if(empty($analytics['breakdowns']['top_cities'] ?? []))
+                            <div class="text-[11px] text-slate-400">No city data recorded for this period. City names appear when GeoIP resolution provides them.</div>
+                        @else
+                            @include('web-analytics::partials.breakdown-list', ['items' => $analytics['breakdowns']['top_cities'] ?? []])
+                        @endif
                     </div>
                 </div>
                 <p class="text-[11px] text-slate-400">GeoIP location is approximate and respects IP anonymization settings.</p>
