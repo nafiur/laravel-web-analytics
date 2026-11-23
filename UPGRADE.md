@@ -4,6 +4,15 @@ The advanced analytics schema is **opt-in**. Existing v2 installations keep work
 
 ## Before you start
 
+0. **Run the preflight check** — it prints an installer-style report and tells you exactly what is missing:
+
+```bash
+php artisan lwa:doctor          # human-readable table
+php artisan lwa:doctor --json   # machine-readable report
+```
+
+Checks include PHP/Laravel versions, extensions, database connection, legacy and advanced tables, config cache, schema flag, queue/cache drivers, storage permissions, published views and pending upgrade rows. Fix every `FAIL` before continuing.
+
 1. **Back up the database** (especially `lwa_logs`) and `.env`.
 2. Note your current `WEB_ANALYTICS_TABLE_NAME` (default `lwa_logs`).
 3. Make sure the queue worker (if you plan to use `queue` mode) can reach the same database/cache.

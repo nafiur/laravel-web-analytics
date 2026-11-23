@@ -50,6 +50,8 @@ This creates separate `lwa_websites`, `lwa_visitors`, `lwa_sessions`, `lwa_pagev
 
 If tables are missing, the dashboard shows a setup page with the `php artisan migrate` instruction, the API returns `503`, the SSE stream emits an `error` event, and commands exit with guidance — no raw stack traces.
 
+Run `php artisan lwa:doctor` before upgrading or enabling the schema: it prints an installer-style table covering PHP/Laravel versions, extensions, DB connection, table readiness, config cache, queue/cache drivers, storage permissions and pending upgrade rows. Use `--json` for CI.
+
 **Upgrade path:** run `php artisan lwa:upgrade --dry-run` first to count legacy rows, then `php artisan lwa:upgrade --website-domain=example.com` to backfill. The command is resumable via an `lwa_upgrade_checkpoints` row and never deletes legacy data unless `--prune-legacy` is passed. Re-run it to import rows logged since the previous run.
 
 Blueprint: `laravel-web-analytics-v3-blueprint.md` (on the planning desktop).
@@ -641,6 +643,7 @@ php artisan lwa:prune --days=30 --tenant=tenant-uuid
 | `lwa:summary` | `analytics:summary` | Print the periodic digest and send it if alerts are enabled |
 | `lwa:aggregate` | — | Build hourly/daily rollups from raw events (`--website`, `--from`, `--to`, `--granularity`) |
 | `lwa:upgrade` | `analytics:upgrade` | Backfill legacy `lwa_logs` into the advanced schema (`--dry-run`, `--chunk`, `--since`, `--prune-legacy`) |
+| `lwa:doctor` | `analytics:doctor` | Installer-style preflight report (`--json` for CI) |
 | `lwa:live` | — | Generate simulated live traffic for demos (`--rps`, `--interval`, `--count`, `--tenant`) |
 
 ---
