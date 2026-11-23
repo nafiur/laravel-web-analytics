@@ -750,6 +750,15 @@
                     .replace(/'/g, '&#039;');
             }
 
+            function lwaFlagHtml(country, emoji) {
+                if (!emoji) return '';
+                const code = String(country || '').trim().slice(0, 2).toUpperCase();
+                if (/^[A-Z]{2}$/.test(code)) {
+                    return '<img src="https://flagcdn.com/w20/' + code.toLowerCase() + '.png" width="18" height="12" alt="' + code + '" class="inline-block rounded-sm shrink-0 align-middle" loading="lazy" onerror="this.style.display=\'none\'">';
+                }
+                return escapeHtml(emoji);
+            }
+
             function prependLiveFeedRow(log) {
                 let tbody = document.getElementById('tableLiveFeed');
                 if (!tbody) return;
@@ -781,7 +790,7 @@
                     <td class="py-2.5 px-4 font-mono text-slate-700 dark:text-slate-200 truncate max-w-[220px]" title="${cleanPath}">${cleanPath}</td>
                     <td class="py-2.5 px-4 font-mono text-slate-500">${cleanIp}</td>
                     <td class="py-2.5 px-4 whitespace-nowrap text-slate-600 dark:text-slate-300">
-                        <span class="text-base mr-1" aria-hidden="true">${ipFlag}</span>
+                        <span class="mr-1">${lwaFlagHtml(log.country, log.flag)}</span>
                         <span class="font-mono text-[11px]">${escapeHtml(log.country || 'Unknown')}</span>
                     </td>
                     <td class="py-2.5 px-4 font-mono text-slate-600 dark:text-slate-300">${parseFloat(log.response_time_ms || 0)} ms</td>

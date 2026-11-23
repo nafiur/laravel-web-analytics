@@ -35,7 +35,7 @@
         <div class="flex flex-wrap items-center gap-2 mt-3">
             @foreach($topCountryItems as $item)
                 <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[11px] bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300">
-                    @if($item['flag'] !== '')<span aria-hidden="true">{{ $item['flag'] }}</span>@endif
+                    @if($item['flag'] !== '')@include('web-analytics::partials.flag', ['country' => $item['name'], 'emoji' => $item['flag']])@endif
                     <span>{{ $item['name'] }}</span>
                 </span>
             @endforeach
