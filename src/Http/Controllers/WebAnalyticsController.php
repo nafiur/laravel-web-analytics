@@ -138,6 +138,11 @@ class WebAnalyticsController extends Controller
         }
         $activeWebsite = $activeWebsiteId !== null ? Website::find($activeWebsiteId) : null;
 
+        $maxMindPath = (string) config('laravel-web-analytics.geoip.maxmind_db_path', '');
+        $geoipReady = class_exists(\MaxMind\Db\Reader::class)
+            && config('laravel-web-analytics.geoip.provider') === 'maxmind'
+            && $maxMindPath !== '' && is_file($maxMindPath) && is_readable($maxMindPath);
+
         $recentEvents = [];
         if (DatabaseReadiness::advancedReady()) {
             $recentEvents = AnalyticEvent::latest('created_at')
@@ -205,7 +210,8 @@ class WebAnalyticsController extends Controller
             'unavailableTitle',
             'websites',
             'activeWebsite',
-            'recentEvents'
+            'recentEvents',
+            'geoipReady'
         ));
     }
 

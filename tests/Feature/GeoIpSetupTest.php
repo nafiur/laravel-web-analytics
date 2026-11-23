@@ -6,6 +6,24 @@ use Nafiur\WebAnalytics\Tests\TestCase;
 
 class GeoIpSetupTest extends TestCase
 {
+    public function test_map_hint_does_not_ask_to_install_when_geoip_is_ready(): void
+    {
+        $ready = view('web-analytics::partials.visitors-map', [
+            'mapId' => 'testReadyMap',
+            'geoipReady' => true,
+        ])->render();
+
+        $this->assertStringNotContainsString('Install', $ready);
+        $this->assertStringContainsString('No located visitors in this period yet.', $ready);
+
+        $pending = view('web-analytics::partials.visitors-map', [
+            'mapId' => 'testPendingMap',
+            'geoipReady' => false,
+        ])->render();
+
+        $this->assertStringContainsString('city-level precision', $pending);
+    }
+
     public function test_geoip_command_reports_reader_and_database_status(): void
     {
         $this->artisan('lwa:geoip')
