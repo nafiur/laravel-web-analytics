@@ -40,6 +40,20 @@ class ApiToken extends Model
         return hash('sha256', $plainToken);
     }
 
+    /** @return string the new plain token to give to the client */
+    public function rotate(): string
+    {
+        $plain = 'lwa_' . Str::random(40);
+        $this->update(['token_hash' => static::hash($plain)]);
+
+        return $plain;
+    }
+
+    public function revoke(): void
+    {
+        $this->delete();
+    }
+
     /** @param string[] $abilities */
     public static function issue(int $websiteId, string $name = 'API token', array $abilities = ['read'], ?\Carbon\Carbon $expiresAt = null): array
     {

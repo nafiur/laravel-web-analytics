@@ -92,6 +92,7 @@ class UpgradeService
                     'response_time_ms' => (float) ($log->response_time_ms ?? 0),
                     'bytes_sent'       => (int) ($log->bytes_sent ?? 0),
                     'created_at'       => $createdAt,
+                    'request_uuid'     => 'legacy_' . $log->id,
                 ]);
 
                 $counts['pageviews']++;

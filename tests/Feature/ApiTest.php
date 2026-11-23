@@ -86,6 +86,26 @@ class ApiTest extends TestCase
         $this->assertSame(1, AnalyticEvent::where('name', 'allowed')->count());
     }
 
+    public function test_token_can_be_rotated_and_old_token_stops_working(): void
+    {
+        $websiteId = (int) config('laravel-web-analytics.analytics.website_id');
+        [$token, $oldPlain] = ApiToken::issue($websiteId, 'rotating', ['read']);
+        $newPlain = $token->rotate();
+
+        $this->assertNotSame($oldPlain, $newPlain);
+        $this->assertSame(ApiToken::hash($newPlain), $token->fresh()->token_hash);
+
+        $this->withHeader('Authorization', 'Bearer ' . $oldPlain)
+            ->getJson(route('lwa_api_summary'))->assertStatus(401);
+
+        $this->withHeader('Authorization', 'Bearer ' . $newPlain)
+            ->getJson(route('lwa_api_summary'))->assertOk();
+
+        $token->revoke();
+        $this->withHeader('Authorization', 'Bearer ' . $newPlain)
+            ->getJson(route('lwa_api_summary'))->assertStatus(401);
+    }
+
     public function test_api_is_rate_limited(): void
     {
         config()->set('laravel-web-analytics.api.rate_limit_per_minute', 2);

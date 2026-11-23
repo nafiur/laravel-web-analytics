@@ -105,7 +105,16 @@ use Nafiur\WebAnalytics\Models\Analytics\ApiToken;
 // store $plainToken securely — only its hash is kept
 ```
 
-Send it as `Authorization: Bearer <token>`. Abilities: `read`, `write`, `admin`, or `*`. Tokens support expiry and are tracked with `last_used_at`.
+Send it as `Authorization: Bearer <token>`. Abilities: `read`, `write`, `admin`, or `*`. Tokens support expiry, rotation and are tracked with `last_used_at`:
+
+```bash
+php artisan lwa:token                       # list tokens
+php artisan lwa:token --create --website=1 --abilities=read,write
+php artisan lwa:token --rotate=1            # prints the new token once
+php artisan lwa:token --revoke=1
+```
+
+Collector jobs are idempotent: each pageview/event carries a `request_uuid`, so a retried queue job cannot create duplicate rows.
 
 ## 🎨 Design System
 

@@ -3,6 +3,7 @@
 namespace Nafiur\WebAnalytics\Services;
 
 use Illuminate\Support\Facades\Bus;
+use Illuminate\Support\Str;
 use Nafiur\WebAnalytics\Contracts\Collector;
 use Nafiur\WebAnalytics\Contracts\StorageDriver;
 use Nafiur\WebAnalytics\Data\EventData;
@@ -42,6 +43,7 @@ class AnalyticsCollector implements Collector
             'utm_medium'      => $context->utmMedium,
             'utm_campaign'    => $context->utmCampaign,
             'created_at'      => $context->occurredAt ?? now()->toIso8601String(),
+            'request_uuid'    => $context->requestUuid ?: (string) Str::uuid(),
         ];
 
         $this->dispatch(new RecordPageview($payload));
@@ -60,7 +62,8 @@ class AnalyticsCollector implements Collector
             'session_key'  => $event->sessionKey,
             'properties'  => $this->sanitizeProperties($event->properties),
             'value'       => $event->value,
-            'created_at'  => $event->occurredAt ?? now()->toIso8601String(),
+            'created_at'   => $event->occurredAt ?? now()->toIso8601String(),
+            'request_uuid' => $event->requestUuid ?: (string) Str::uuid(),
         ];
 
         $this->dispatch(new RecordEvent($payload));

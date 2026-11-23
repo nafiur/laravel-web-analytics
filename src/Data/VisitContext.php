@@ -22,6 +22,7 @@ final class VisitContext
         public readonly ?string $utmCampaign = null,
         public readonly ?string $title = null,
         public readonly ?string $occurredAt = null,
+        public readonly ?string $requestUuid = null,
     ) {
     }
 }

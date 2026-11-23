@@ -20,6 +20,8 @@ All notable changes to this project are documented here. The format is based on 
 - **GeoIP setup** — `lwa:geoip` (`analytics:geoip`) reports/checks offline MaxMind readiness and can install the optional reader or download GeoLite2-City.mmdb with a license key.
 - **Keyless map fallback** — country code/name resolves to an approximate country centroid, so visitors can be plotted without a MaxMind key, database or external API.
 - **Auto GeoIP updates** — `lwa:geoip --auto` downloads only when the database is missing/stale, driven by `.env` credentials and a configurable interval; safe to schedule weekly.
+- **Queue idempotency** — `request_uuid` on pageviews/events prevents duplicate rows when jobs are retried.
+- **Token management** — `lwa:token` (`analytics:token`) lists, issues, rotates and revokes API tokens.
 - **Event reports** — Events & Goals / Conversions pages list actually recorded events instead of placeholder numbers.
 - **Documentation** — `ARCHITECTURE.md`, `UPGRADE.md` and this changelog.
 - **Testing** — PHPUnit + Orchestra Testbench; CI matrix across PHP 8.2–8.5 with SQLite, MySQL 8 and PostgreSQL 16, plus PHP 8.1 syntax checks.

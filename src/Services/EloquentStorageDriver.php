@@ -35,7 +35,8 @@ class EloquentStorageDriver implements StorageDriver
             $payload['utm_campaign'] ?? null,
         );
 
-        AnalyticsModels\Pageview::create([
+        $uuid = $payload['request_uuid'] ?? null;
+        $attributes = [
             'website_id'       => $websiteId,
             'session_id'       => $session->id,
             'visitor_id'       => $visitor->id,
@@ -45,7 +46,14 @@ class EloquentStorageDriver implements StorageDriver
             'response_time_ms' => (float) ($payload['response_time_ms'] ?? 0),
             'bytes_sent'       => (int) ($payload['bytes_sent'] ?? 0),
             'created_at'       => $occurredAt,
-        ]);
+        ];
+
+        if ($uuid !== null) {
+            $attributes['request_uuid'] = $uuid;
+            AnalyticsModels\Pageview::firstOrCreate(['request_uuid' => $uuid], $attributes);
+        } else {
+            AnalyticsModels\Pageview::create($attributes);
+        }
     }
 
     public function storeEvent(array $payload): void
@@ -72,7 +80,8 @@ class EloquentStorageDriver implements StorageDriver
             $sessionId = $session->id;
         }
 
-        AnalyticsModels\AnalyticEvent::create([
+        $uuid = $payload['request_uuid'] ?? null;
+        $attributes = [
             'website_id'  => $websiteId,
             'session_id'  => $sessionId,
             'visitor_id'  => $visitorId,
@@ -80,6 +89,13 @@ class EloquentStorageDriver implements StorageDriver
             'properties'  => $payload['properties'] ?? [],
             'value'       => $payload['value'] ?? null,
             'created_at'  => $occurredAt,
-        ]);
+        ];
+
+        if ($uuid !== null) {
+            $attributes['request_uuid'] = $uuid;
+            AnalyticsModels\AnalyticEvent::firstOrCreate(['request_uuid' => $uuid], $attributes);
+        } else {
+            AnalyticsModels\AnalyticEvent::create($attributes);
+        }
     }
 }

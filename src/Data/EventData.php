@@ -13,6 +13,7 @@ final class EventData
         public readonly array $properties = [],
         public readonly ?float $value = null,
         public readonly ?string $occurredAt = null,
+        public readonly ?string $requestUuid = null,
     ) {
     }
 }

@@ -45,6 +45,7 @@ class WebAnalyticsServiceProvider extends ServiceProvider
             \Nafiur\WebAnalytics\Commands\BenchmarkAnalyticsCommand::class,
             \Nafiur\WebAnalytics\Commands\DoctorCommand::class,
             \Nafiur\WebAnalytics\Commands\GeoIpSetupCommand::class,
+            \Nafiur\WebAnalytics\Commands\ApiTokenCommand::class,
         ]);
 
         // Publish Configuration

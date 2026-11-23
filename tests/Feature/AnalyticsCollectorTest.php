@@ -77,6 +77,32 @@ class AnalyticsCollectorTest extends TestCase
         $this->assertSame(2, AnalyticsSession::count());
     }
 
+    public function test_duplicate_jobs_are_idempotent(): void
+    {
+        $collector = app(Collector::class);
+        $websiteId = (int) config('laravel-web-analytics.analytics.website_id');
+        $uuid = 'test-idempotency-1234';
+
+        foreach ([1, 2] as $index) {
+            $collector->pageview(new VisitContext(
+                websiteId: $websiteId,
+                visitorHash: 'idempotent-visitor',
+                path: '/duplicate',
+                requestUuid: $uuid,
+                occurredAt: now()->toIso8601String(),
+            ));
+            $collector->event(new EventData(
+                websiteId: $websiteId,
+                name: 'duplicate_event',
+                visitorHash: 'idempotent-visitor',
+                requestUuid: 'event-' . $uuid,
+            ));
+        }
+
+        $this->assertSame(1, Pageview::where('request_uuid', $uuid)->count());
+        $this->assertSame(1, AnalyticEvent::where('request_uuid', 'event-' . $uuid)->count());
+    }
+
     public function test_event_properties_are_validated_and_stored(): void
     {
         app(Collector::class)->event(new EventData(
