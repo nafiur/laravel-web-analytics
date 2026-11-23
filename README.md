@@ -203,6 +203,9 @@ The package defines routes with the `lwa_` prefix to avoid conflicts with your a
 | `GET /web-analytics/export` | `lwa_export` | Export analytics to CSV |
 | `POST /web-analytics/settings/prune` | `lwa_settings_prune` | Prune rows older than N days |
 | `POST /web-analytics/settings/empty` | `lwa_settings_empty` | Empty the telemetry table (requires `confirm=DELETE`) |
+| `POST /web-analytics/websites` | `lwa_websites_store` | Register a website |
+| `POST /web-analytics/websites/switch` | `lwa_websites_switch` | Switch the active website (session) |
+| `DELETE /web-analytics/websites/{website}` | `lwa_websites_destroy` | Remove a website (requires `confirm=DELETE`) |
 | `POST /web-analytics/settings/test-alert` | `lwa_settings_test_alert` | Send a test alert through the configured channel |
 | `GET /web-analytics/api/v1/summary` | `lwa_api_summary` | JSON summary (bearer token, `read`) |
 | `GET /web-analytics/api/v1/timeseries` | `lwa_api_timeseries` | JSON time series (bearer token, `read`) |
@@ -242,6 +245,7 @@ The dashboard's **Setting** tab provides an adapted settings screen:
 - **Alerts** — read-only channel/threshold info and a **Send test alert** action.
 - **Export** — default CSV range and whether to include the tenant scope in export links.
 - **Data maintenance** — row counts and oldest/newest timestamps, plus **Prune** and **Empty table** actions. Both are POST routes behind the dashboard's middleware with CSRF protection; emptying requires typing `DELETE`, and in multi-tenant mode only the current tenant's rows are removed.
+- **Websites** — register properties, switch the active website (session-based), and remove websites. A header selector is available when more than one website is registered; all queries are scoped to the active website.
 - **About** — package/runtime information.
 
 Set `WEB_ANALYTICS_DESTRUCTIVE_ACTIONS=false` to disable the prune/empty actions entirely.

@@ -5,6 +5,7 @@ namespace Nafiur\WebAnalytics\Http\Controllers;
 use Illuminate\Http\Request;
 use Illuminate\Routing\Controller;
 use Illuminate\Support\Facades\DB;
+use Nafiur\WebAnalytics\Models\Analytics\Website;
 use Nafiur\WebAnalytics\Models\LwaLogs;
 use Nafiur\WebAnalytics\Services\AlertService;
 use Nafiur\WebAnalytics\Services\CountryFlag;
@@ -13,6 +14,7 @@ use Nafiur\WebAnalytics\Services\GeoIpService;
 use Nafiur\WebAnalytics\Services\PruneService;
 use Nafiur\WebAnalytics\Services\TenantResolver;
 use Nafiur\WebAnalytics\Services\WebAnalyticsLogParser;
+use Nafiur\WebAnalytics\Services\WebsiteResolver;
 
 class WebAnalyticsController extends Controller
 {
@@ -121,6 +123,13 @@ class WebAnalyticsController extends Controller
     {
         [$activePane, $activeScroll, $unavailableTitle] = $this->sectionView($section);
 
+        $websites = Website::orderBy('domain')->get();
+        $activeWebsiteId = app(WebsiteResolver::class)->currentId();
+        if ($activeWebsiteId !== null) {
+            config()->set('laravel-web-analytics.analytics.website_id', $activeWebsiteId);
+        }
+        $activeWebsite = $activeWebsiteId !== null ? Website::find($activeWebsiteId) : null;
+
         $timeRange = $request->input('range', '24h');
         $customStart = $request->input('start_date');
         $customEnd = $request->input('end_date');
@@ -171,7 +180,9 @@ class WebAnalyticsController extends Controller
             'section',
             'activePane',
             'activeScroll',
-            'unavailableTitle'
+            'unavailableTitle',
+            'websites',
+            'activeWebsite'
         ));
     }
 
@@ -424,6 +435,69 @@ class WebAnalyticsController extends Controller
         $query->delete();
 
         return back()->with('lwa_status', "Deleted {$count} telemetry record(s).");
+    }
+
+    public function websitesIndex()
+    {
+        return redirect()->route('lwa_settings');
+    }
+
+    /**
+     * Register a new website in the multi-website dashboard.
+     */
+    public function storeWebsite(Request $request)
+    {
+        $data = $request->validate([
+            'name'   => 'required|string|max:120',
+            'domain' => 'required|string|max:190',
+        ]);
+
+        $domain = parse_url($data['domain'], PHP_URL_HOST) ?: $data['domain'];
+
+        Website::firstOrCreate(
+            ['domain' => $domain],
+            [
+                'name'        => $data['name'],
+                'tracking_id' => 'trk_' . substr(sha1($domain), 0, 12),
+            ]
+        );
+
+        return back()->with('lwa_status', "Website [{$domain}] is ready.");
+    }
+
+    /**
+     * Switch the active website for this dashboard session.
+     */
+    public function switchWebsite(Request $request)
+    {
+        $data = $request->validate(['website' => 'required|integer']);
+
+        if (!app(WebsiteResolver::class)->switchTo((int) $data['website'])) {
+            return back()->withErrors(['website' => 'Unknown website.']);
+        }
+
+        return back()->with('lwa_status', 'Active website switched.');
+    }
+
+    /**
+     * Remove a registered website (never the last one).
+     */
+    public function destroyWebsite(Request $request, int $website)
+    {
+        if ($request->input('confirm') !== 'DELETE') {
+            return back()->withErrors(['confirm' => 'Type DELETE to remove a website.']);
+        }
+
+        if (Website::count() <= 1) {
+            return back()->withErrors(['website' => 'The last website cannot be removed.']);
+        }
+
+        Website::where('id', $website)->delete();
+        if ((int) session('lwa_website_id') === $website) {
+            session()->forget('lwa_website_id');
+        }
+
+        return back()->with('lwa_status', 'Website removed.');
     }
 
     /**

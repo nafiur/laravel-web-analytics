@@ -25,6 +25,8 @@
                             <div
                                 class="px-2.5 pt-4 pb-1 text-[10px] font-semibold uppercase tracking-wider text-slate-400">
                                 System</div>
+                            <a href="#settings-websites"
+                                class="settings-nav-link block px-2.5 py-2 rounded-md font-medium text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800 transition">Websites</a>
                             <a href="#settings-about"
                                 class="settings-nav-link block px-2.5 py-2 rounded-md font-medium text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800 transition">About</a>
                         </nav>
@@ -360,6 +362,8 @@
                                         Destructive actions are disabled by configuration.</div>
                                 @endif
                             </section>
+
+                            @include('web-analytics::sections.websites')
 
                             <!-- About -->
                             <section id="settings-about"
