@@ -21,6 +21,8 @@
                                 Data</div>
                             <a href="#settings-maintenance"
                                 class="settings-nav-link block px-2.5 py-2 rounded-md font-medium text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800 transition">Maintenance</a>
+                            <a href="#settings-countries"
+                                class="settings-nav-link block px-2.5 py-2 rounded-md font-medium text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800 transition">Countries</a>
 
                             <div
                                 class="px-2.5 pt-4 pb-1 text-[10px] font-semibold uppercase tracking-wider text-slate-400">
@@ -58,7 +60,7 @@
                                 <div class="divide-y divide-slate-100 dark:divide-slate-800 text-xs">
                                     <div class="flex items-center justify-between gap-4 px-4 py-3">
                                         <span class="flex items-center gap-1.5">
-                                            <span id="languageFlag" class="text-sm leading-none" aria-hidden="true">🇺🇸</span>
+                                            <span id="languageFlag" aria-hidden="true">@include('web-analytics::partials.flag', ['country' => 'US', 'emoji' => '🇺🇸'])</span>
                                             <span class="text-slate-600 dark:text-slate-300"
                                                 data-i18n="language">Language</span>
                                         </span>
@@ -364,6 +366,12 @@
                             </section>
 
                             @include('web-analytics::sections.websites')
+
+                            <section id="settings-countries" class="lwa-surface border lwa-border rounded-lg p-4 shadow-sm">
+                                <div class="text-xs font-semibold text-slate-800 dark:text-slate-200 mb-3">Top Countries</div>
+                                @include('web-analytics::partials.breakdown-list', ['items' => $analytics['breakdowns']['top_countries'] ?? []])
+                                <p class="text-[11px] text-slate-400 mt-3">GeoIP location is approximate and respects IP anonymization settings.</p>
+                            </section>
 
                             <!-- About -->
                             <section id="settings-about"

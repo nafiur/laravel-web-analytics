@@ -475,7 +475,7 @@ class DatabaseTrafficAnalytics
         }
 
         $rows = $query
-            ->select($column, DB::raw('COUNT(*) as total_count'))
+            ->select($column, DB::raw('COUNT(*) as total_count'), DB::raw('MAX(country) as group_country'))
             ->groupBy($column)
             ->orderByDesc('total_count')
             ->limit($limit)
@@ -492,7 +492,7 @@ class DatabaseTrafficAnalytics
                 'count'      => $cnt,
                 'count_fmt'  => $this->formatNumber($cnt),
                 'percentage' => $pct,
-                'flag'       => $column === 'country' ? CountryFlag::emoji($val) : '',
+                'flag'       => CountryFlag::emoji($column === 'country' ? $val : ($row->group_country ?? null)),
             ];
         }
 

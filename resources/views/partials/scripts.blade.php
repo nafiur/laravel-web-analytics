@@ -1211,8 +1211,12 @@
             }
 
             const languageFlags = {
-                en: '🇺🇸', bn: '🇧🇩', hi: '🇮🇳', es: '🇪🇸', fr: '🇫🇷', de: '🇩🇪',
-                pt: '🇵🇹', ar: '🇸🇦', zh: '🇨🇳', ja: '🇯🇵', ur: '🇵🇰', id: '🇮🇩'
+                en: { code: 'us', emoji: '🇺🇸' }, bn: { code: 'bd', emoji: '🇧🇩' },
+                hi: { code: 'in', emoji: '🇮🇳' }, es: { code: 'es', emoji: '🇪🇸' },
+                fr: { code: 'fr', emoji: '🇫🇷' }, de: { code: 'de', emoji: '🇩🇪' },
+                pt: { code: 'pt', emoji: '🇵🇹' }, ar: { code: 'sa', emoji: '🇸🇦' },
+                zh: { code: 'cn', emoji: '🇨🇳' }, ja: { code: 'jp', emoji: '🇯🇵' },
+                ur: { code: 'pk', emoji: '🇵🇰' }, id: { code: 'id', emoji: '🇮🇩' }
             };
 
             function applyLanguage(lang) {
@@ -1222,7 +1226,10 @@
                     if (dict[key]) el.textContent = dict[key];
                 });
                 const flag = document.getElementById('languageFlag');
-                if (flag) flag.textContent = languageFlags[lang] || '🇺🇸';
+                if (flag) {
+                    const meta = languageFlags[lang] || languageFlags.en;
+                    flag.innerHTML = '<img src="https://flagcdn.com/w20/' + meta.code + '.png" width="18" height="12" alt="' + meta.code + '" class="inline-block rounded-sm align-middle" loading="lazy" onerror="this.outerHTML=\'' + meta.emoji + '\'">';
+                }
                 document.documentElement.dir = (lang === 'ar' || lang === 'ur') ? 'rtl' : 'ltr';
                 if (languageSelect) languageSelect.value = lang;
             }

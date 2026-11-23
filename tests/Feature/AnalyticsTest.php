@@ -198,9 +198,10 @@ class AnalyticsTest extends TestCase
     {
         LwaLogs::create($this->log(['country' => 'BD', 'path' => '/country-flag']));
 
-        foreach (['lwa_overview', 'lwa_visitors', 'lwa_geography'] as $route) {
+        foreach (['lwa_overview', 'lwa_visitors', 'lwa_geography', 'lwa_sources', 'lwa_settings'] as $route) {
             $content = $this->get(route($route))->getContent();
-            $this->assertStringContainsString('🇧🇩', $content, "Missing flag on {$route}");
+            $this->assertStringContainsString('flagcdn.com/w20/bd.png', $content, "Missing flag on {$route}");
+            $this->assertStringContainsString('🇧🇩', $content, "Missing emoji fallback on {$route}");
         }
     }
 
