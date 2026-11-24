@@ -2052,6 +2052,52 @@
                 });
             });
 
+            const chipContainer = document.getElementById('lwaLogFilterChips');
+            const knownFields = ['method', 'host', 'path', 'full_url', 'status', 'ip_address', 'country', 'city',
+                'device', 'os', 'browser', 'user_agent', 'session_id', 'user_id', 'cache_status', 'tenant_id',
+                'referrer', 'utm_source', 'utm_medium', 'utm_campaign'];
+            function addFilterChip(field, value) {
+                if (!chipContainer || !knownFields.includes(field)) return;
+                const nativeControl = document.querySelector('form [name="' + field + '"]');
+                if (nativeControl && !chipContainer.querySelector('[data-chip="' + field + '"]')) {
+                    nativeControl.focus();
+                    return;
+                }
+                const existing = chipContainer.querySelector('[data-chip="' + field + '"]');
+                if (existing) { existing.querySelector('input')?.focus(); return; }
+                const chip = document.createElement('div');
+                chip.className = 'flex items-center gap-1 rounded border lwa-border bg-white dark:bg-slate-800 px-1.5 py-1';
+                chip.dataset.chip = field;
+                const label = document.createElement('span');
+                label.className = 'text-[10px] text-slate-400';
+                label.textContent = field.replace(/_/g, ' ') + ':';
+                const input = document.createElement('input');
+                input.type = 'text';
+                input.name = field;
+                input.value = value || '';
+                input.placeholder = 'value';
+                input.className = 'w-28 text-[11px] font-mono bg-transparent text-slate-700 dark:text-slate-200 focus:outline-none';
+                const remove = document.createElement('button');
+                remove.type = 'button';
+                remove.dataset.chipRemove = field;
+                remove.className = 'text-slate-400 hover:text-rose-500 text-sm leading-none';
+                remove.textContent = '×';
+                chip.append(label, input, remove);
+                chipContainer.appendChild(chip);
+                input.focus();
+            }
+            document.querySelectorAll('[data-log-field]').forEach(function(button) {
+                button.addEventListener('click', function() { addFilterChip(button.dataset.logField, ''); });
+            });
+            chipContainer?.addEventListener('click', function(event) {
+                if (event.target.closest('[data-chip-remove]')) {
+                    event.target.closest('[data-chip]')?.remove();
+                }
+            });
+            new URLSearchParams(window.location.search).forEach(function(value, key) {
+                addFilterChip(key, value);
+            });
+
             const exportButton = document.querySelector('[data-lwa-export-logs]');
             if (exportButton) {
                 exportButton.addEventListener('click', function() {

@@ -5,7 +5,38 @@
                      ];
                  @endphp
 
-                 <div class="space-y-4">
+                 @php
+                      $logFieldGroups = [
+                          'Request'      => ['method', 'host', 'path', 'full_url', 'status'],
+                          'Client'       => ['ip_address', 'country', 'city', 'device', 'os', 'browser', 'user_agent', 'session_id', 'user_id'],
+                          'Response'     => ['cache_status', 'tenant_id'],
+                          'Other fields' => ['referrer', 'utm_source', 'utm_medium', 'utm_campaign'],
+                      ];
+                  @endphp
+
+                  <div class="grid grid-cols-1 lg:grid-cols-[210px_minmax(0,1fr)] gap-4 items-start">
+                      <!-- Field groups (filter picker) -->
+                      <aside class="lwa-surface border lwa-border rounded-lg shadow-sm overflow-hidden">
+                          <div class="px-3 py-2 border-b lwa-border text-[11px] font-semibold text-slate-500 dark:text-slate-400">Search fields...</div>
+                          @foreach($logFieldGroups as $groupLabel => $groupFields)
+                              <details class="border-b lwa-border last:border-0">
+                                  <summary class="px-3 py-2 text-xs font-medium text-slate-700 dark:text-slate-200 cursor-pointer hover:bg-slate-50 dark:hover:bg-slate-800/60 flex items-center justify-between">
+                                      {{ $groupLabel }} <i data-lucide="chevron-down" class="text-xs text-slate-400"></i>
+                                  </summary>
+                                  <div class="px-2 pb-2 space-y-0.5">
+                                      @foreach($groupFields as $groupField)
+                                          <button type="button" data-log-field="{{ $groupField }}"
+                                                  class="w-full text-left px-2 py-1.5 rounded text-[11px] font-mono text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800">
+                                              {{ str_replace('_', ' ', $groupField) }}
+                                          </button>
+                                      @endforeach
+                                  </div>
+                              </details>
+                          @endforeach
+                      </aside>
+
+                      <div class="space-y-4 min-w-0">
+                  <div class="space-y-4">
                      <div>
                          <h2 class="text-sm font-semibold text-slate-900 dark:text-white">Logs</h2>
                          <p class="text-[11px] text-slate-400 mt-0.5">Recorded HTTP requests — filter, inspect and export the raw rows in the selected range.</p>
@@ -40,6 +71,7 @@
                                  <input type="hidden" name="{{ $hiddenKey }}" value="{{ $hiddenValue }}">
                              @endif
                          @endforeach
+                         <div id="lwaLogFilterChips" class="flex flex-wrap gap-2 mb-2"></div>
                          <div class="flex flex-wrap items-center gap-2">
                              <input type="search" name="q" value="{{ $logFilters['q'] ?? '' }}" placeholder="Search path, URL, IP or user agent..."
                                     class="flex-1 min-w-[240px] text-xs px-2.5 py-1.5 border border-slate-200 dark:border-slate-700 rounded-md bg-white dark:bg-slate-800 text-slate-700 dark:text-slate-200">
@@ -121,4 +153,6 @@
                          @endif
                          <script type="application/json" id="lwaLogsData">{!! json_encode($logRows->items(), JSON_HEX_TAG | JSON_HEX_AMP | JSON_HEX_APOS | JSON_HEX_QUOT) !!}</script>
                      </div>
-                 </div>
+                                       </div>
+                      </div>
+                  </div>

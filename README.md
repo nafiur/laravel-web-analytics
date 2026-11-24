@@ -35,7 +35,7 @@ A modern, fast, and self-hosted Web Traffic & Visitor Analytics Dashboard for La
 - 🔍 **Breakdown explorer**: Every breakdown has a grid icon that opens a full-table detail modal with search, sorting, row limits, checkboxes and per-row actions. Card menus also offer Proportion/Trend views, per-card CSV/JSON export, expand and pin-to-dashboard.
 - 📈 **Chart Group by**: Traffic charts can be grouped by country, path, status code, browser, OS, device type, HTTP method, referrer, data center (city), host or cache status — trend series are computed for both database and file-log sources.
 - 🔗 **Observability deep links**: Row-level "View in Observability" opens the Real-time feed pre-filtered by that breakdown value.
-- 📜 **Raw request logs**: Dedicated `/web-analytics/logs` page with an outcomes-over-time chart, field filters (method, status, cache status, host, path, IP, free-text search), paginated table, expandable rows with full request details and filtered CSV export. Edge/security fields (bot score, edge status) are intentionally not collected.
+- 📜 **Raw request logs**: Dedicated `/web-analytics/logs` page with an outcomes-over-time chart, a Cloudflare-style field sidebar (Request / Client / Response / Other fields — click a field to add a filter chip), paginated table, expandable rows with full request details and filtered CSV export. Edge/security fields (bot score, edge status) are intentionally not collected.
 
 ---
 

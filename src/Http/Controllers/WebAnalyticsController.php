@@ -181,7 +181,9 @@ class WebAnalyticsController extends Controller
         }
 
         $logFilters = $request->only([
-            'q', 'method', 'host', 'path', 'status', 'cache_status', 'country', 'device', 'os', 'browser', 'ip_address',
+            'q', 'method', 'host', 'path', 'status', 'cache_status', 'country', 'city', 'device', 'os', 'browser',
+            'ip_address', 'user_agent', 'referrer', 'full_url', 'utm_source', 'utm_medium', 'utm_campaign',
+            'session_id', 'user_id', 'tenant_id',
         ]);
         $logRows = collect();
         if ($section === 'logs' && $source !== 'file') {
@@ -192,13 +194,16 @@ class WebAnalyticsController extends Controller
             if ($end) {
                 $logQuery->where('created_at', '<=', $end);
             }
-            foreach (['method', 'host', 'cache_status', 'country', 'device', 'os', 'browser', 'ip_address'] as $field) {
+            foreach (['method', 'host', 'cache_status', 'country', 'city', 'device', 'os', 'browser',
+                      'ip_address', 'session_id', 'user_id', 'tenant_id', 'utm_source', 'utm_medium', 'utm_campaign'] as $field) {
                 if (!empty($logFilters[$field])) {
                     $logQuery->where($field, $logFilters[$field]);
                 }
             }
-            if (!empty($logFilters['path'])) {
-                $logQuery->where('path', 'like', '%' . $logFilters['path'] . '%');
+            foreach (['path', 'user_agent', 'referrer', 'full_url'] as $likeField) {
+                if (!empty($logFilters[$likeField])) {
+                    $logQuery->where($likeField, 'like', '%' . $logFilters[$likeField] . '%');
+                }
             }
             if (!empty($logFilters['status'])) {
                 $status = (string) $logFilters['status'];

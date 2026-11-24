@@ -128,6 +128,8 @@ class AnalyticsTest extends TestCase
 
         $this->assertStringContainsString('value="top_cache_statuses" selected', $content);
         $this->assertStringContainsString('Cache status (all)', $content);
+        $this->assertStringContainsString('data-log-field="user_agent"', $content);
+        $this->assertStringContainsString('lwaLogFilterChips', $content);
     }
 
     public function test_live_update_controls_and_keys_are_rendered(): void
