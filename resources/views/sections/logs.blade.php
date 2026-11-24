@@ -49,10 +49,7 @@
                                  <div class="text-xs font-semibold text-slate-800 dark:text-slate-200">Request outcomes over time</div>
                                  <p class="text-[11px] text-slate-400 mt-0.5">Cache delivery breakdown for the selected period</p>
                              </div>
-                             @include('web-analytics::partials.group-by-select', [
-                                 'chartId' => 'chartLogOutcomes',
-                                 'default' => 'top_cache_statuses',
-                             ])
+                             @include('web-analytics::partials.group-by-select', ['chartId' => 'chartLogOutcomes'])
                          </div>
                          <div class="relative mt-3 h-56">
                              <div id="chartLogOutcomes" class="h-56 w-full"></div>

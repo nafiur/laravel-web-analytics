@@ -126,7 +126,8 @@ class AnalyticsTest extends TestCase
             $this->assertStringContainsString($needle, $content);
         }
 
-        $this->assertStringContainsString('value="top_cache_statuses" selected', $content);
+        $this->assertStringContainsString('value="" selected', $content);
+        $this->assertStringNotContainsString('value="top_cache_statuses" selected', $content);
         $this->assertStringContainsString('Cache status (all)', $content);
         $this->assertStringContainsString('data-log-field="user_agent"', $content);
         $this->assertStringContainsString('lwaLogFilterChips', $content);

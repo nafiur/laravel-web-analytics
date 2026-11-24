@@ -382,7 +382,7 @@ Time-series charts include a **Group by** select. Available dimensions depend on
 
 `Country · Path · Origin status code · Browser · Operating system · Device type · HTTP protocol · Referrer · Data center (city) · Host · Cache status (all)`
 
-**None** always means a single "total requests" line — no grouping. The Logs page opens with **Cache status (all)** selected so all delivery outcomes (HIT / MISS / BYPASS / Dynamic) are shown together.
+**None** always means a single "total requests" line — no grouping. The Logs page opens with **None**; select **Cache status (all)** to see all delivery outcomes (HIT / MISS / BYPASS / Dynamic) together.
 
 - **Host** is recorded from the request host; older rows are backfilled from `full_url` by an additive migration.
 - **Cache status** is normalised from `cf-cache-status` / `x-cache` headers (`HIT`, `MISS`, `BYPASS`, `EXPIRED`, …). Rows logged before upgrading have no cache status, so they are excluded from that breakdown.

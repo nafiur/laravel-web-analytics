@@ -2021,8 +2021,8 @@
         (function() {
             const el = document.querySelector('#chartLogOutcomes');
             if (el && window.ApexCharts) {
-                const trend = (window.lwaBreakdownTrends || {}).top_cache_statuses || {};
-                const series = (trend.series || []).map(item => ({ name: item.name, data: item.data || [] }));
+                const series = [{ name: 'Requests', data: requestsData || [] }];
+                const labels = timeLabels || [];
                 const chart = new ApexCharts(el, {
                     series: series.length ? series : [{ name: 'No data', data: [] }],
                     chart: { type: 'area', height: 224, stacked: false, toolbar: { show: false }, zoom: { enabled: false } },
@@ -2030,7 +2030,7 @@
                     dataLabels: { enabled: false },
                     stroke: { curve: 'straight', width: 2 },
                     fill: { type: 'gradient', gradient: { shadeIntensity: 1, opacityFrom: 0.3, opacityTo: 0.05, stops: [0, 95, 100] } },
-                    xaxis: { categories: trend.labels || [], labels: { style: { fontSize: '10px', colors: '#94a3b8' } }, axisBorder: { show: false } },
+                    xaxis: { categories: labels, labels: { style: { fontSize: '10px', colors: '#94a3b8' } }, axisBorder: { show: false } },
                     yaxis: { labels: { style: { fontSize: '10px', colors: '#94a3b8' } } },
                     grid: { borderColor: isDarkMode() ? '#1f2937' : '#f1f5f9', strokeDashArray: 3 },
                     legend: { show: series.length > 1, position: 'top' },
