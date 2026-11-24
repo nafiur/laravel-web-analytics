@@ -148,10 +148,16 @@
                                  </tbody>
                              </table>
                          </div>
-                         @if($logRows->hasPages())
+                         @if(method_exists($logRows, 'hasPages') && $logRows->hasPages())
                              <div class="px-4 py-3 border-t lwa-border">{{ $logRows->links() }}</div>
                          @endif
-                         <script type="application/json" id="lwaLogsData">{!! json_encode($logRows->items(), JSON_HEX_TAG | JSON_HEX_AMP | JSON_HEX_APOS | JSON_HEX_QUOT) !!}</script>
+                         
+                         @if(($source ?? 'database') === 'file')
+                             <div class="px-4 py-3 text-[11px] text-slate-400 border-t lwa-border">
+                                 Raw log rows are only available with the Database source. Switch the source selector to Database.
+                             </div>
+                         @endif
+<script type="application/json" id="lwaLogsData">{!! json_encode(method_exists($logRows, 'items') ? $logRows->items() : $logRows->all(), JSON_HEX_TAG | JSON_HEX_AMP | JSON_HEX_APOS | JSON_HEX_QUOT) !!}</script>
                      </div>
                                        </div>
                       </div>

@@ -132,6 +132,14 @@ class AnalyticsTest extends TestCase
         $this->assertStringContainsString('lwaLogFilterChips', $content);
     }
 
+    public function test_logs_page_renders_with_file_source(): void
+    {
+        $response = $this->get(route('lwa_logs', ['range' => '24h', 'source' => 'file']));
+
+        $response->assertOk();
+        $response->assertSee('Raw log rows are only available with the Database source', false);
+    }
+
     public function test_live_update_controls_and_keys_are_rendered(): void
     {
         $content = $this->get(route('lwa_devices'))->getContent();

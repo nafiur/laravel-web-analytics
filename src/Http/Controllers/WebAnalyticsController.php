@@ -185,7 +185,12 @@ class WebAnalyticsController extends Controller
             'ip_address', 'user_agent', 'referrer', 'full_url', 'utm_source', 'utm_medium', 'utm_campaign',
             'session_id', 'user_id', 'tenant_id',
         ]);
-        $logRows = collect();
+        // Always hand the view a paginator — the file source has no raw table
+        // to explore, but the same Blade template is still rendered.
+        $logRows = new \Illuminate\Pagination\LengthAwarePaginator([], 0, 25, 1, [
+            'path'  => $request->url(),
+            'query' => $request->query(),
+        ]);
         if ($section === 'logs' && $source !== 'file') {
             $logQuery = LwaLogs::forTenant($tenantId);
             if ($start) {
