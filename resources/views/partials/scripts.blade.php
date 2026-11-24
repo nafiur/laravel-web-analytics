@@ -222,6 +222,8 @@
         const deviceColors = { Desktop: '#0051c3', Mobile: '#f59e0b', Tablet: '#8b5cf6', Bot: '#94a3b8' };
 
         const isDarkMode = () => document.documentElement.classList.contains('dark');
+        const lwaGridColor = () => isDarkMode() ? '#2a2e37' : '#eceef3';
+        const lwaGrid = () => ({ borderColor: lwaGridColor(), strokeDashArray: 0 });
         const getChartTheme = () => ({
             mode: isDarkMode() ? 'dark' : 'light',
             fontFamily: 'Plus Jakarta Sans, sans-serif'
@@ -244,15 +246,7 @@
                 }
             },
             colors: ['#0051c3'],
-            fill: {
-                type: 'gradient',
-                gradient: {
-                    shadeIntensity: 1,
-                    opacityFrom: 0.35,
-                    opacityTo: 0.05,
-                    stops: [0, 95, 100]
-                }
-            },
+            fill: { type: 'solid', opacity: 0.07 },
             dataLabels: {
                 enabled: false
             },
@@ -281,10 +275,7 @@
                     }
                 }
             },
-            grid: {
-                borderColor: isDarkMode() ? '#1f2937' : '#f1f5f9',
-                strokeDashArray: 3
-            },
+            grid: lwaGrid(),
             tooltip: lwaChartTooltip(' requests')
         });
 
@@ -297,12 +288,12 @@
                 series: [{ name: 'Requests', data: requestsData }],
                 chart: { type: 'area', height: 250, toolbar: { show: false }, zoom: { enabled: false } },
                 colors: ['#4f46e5'],
-                fill: { type: 'gradient', gradient: { shadeIntensity: 1, opacityFrom: 0.35, opacityTo: 0.05, stops: [0, 95, 100] } },
+                fill: { type: 'solid', opacity: 0.07 },
                 dataLabels: { enabled: false },
                 stroke: { curve: 'straight', width: 2 },
                 xaxis: { categories: timeLabels, labels: { style: { fontSize: '10px', colors: '#94a3b8' } }, axisBorder: { show: false }, axisTicks: { show: false } },
                 yaxis: { labels: { style: { fontSize: '10px', colors: '#94a3b8' } } },
-                grid: { borderColor: isDarkMode() ? '#26344b' : '#e4e8f0', strokeDashArray: 3 },
+                grid: lwaGrid(),
                 tooltip: lwaChartTooltip(' requests')
             });
             chartOverviewTraffic.render();
@@ -325,15 +316,7 @@
                 }
             },
             colors: ['#0051c3'],
-            fill: {
-                type: 'gradient',
-                gradient: {
-                    shadeIntensity: 1,
-                    opacityFrom: 0.35,
-                    opacityTo: 0.05,
-                    stops: [0, 95, 100]
-                }
-            },
+            fill: { type: 'solid', opacity: 0.07 },
             dataLabels: {
                 enabled: false
             },
@@ -363,10 +346,7 @@
                     formatter: (val) => val + ' MB'
                 }
             },
-            grid: {
-                borderColor: isDarkMode() ? '#1f2937' : '#f1f5f9',
-                strokeDashArray: 3
-            },
+            grid: lwaGrid(),
             tooltip: lwaChartTooltip(' MB')
         });
 
@@ -431,10 +411,7 @@
             legend: {
                 show: false
             },
-            grid: {
-                borderColor: isDarkMode() ? '#1f2937' : '#f1f5f9',
-                strokeDashArray: 3
-            },
+            grid: lwaGrid(),
             tooltip: {
                 theme: isDarkMode() ? 'dark' : 'light'
             }
@@ -463,7 +440,7 @@
                 },
                 yaxis: { labels: { style: { fontSize: '10px', colors: '#94a3b8' } } },
                 legend: { show: false },
-                grid: { borderColor: isDarkMode() ? '#1f2937' : '#f1f5f9', strokeDashArray: 3 },
+                grid: lwaGrid(),
                 tooltip: { theme: isDarkMode() ? 'dark' : 'light', y: { formatter: val => Number(val).toLocaleString() } }
             });
             chartDeviceTypes.render();
@@ -510,10 +487,7 @@
                     }
                 }
             },
-            grid: {
-                borderColor: isDarkMode() ? '#1f2937' : '#f1f5f9',
-                strokeDashArray: 3
-            },
+            grid: lwaGrid(),
             tooltip: {
                 theme: isDarkMode() ? 'dark' : 'light'
             }
@@ -559,10 +533,7 @@
                         }
                     }
                 },
-                grid: {
-                    borderColor: isDarkMode() ? '#1f2937' : '#f1f5f9',
-                    strokeDashArray: 3
-                },
+                grid: lwaGrid(),
                 tooltip: lwaChartTooltip(' ms')
             });
             chartLatency.render();
@@ -2055,10 +2026,10 @@
                     colors: ['#0051c3', '#f59e0b', '#8b5cf6', '#10b981', '#ef4444', '#06b6d4'],
                     dataLabels: { enabled: false },
                     stroke: lwaSmoothArea,
-                    fill: { type: 'gradient', gradient: { shadeIntensity: 1, opacityFrom: 0.3, opacityTo: 0.05, stops: [0, 95, 100] } },
+                    fill: { type: 'solid', opacity: 0.07 },
                     xaxis: { categories: labels, labels: { style: { fontSize: '10px', colors: '#94a3b8' } }, axisBorder: { show: false } },
                     yaxis: { labels: { style: { fontSize: '10px', colors: '#94a3b8' } } },
-                    grid: { borderColor: isDarkMode() ? '#1f2937' : '#f1f5f9', strokeDashArray: 3 },
+                    grid: lwaGrid(),
                     legend: { show: series.length > 1, position: 'top' },
                     tooltip: lwaChartTooltip('')
                 });
@@ -2247,11 +2218,11 @@
                     chart: { type: data.stacked ? 'bar' : 'area', height: 192, stacked: !!data.stacked, toolbar: { show: false }, zoom: { enabled: false } },
                     colors: series.map((_, i) => palette[i % palette.length]),
                     stroke: data.stacked ? { width: 0 } : lwaSmoothArea,
-                    fill: data.stacked ? { opacity: 1 } : { type: 'gradient', gradient: { shadeIntensity: 1, opacityFrom: 0.3, opacityTo: 0.05, stops: [0, 95, 100] } },
+                    fill: data.stacked ? { opacity: 1 } : { type: 'solid', opacity: 0.07 },
                     dataLabels: { enabled: false },
                     xaxis: { categories: data.labels || [], labels: { style: { fontSize: '10px', colors: '#94a3b8' } }, axisBorder: { show: false } },
                     yaxis: { labels: { style: { fontSize: '10px', colors: '#94a3b8' } } },
-                    grid: { borderColor: isDarkMode() ? '#1f2937' : '#f1f5f9', strokeDashArray: 3 },
+                    grid: lwaGrid(),
                     legend: { show: series.length > 1, position: 'bottom' },
                     tooltip: lwaChartTooltip(''),
                 }).render();

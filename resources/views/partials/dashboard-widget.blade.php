@@ -21,7 +21,7 @@
     </div>
 
     @if($widgetType === 'kpi')
-        <div class="text-2xl font-bold text-slate-900 dark:text-white">
+        <div class="text-xl font-semibold text-slate-900 dark:text-white">
             {{ $analytics['summary'][$widgetKey] ?? 0 }}{{ $widgetSuffix }}
         </div>
         <div class="text-[11px] text-slate-400 mt-1">{{ str_replace('_', ' ', $widgetKey) }}</div>

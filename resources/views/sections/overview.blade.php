@@ -24,9 +24,9 @@
                             ];
                         @endphp
                         @foreach($kpis as [$label, $key, $definition])
-                            <div class="lwa-surface border lwa-border rounded-lg p-3.5 shadow-sm lwa-kpi" title="{{ $definition }}">
+                            <div class="lwa-surface border lwa-border rounded-lg p-3 shadow-sm lwa-kpi" title="{{ $definition }}">
                                 <div class="text-[11px] font-medium text-slate-500 dark:text-slate-400">{{ $label }}</div>
-                                <div class="text-xl font-bold text-slate-900 dark:text-white mt-1">
+                                <div class="text-lg font-semibold text-slate-900 dark:text-white mt-0.5">
                                     {{ $analytics['summary'][$key] ?? 0 }}@if(in_array($key, ['bounce_rate'], true))%@endif
                                 </div>
                                 <div class="text-[10px] text-slate-400 mt-1 truncate">{{ $definition }}</div>
