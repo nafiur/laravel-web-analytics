@@ -24,7 +24,12 @@
         <span id="{{ $mapId }}Count" class="text-[11px] font-mono text-slate-500">0 located</span>
     </div>
     <div id="{{ $mapId }}" data-lwa-map="{{ $mapId }}" data-geoip-ready="{{ !empty($geoipReady) ? '1' : '0' }}" data-highlight-countries="{{ json_encode($highlightCountries) }}" class="w-full h-64 rounded-md overflow-hidden bg-slate-50 dark:bg-slate-800/40"></div>
-    <p id="{{ $mapId }}Empty" class="lwa-map-empty text-[11px] text-slate-400 text-center mt-2">
+    @php
+        $mapHasMarkers = collect($analytics['recent_logs'] ?? [])
+            ->filter(fn ($log) => !empty($log['latitude']) && !empty($log['longitude']))
+            ->isNotEmpty();
+    @endphp
+    <p id="{{ $mapId }}Empty" class="lwa-map-empty text-[11px] text-slate-400 text-center mt-2 {{ $mapHasMarkers ? 'hidden' : '' }}">
         @if(!empty($geoipReady))
             No located visitors in this period yet.
         @else

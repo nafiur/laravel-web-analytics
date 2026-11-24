@@ -667,6 +667,8 @@
                         const count = document.getElementById(id + 'Count');
                         if (count) count.textContent = counts[id] + ' located';
                         document.querySelectorAll('.lwa-map-empty').forEach(function (el) { el.classList.add('hidden'); });
+                        const empty = document.getElementById(id + 'Empty');
+                        if (empty) empty.classList.add('hidden');
                     } catch (err) { /* ignore bad coordinates */ }
                 });
             };
