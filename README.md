@@ -1,14 +1,10 @@
 # Laravel Web Analytics
 
-<p align="center">
-  <img src="art/banner.png" alt="Laravel Web Analytics Banner" width="100%">
-</p>
+![Laravel Web Analytics Banner](https://raw.githubusercontent.com/nafiur/laravel-web-analytics/main/art/banner.png)
 
-<p align="center">
-  <a href="https://packagist.org/packages/nafiur/laravel-web-analytics"><img src="https://img.shields.io/packagist/v/nafiur/laravel-web-analytics.svg?style=flat-square" alt="Latest Version on Packagist"></a>
-  <a href="https://packagist.org/packages/nafiur/laravel-web-analytics"><img src="https://img.shields.io/packagist/dt/nafiur/laravel-web-analytics.svg?style=flat-square" alt="Total Downloads"></a>
-  <a href="https://github.com/nafiur/laravel-web-analytics/blob/main/LICENSE"><img src="https://img.shields.io/github/license/nafiur/laravel-web-analytics.svg?style=flat-square" alt="License"></a>
-</p>
+[![Latest Version on Packagist](https://img.shields.io/packagist/v/nafiur/laravel-web-analytics.svg?style=flat-square)](https://packagist.org/packages/nafiur/laravel-web-analytics)
+[![Total Downloads](https://img.shields.io/packagist/dt/nafiur/laravel-web-analytics.svg?style=flat-square)](https://packagist.org/packages/nafiur/laravel-web-analytics)
+[![License](https://img.shields.io/github/license/nafiur/laravel-web-analytics.svg?style=flat-square)](https://github.com/nafiur/laravel-web-analytics/blob/main/LICENSE)
 
 A modern, fast, and self-hosted Web Traffic & Visitor Analytics Dashboard for Laravel with real-time Server-Sent Events (SSE) live streaming and Tailwind CSS styling.
 
