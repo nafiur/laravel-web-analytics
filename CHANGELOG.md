@@ -12,7 +12,7 @@ All notable changes to this project are documented here. The format is based on 
 
 - Logs page "Group by" now opens with **None** (a single total-requests line). Select **Cache status (all)** to see all delivery outcomes together.
 - Time-series charts use smooth curves, hover markers and a shared card-style tooltip showing the bucket label, series colour/name and formatted value.
-- Precision-focused UI redesign inspired by developer tools: flat 1px-border surfaces (no shadows or gradient backgrounds), compact typography and KPI cards, smaller radii, solid accent buttons/links, faint solid chart fills with hairline grids, sticky table headers, and matched light/dark themes. No routes, metrics or features changed.
+- Precision-focused UI redesign inspired by developer tools: the layout stylesheet was rewritten from scratch with warm-neutral light / deep-neutral dark tokens, flat 1px-border surfaces, compact typography and KPI cards, smaller radii, solid accent buttons, faint solid chart fills with hairline grids and sticky table headers. Shared shell classes were added to the sidebar and subheader. No routes, metrics or features changed.
 
 ## [3.1.0] - 2026-11-24
 

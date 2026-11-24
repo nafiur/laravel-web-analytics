@@ -1,5 +1,5 @@
             <!-- Subheader Bar: Segmented Tabs & Filters -->
-            <div class="lwa-surface border-b lwa-border px-4 sm:px-6 py-2.5 sticky top-14 z-30">
+            <div class="lwa-app-subheader px-4 sm:px-6 py-2.5 sticky top-14 z-30">
                 <div class="flex flex-wrap items-center justify-between gap-3">
                     <!-- Segmented Sub-Tabs (hidden on the full Settings screen) -->
                     @if(($section ?? '') !== 'settings')

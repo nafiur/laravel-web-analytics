@@ -1,5 +1,5 @@
         <!-- ============ LEFT SIDEBAR ============ -->
-        <aside id="appSidebar" class="w-64 lwa-surface border-r lwa-border flex flex-col justify-between shrink-0 transition-transform duration-200 lg:translate-x-0 -translate-x-full fixed lg:static inset-y-14 left-0 z-30">
+        <aside id="appSidebar" class="w-64 lwa-app-sidebar border-r lwa-border flex flex-col justify-between shrink-0 transition-transform duration-200 lg:translate-x-0 -translate-x-full fixed lg:static inset-y-14 left-0 z-30">
             <div class="flex-1 overflow-y-auto py-4 px-3">
                 <nav class="space-y-1 text-xs">
                     @php($current = $section ?? 'overview')
