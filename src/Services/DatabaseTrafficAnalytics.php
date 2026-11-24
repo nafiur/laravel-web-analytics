@@ -286,16 +286,22 @@ class DatabaseTrafficAnalytics
     protected function buildTimeSeries(string $timeRange, ?Carbon $start, ?Carbon $end, ?string $tenantId = null): array
     {
         $isHourly = in_array($timeRange, ['1h', '6h', '12h', '24h', 'today'], true);
-        $query = LwaLogs::query();
-        if ($tenantId !== null && $tenantId !== '') {
-            $query->where('tenant_id', $tenantId);
-        }
-        if ($start) {
-            $query->where('created_at', '>=', $start);
-        }
-        if ($end) {
-            $query->where('created_at', '<=', $end);
-        }
+
+        // Each series gets its own fresh query: cloning a query after selectRaw()
+        // would append the aggregates to the device query and break strict
+        // MySQL's ONLY_FULL_GROUP_BY mode.
+        $applyFilters = function ($query) use ($tenantId, $start, $end) {
+            if ($tenantId !== null && $tenantId !== '') {
+                $query->where('tenant_id', $tenantId);
+            }
+            if ($start) {
+                $query->where('created_at', '>=', $start);
+            }
+            if ($end) {
+                $query->where('created_at', '<=', $end);
+            }
+            return $query;
+        };
 
         $driver = DB::connection()->getDriverName();
         if ($driver === 'sqlite') {
@@ -308,7 +314,7 @@ class DatabaseTrafficAnalytics
             $dateExpr = "DATE_FORMAT(created_at, '{$dateFormat}')";
         }
 
-        $rows = $query->selectRaw("
+        $rows = $applyFilters(LwaLogs::query())->selectRaw("
             {$dateExpr} as bucket_time,
             COUNT(*) as req_count,
             COALESCE(SUM(bytes_sent), 0) as byte_sum,
@@ -325,7 +331,7 @@ class DatabaseTrafficAnalytics
 
         // Device categories per bucket for the stacked "Device types over time"
         // chart. Kept in a separate query so the main aggregate stays 1 row/bucket.
-        $deviceRows = (clone $query)
+        $deviceRows = $applyFilters(LwaLogs::query())
             ->selectRaw("{$dateExpr} as bucket_time, device, COUNT(*) as device_count")
             ->groupBy('bucket_time', 'device')
             ->get();

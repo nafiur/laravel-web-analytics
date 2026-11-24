@@ -3,6 +3,7 @@
 namespace Nafiur\WebAnalytics\Tests\Feature;
 
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Facades\DB;
 use Nafiur\WebAnalytics\Models\LwaLogs;
 use Nafiur\WebAnalytics\Services\CountryFlag;
 use Nafiur\WebAnalytics\Tests\TestCase;
@@ -226,6 +227,26 @@ class AnalyticsTest extends TestCase
         ] as $needle) {
             $this->assertStringContainsString($needle, $content);
         }
+    }
+
+    public function test_device_series_query_has_one_select_and_group_by(): void
+    {
+        $queries = [];
+        DB::listen(function ($query) use (&$queries) {
+            $queries[] = $query->sql;
+        });
+
+        $this->getJson(route('lwa_data', ['range' => '24h']))->assertOk();
+
+        $deviceQueries = array_values(array_filter(
+            $queries,
+            fn (string $sql): bool => str_contains($sql, 'device_count')
+        ));
+
+        $this->assertCount(1, $deviceQueries);
+        $this->assertSame(1, substr_count($deviceQueries[0], 'as bucket_time'));
+        $this->assertSame(1, substr_count($deviceQueries[0], 'group by'));
+        $this->assertStringNotContainsString('req_count', $deviceQueries[0]);
     }
 
     public function test_device_over_time_and_user_agents_are_exposed_in_data_payload(): void
