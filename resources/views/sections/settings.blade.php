@@ -369,7 +369,7 @@
 
                             <section id="settings-countries" class="lwa-surface border lwa-border rounded-lg p-4 shadow-sm">
                                 <div class="text-xs font-semibold text-slate-800 dark:text-slate-200 mb-3">Top Countries</div>
-                                @include('web-analytics::partials.breakdown-list', ['items' => $analytics['breakdowns']['top_countries'] ?? []])
+                                @include('web-analytics::partials.breakdown-list', ['items' => $analytics['breakdowns']['top_countries'] ?? [], 'key' => 'top_countries'])
                                 <p class="text-[11px] text-slate-400 mt-3">GeoIP location is approximate and respects IP anonymization settings.</p>
                             </section>
 

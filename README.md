@@ -370,6 +370,14 @@ The **Devices & Browsers** page (`/web-analytics/devices`) shows a stacked "Devi
 
 The grid icon is available on **every** breakdown list, not only on the Technology page. View mode, pin and expand preferences are browser-local — no server-side user state and no cookies.
 
+### Live updates
+
+Reports can refresh without a page reload:
+
+- **Auto refresh** — the subheader `Auto: Off / 5s / 10s / 30s` selector polls the compact `/web-analytics/data?light=1` endpoint (the choice is stored in `localStorage`). It updates KPI values, breakdown lists (including pinned reports), trend sparklines, device legend totals and chart series in place.
+- **SSE push** — when new traffic arrives, the existing stream emits an `analytics` event carrying the same compact payload, so charts and breakdowns update immediately. The manual **Refresh** button uses the same in-place apply path.
+- The light payload omits recent/error log rows to keep polling cheap; no extra packets are sent when there is no new traffic beyond the periodic poll.
+
 ### Chart Group by
 
 Time-series charts include a **Group by** select. Available dimensions depend on recorded data:

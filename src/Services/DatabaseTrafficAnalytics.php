@@ -15,7 +15,7 @@ class DatabaseTrafficAnalytics
     /**
      * Compute full dashboard analytics data from database table.
      */
-    public function getDashboardData(string $timeRange = '24h', ?string $customStart = null, ?string $customEnd = null, ?string $tenantId = null): array
+    public function getDashboardData(string $timeRange = '24h', ?string $customStart = null, ?string $customEnd = null, ?string $tenantId = null, bool $light = false): array
     {
         if ($tenantId === null && TenantResolver::isEnabled()) {
             $tenantId = TenantResolver::resolveTrusted();
@@ -141,6 +141,11 @@ class DatabaseTrafficAnalytics
             'top_methods'         => $this->getTopBreakdown($baseQuery, 'method', $totalRequests, 6),
         ];
 
+        $recentLogs = [];
+        $topErrorPaths = [];
+        $recentErrorLogs = [];
+
+        if (! $light) {
         // Recent Live Logs (latest 20 requests) - without any User model dependency
         $recentLogs = (clone $baseQuery)
             ->latest('id')
@@ -230,6 +235,7 @@ class DatabaseTrafficAnalytics
                 ];
             })
             ->toArray();
+        }
 
         // Sparklines
         $sparklineRequests = $timeSeries['requests'] ?: [0];

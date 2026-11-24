@@ -112,6 +112,15 @@
                             </div>
                         </div>
 
+                        <!-- Auto refresh interval -->
+                        <select id="lwaAutoRefresh" title="Auto refresh reports"
+                            class="text-xs px-2 py-1.5 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-md text-slate-700 dark:text-slate-300 focus:outline-none">
+                            <option value="0">Auto: Off</option>
+                            <option value="5">Every 5s</option>
+                            <option value="10">Every 10s</option>
+                            <option value="30">Every 30s</option>
+                        </select>
+
                         <!-- Refresh current report -->
                         <button type="button" id="lwaRefreshBtn"
                             class="inline-flex items-center gap-1 px-2.5 py-1.5 text-xs font-medium text-slate-700 dark:text-slate-300 bg-white dark:bg-slate-800 hover:bg-slate-50 dark:hover:bg-slate-700 border border-slate-200 dark:border-slate-700 rounded-md shadow-sm transition"

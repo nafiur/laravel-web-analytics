@@ -722,6 +722,9 @@
                 setConnectionState('reconnecting');
 
                 let streamUrl = "{{ route('lwa_stream') }}?last_id=" + lastTrafficId;
+                const streamParams = new URLSearchParams(window.location.search);
+                const streamRange = streamParams.get('range') || "{{ $timeRange ?? '24h' }}";
+                streamUrl += "&range=" + encodeURIComponent(streamRange);
                 if (currentTenantId) {
                     streamUrl += "&tenant_id=" + encodeURIComponent(currentTenantId);
                 }
@@ -757,7 +760,14 @@
                     } catch (err) {}
                 });
 
-                sseSource.addEventListener('ping', function(e) {
+                sseSource.addEventListener('analytics', function(e) {
+                try {
+                    const parsed = JSON.parse(e.data);
+                    if (parsed.analytics && window.lwaApplyAnalytics) window.lwaApplyAnalytics(parsed.analytics);
+                } catch (err) { /* ignore malformed payload */ }
+            });
+
+            sseSource.addEventListener('ping', function(e) {
                     try {
                         let p = JSON.parse(e.data);
                         if (p.last_id) lastTrafficId = p.last_id;
@@ -1506,32 +1516,9 @@
             btn.addEventListener('click', async function() {
                 const originalDisabled = btn.disabled;
                 btn.disabled = true;
-                const url = new URL("{{ route('lwa_data') }}", window.location.origin);
-                window.location.search.replace(/^\?/, '').split('&').forEach(function(pair) {
-                    if (!pair) return;
-                    const parts = pair.split('=');
-                    url.searchParams.set(decodeURIComponent(parts[0]), decodeURIComponent(parts.slice(1).join('=') || ''));
-                });
-
                 try {
-                    const response = await fetch(url, { headers: { 'Accept': 'application/json', 'X-Requested-With': 'XMLHttpRequest' } });
-                    if (!response.ok) throw new Error('HTTP ' + response.status);
-                    const payload = await response.json();
-                    if (!payload.success) throw new Error('Bad payload');
-
-                    const summary = (payload.analytics && payload.analytics.summary) || {};
-                    const requests = document.getElementById('kpiRequests');
-                    const visits = document.getElementById('kpiVisits');
-                    const bytes = document.getElementById('kpiBytes');
-                    if (requests && summary.total_requests_fmt !== undefined) requests.textContent = summary.total_requests_fmt;
-                    if (visits && summary.unique_visitors_fmt !== undefined) visits.textContent = summary.unique_visitors_fmt;
-                    if (bytes && summary.total_bytes_fmt !== undefined) bytes.textContent = summary.total_bytes_fmt;
-                    if (toast) toast.classList.add('hidden');
-                } catch (err) {
-                    if (toast) {
-                        toast.classList.remove('hidden');
-                        window.lwaRenderIcons();
-                    }
+                    if (window.lwaRefreshAnalytics) await window.lwaRefreshAnalytics();
+                    else window.location.reload();
                 } finally {
                     btn.disabled = originalDisabled;
                 }
@@ -1847,6 +1834,176 @@
                     chart.updateOptions({ colors: palette, legend: { show: series.length > 1, position: 'bottom' } });
                 });
             });
+        })();
+
+        // 9e. Live analytics updates: polling + SSE payloads
+        (function() {
+            const dataUrl = "{{ route('lwa_data') }}";
+            const autoSelect = document.getElementById('lwaAutoRefresh');
+            let timer = null;
+            let inFlight = false;
+
+            function esc(value) {
+                return String(value ?? '').replace(/&/g, '&amp;').replace(/</g, '&lt;')
+                    .replace(/>/g, '&gt;').replace(/"/g, '&quot;').replace(/'/g, '&#039;');
+            }
+
+            function proportionRow(item) {
+                const pct = Math.min(100, Math.max(2, Number(item.percentage) || 0));
+                const mark = item.icon || (item.flag ? '<span aria-hidden="true">' + esc(item.flag) + '</span>' : '');
+                return '<div class="flex items-center justify-between text-xs py-1 border-b border-slate-100 dark:border-slate-800/80 last:border-0 px-1 rounded">' +
+                    '<span class="flex items-center gap-1.5 min-w-0 truncate max-w-[180px] sm:max-w-[280px] font-mono text-slate-700 dark:text-slate-300" title="' + esc(item.name) + '">' +
+                        mark + '<span class="truncate">' + esc(item.name) + '</span></span>' +
+                    '<div class="flex items-center gap-3 w-36 sm:w-48 shrink-0">' +
+                        '<div class="flex-1 bg-slate-100 dark:bg-slate-800 h-1.5 rounded-full overflow-hidden"><div class="bg-[#0051c3] dark:bg-[#38bdf8] h-full rounded-full" style="width:' + pct + '%"></div></div>' +
+                        '<span class="text-right w-14 font-mono text-slate-600 dark:text-slate-400">' + esc(item.count_fmt ?? item.count ?? 0) + '</span>' +
+                    '</div></div>';
+            }
+
+            function trendRow(item) {
+                const data = item.data || [];
+                const max = Math.max(1, ...data.map(Number));
+                const points = data.map((value, index) =>
+                    (data.length > 1 ? (index / (data.length - 1)) * 100 : 0).toFixed(2) + ',' +
+                    (22 - (Number(value) / max) * 18).toFixed(2)).join(' ');
+                return '<div class="flex items-center justify-between text-xs py-1 border-b border-slate-100 dark:border-slate-800/80 last:border-0 px-1 rounded">' +
+                    '<span class="flex items-center gap-1.5 min-w-0 truncate max-w-[180px] sm:max-w-[280px] font-mono text-slate-700 dark:text-slate-300" title="' + esc(item.name) + '"><span class="truncate">' + esc(item.name) + '</span></span>' +
+                    '<div class="flex items-center gap-3 w-36 sm:w-48 shrink-0">' +
+                        '<svg viewBox="0 0 100 24" preserveAspectRatio="none" class="h-5 flex-1 text-[#0051c3] dark:text-[#38bdf8]" aria-hidden="true"><polyline points="' + points + '" fill="none" stroke="currentColor" stroke-width="1.6" vector-effect="non-scaling-stroke"/></svg>' +
+                        '<span class="text-right w-14 font-mono text-slate-600 dark:text-slate-400">' + data.reduce((a, b) => a + Number(b), 0).toLocaleString() + '</span>' +
+                    '</div></div>';
+            }
+
+            function updateList(container, html) {
+                const target = container.querySelector(':scope > .space-y-2') || container;
+                target.innerHTML = html || '<div class="text-xs text-slate-400 py-3 text-center">No data for this period</div>';
+            }
+
+            function applyCharts(analytics) {
+                const seriesOf = (key, name) => [{ name: name, data: (analytics.time_series || {})[key] || [] }];
+                const registry = window.lwaChartRegistry || {};
+                const overview = registry.chartOverviewTraffic;
+                if (overview) {
+                    const select = document.querySelector('[data-lwa-group-by][data-chart-id="chartOverviewTraffic"]');
+                    let series = seriesOf('requests', 'Requests');
+                    if (select && select.value && analytics.breakdown_trends) {
+                        const grouped = (analytics.breakdown_trends[select.value] || {}).series || [];
+                        if (grouped.length) series = grouped.slice(0, 6).map(s => ({ name: s.name, data: s.data || [] }));
+                    }
+                    overview.updateSeries(series);
+                    overview.updateOptions({ xaxis: { categories: (analytics.time_series || {}).labels || [] } });
+                }
+                if (registry.chartRequestsOverTime) registry.chartRequestsOverTime.updateSeries(seriesOf('requests', 'Requests'));
+                if (registry.chartBandwidth) registry.chartBandwidth.updateSeries(seriesOf('bandwidth_mb', 'Data Transfer (MB)'));
+                if (registry.chartStatus) {
+                    registry.chartStatus.updateSeries([
+                        { name: '2xx', data: (analytics.time_series || {}).status_2xx || [] },
+                        { name: '3xx', data: (analytics.time_series || {}).status_3xx || [] },
+                        { name: '4xx', data: (analytics.time_series || {}).status_4xx || [] },
+                        { name: '5xx', data: (analytics.time_series || {}).status_5xx || [] },
+                    ]);
+                }
+                if (registry.chartLatency) registry.chartLatency.updateSeries(seriesOf('latency', 'Latency (ms)'));
+
+                const device = analytics.time_series?.device_over_time;
+                if (registry.chartDeviceTypes && device) {
+                    const series = (device.series || []).map(s => ({ name: s.name, data: s.data || [] }));
+                    registry.chartDeviceTypes.updateSeries(series.length ? series : [{ name: 'No data', data: [] }]);
+                    const colors = { Desktop: '#0051c3', Mobile: '#f59e0b', Tablet: '#8b5cf6', Bot: '#94a3b8' };
+                    const legend = document.querySelector('[data-card-id="device-types-over-time"] .flex.flex-wrap');
+                    if (legend) {
+                        legend.innerHTML = series.map(s => {
+                            const total = (s.data || []).reduce((a, b) => a + Number(b), 0).toLocaleString();
+                            return '<div class="flex items-center gap-1.5 text-[11px] text-slate-500 dark:text-slate-400">' +
+                                '<span class="w-2 h-2 rounded-full" style="background:' + (colors[s.name] || '#0051c3') + '"></span>' +
+                                '<span>' + esc(s.name) + '</span><span class="font-semibold text-slate-700 dark:text-slate-200">' + total + '</span></div>';
+                        }).join('');
+                    }
+                }
+            }
+
+            window.lwaApplyAnalytics = function(analytics) {
+                if (!analytics) return;
+                const breakdowns = analytics.breakdowns || {};
+                window.lwaBreakdownTrends = analytics.breakdown_trends || window.lwaBreakdownTrends || {};
+
+                document.querySelectorAll('[data-lwa-breakdown-list][data-lwa-breakdown-key]').forEach(function(list) {
+                    const key = list.dataset.lwaBreakdownKey;
+                    if (!key || !Object.prototype.hasOwnProperty.call(breakdowns, key)) return;
+                    const items = breakdowns[key] || [];
+                    list.dataset.lwaItems = JSON.stringify(items);
+                    updateList(list, items.map(proportionRow).join(''));
+                });
+                document.querySelectorAll('[data-view="trend"][data-lwa-breakdown-key]').forEach(function(container) {
+                    const key = container.dataset.lwaBreakdownKey;
+                    const trend = (analytics.breakdown_trends || {})[key];
+                    if (!trend) return;
+                    updateList(container, (trend.series || []).map(trendRow).join(''));
+                });
+
+                document.querySelectorAll('[data-lwa-card-tools][data-card-id]').forEach(function(tools) {
+                    const source = document.getElementById('lwa-card-data-' + tools.dataset.cardId);
+                    if (!source) return;
+                    try {
+                        const data = JSON.parse(source.textContent || '{}');
+                        Object.keys(data).forEach(function(section) {
+                            if (Array.isArray(breakdowns[section])) data[section] = breakdowns[section];
+                            else if (analytics.breakdown_trends && analytics.breakdown_trends[section]) data[section] = analytics.breakdown_trends[section];
+                        });
+                        source.textContent = JSON.stringify(data);
+                    } catch (err) { /* keep previous data */ }
+                });
+
+                const summary = analytics.summary || {};
+                [['kpiRequests', 'total_requests_fmt'], ['kpiVisits', 'unique_visitors_fmt'], ['kpiBytes', 'total_bytes_fmt']]
+                    .forEach(function(pair) {
+                        const el = document.getElementById(pair[0]);
+                        if (el && summary[pair[1]] !== undefined) el.textContent = summary[pair[1]];
+                    });
+
+                applyCharts(analytics);
+                if (window.lwaRenderIcons) window.lwaRenderIcons();
+                const toast = document.getElementById('lwaErrorToast');
+                if (toast) toast.classList.add('hidden');
+            };
+
+            window.lwaRefreshAnalytics = async function() {
+                if (inFlight) return;
+                inFlight = true;
+                try {
+                    const url = new URL(dataUrl, window.location.origin);
+                    window.location.search.replace(/^\?/, '').split('&').forEach(function(pair) {
+                        if (!pair) return;
+                        const parts = pair.split('=');
+                        url.searchParams.set(decodeURIComponent(parts[0]), decodeURIComponent(parts.slice(1).join('=') || ''));
+                    });
+                    url.searchParams.set('light', '1');
+                    const response = await fetch(url, { headers: { 'Accept': 'application/json', 'X-Requested-With': 'XMLHttpRequest' } });
+                    if (!response.ok) throw new Error('HTTP ' + response.status);
+                    const payload = await response.json();
+                    if (!payload.success) throw new Error('Bad payload');
+                    window.lwaApplyAnalytics(payload.analytics);
+                } catch (err) {
+                    const toast = document.getElementById('lwaErrorToast');
+                    if (toast) { toast.classList.remove('hidden'); if (window.lwaRenderIcons) window.lwaRenderIcons(); }
+                } finally {
+                    inFlight = false;
+                }
+            };
+
+            function applyTimer() {
+                if (timer) { clearInterval(timer); timer = null; }
+                const seconds = parseInt(autoSelect?.value || '0', 10) || 0;
+                if (seconds > 0) timer = setInterval(window.lwaRefreshAnalytics, seconds * 1000);
+            }
+            if (autoSelect) {
+                autoSelect.value = localStorage.getItem('lwa_auto_refresh') || '0';
+                autoSelect.addEventListener('change', function() {
+                    localStorage.setItem('lwa_auto_refresh', autoSelect.value);
+                    applyTimer();
+                });
+                applyTimer();
+            }
         })();
 
         // 10. Render Lucide icons / clear chart skeletons after the DOM is ready

@@ -232,11 +232,12 @@ class WebAnalyticsController extends Controller
         $customEnd = $request->input('end_date');
         $source = $request->input('source', 'database');
         $tenantId = $this->resolveDashboardTenant($request);
+        $light = $request->boolean('light');
 
         if ($source === 'file') {
-            $analytics = $this->logParser->getDashboardData($timeRange, $customStart, $customEnd);
+            $analytics = $this->logParser->getDashboardData($timeRange, $customStart, $customEnd, $light);
         } else {
-            $analytics = $this->dbAnalytics->getDashboardData($timeRange, $customStart, $customEnd, $tenantId);
+            $analytics = $this->dbAnalytics->getDashboardData($timeRange, $customStart, $customEnd, $tenantId, $light);
         }
 
         return response()->json([
@@ -272,6 +273,7 @@ class WebAnalyticsController extends Controller
         }
 
         $tenantId = $this->resolveDashboardTenant($request);
+        $timeRange = (string) $request->input('range', '24h');
 
         // On reconnect EventSource sends Last-Event-ID; the query string only
         // carries the initial cursor rendered with the page.
@@ -285,7 +287,7 @@ class WebAnalyticsController extends Controller
 
         $interval = max(1, (int) config('laravel-web-analytics.stream_interval', 2));
 
-        return response()->stream(function () use ($lastId, $tenantId, $interval) {
+        return response()->stream(function () use ($lastId, $tenantId, $interval, $timeRange) {
             $formatter = new DatabaseTrafficAnalytics();
             $activeWindow = max(1, (int) config('laravel-web-analytics.active_visitor_window', 5));
             $currentLastId = $lastId;
@@ -339,6 +341,13 @@ class WebAnalyticsController extends Controller
                     'logs'    => $formattedLogs,
                     'last_id' => $currentLastId,
                 ]) . "\n\n";
+
+                // Push a compact analytics snapshot so charts and breakdowns
+                // can update without a full page reload or extra polling call.
+                $liveAnalytics = $formatter->getDashboardData($timeRange, null, null, $tenantId, true);
+                echo "id: {$currentLastId}\n";
+                echo "event: analytics\n";
+                echo "data: " . json_encode(['analytics' => $liveAnalytics]) . "\n\n";
             } else {
                 echo "id: {$currentLastId}\n";
                 echo "event: ping\n";

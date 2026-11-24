@@ -20,11 +20,14 @@
     </div>
 
     <div data-view="proportion">
-        @include('web-analytics::partials.breakdown-list', ['items' => $cardItems])
+        @include('web-analytics::partials.breakdown-list', [
+            'items' => $cardItems,
+            'key'   => str_replace('-', '_', (string) $cardId),
+        ])
     </div>
 
     @if($cardTrend)
-        <div data-view="trend">
+        <div data-view="trend" data-lwa-breakdown-key="{{ str_replace('-', '_', (string) $cardId) }}">
             @include('web-analytics::partials.breakdown-trend-list', [
                 'trend'    => $cardTrend,
                 'iconKind' => $iconKind,

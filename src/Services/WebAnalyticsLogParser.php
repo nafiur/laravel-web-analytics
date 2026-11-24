@@ -219,7 +219,7 @@ class WebAnalyticsLogParser
     /**
      * Compute full dashboard analytics data from parsed records.
      */
-    public function getDashboardData(string $timeRange = '24h', ?string $customStart = null, ?string $customEnd = null): array
+    public function getDashboardData(string $timeRange = '24h', ?string $customStart = null, ?string $customEnd = null, bool $light = false): array
     {
         $records = $this->parseRecords($timeRange, $customStart, $customEnd);
         $totalRequests = count($records);
@@ -453,8 +453,12 @@ class WebAnalyticsLogParser
             }
         }, array_keys($timeSeriesBuckets));
 
-        // Recent Logs (latest 20)
         $recentLogs = [];
+        $topErrorPaths = [];
+        $recentErrorLogs = [];
+
+        if (! $light) {
+        // Recent Logs (latest 20)
         $reversed = array_reverse($records);
         foreach (array_slice($reversed, 0, 20) as $idx => $r) {
             $recentLogs[] = [
@@ -534,6 +538,7 @@ class WebAnalyticsLogParser
                 'time_clock'       => $er['datetime']->format('H:i:s'),
                 'created_at_iso'   => $er['datetime']->toIso8601String(),
             ];
+        }
         }
 
         $deviceSeries = [];

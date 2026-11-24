@@ -23,6 +23,6 @@
 
                         <div class="lwa-surface border lwa-border rounded-lg p-4 shadow-sm">
                             <div class="text-xs font-semibold text-slate-800 dark:text-slate-200 mb-3">Top paths by data transfer</div>
-                            @include('web-analytics::partials.breakdown-list', ['items' => $analytics['breakdowns']['top_paths_bandwidth'] ?? []])
+                            @include('web-analytics::partials.breakdown-list', ['items' => $analytics['breakdowns']['top_paths_bandwidth'] ?? [], 'key' => 'top_paths_bandwidth'])
                         </div>
                     </div>

@@ -18,40 +18,40 @@
                     <div class="grid grid-cols-1 lg:grid-cols-2 gap-4">
                         <div id="section-countries" class="lwa-surface border lwa-border rounded-lg p-4 shadow-sm scroll-mt-32">
                             <div class="text-xs font-semibold text-slate-800 dark:text-slate-200 mb-3">Top Countries</div>
-                            @include('web-analytics::partials.breakdown-list', ['items' => $analytics['breakdowns']['top_countries'] ?? []])
+                            @include('web-analytics::partials.breakdown-list', ['items' => $analytics['breakdowns']['top_countries'] ?? [], 'key' => 'top_countries'])
                         </div>
                         <div class="lwa-surface border lwa-border rounded-lg p-4 shadow-sm">
                             <div class="text-xs font-semibold text-slate-800 dark:text-slate-200 mb-3">Top Client IPs</div>
-                            @include('web-analytics::partials.breakdown-list', ['items' => $analytics['breakdowns']['top_ips'] ?? []])
+                            @include('web-analytics::partials.breakdown-list', ['items' => $analytics['breakdowns']['top_ips'] ?? [], 'key' => 'top_ips'])
                         </div>
                     </div>
 
                     <div id="section-devices" class="grid grid-cols-1 lg:grid-cols-3 gap-4 scroll-mt-32">
                         <div class="lwa-surface border lwa-border rounded-lg p-4 shadow-sm">
                             <div class="text-xs font-semibold text-slate-800 dark:text-slate-200 mb-3">Device Types</div>
-                            @include('web-analytics::partials.breakdown-list', ['items' => $analytics['breakdowns']['top_devices'] ?? []])
+                            @include('web-analytics::partials.breakdown-list', ['items' => $analytics['breakdowns']['top_devices'] ?? [], 'key' => 'top_devices'])
                         </div>
                         <div class="lwa-surface border lwa-border rounded-lg p-4 shadow-sm">
                             <div class="text-xs font-semibold text-slate-800 dark:text-slate-200 mb-3">Operating Systems</div>
-                            @include('web-analytics::partials.breakdown-list', ['items' => $analytics['breakdowns']['top_os'] ?? []])
+                            @include('web-analytics::partials.breakdown-list', ['items' => $analytics['breakdowns']['top_os'] ?? [], 'key' => 'top_os'])
                         </div>
                         <div class="lwa-surface border lwa-border rounded-lg p-4 shadow-sm">
                             <div class="text-xs font-semibold text-slate-800 dark:text-slate-200 mb-3">Browsers</div>
-                            @include('web-analytics::partials.breakdown-list', ['items' => $analytics['breakdowns']['top_browsers'] ?? []])
+                            @include('web-analytics::partials.breakdown-list', ['items' => $analytics['breakdowns']['top_browsers'] ?? [], 'key' => 'top_browsers'])
                         </div>
                     </div>
 
                     <div id="section-campaigns" class="grid grid-cols-1 lg:grid-cols-3 gap-4 scroll-mt-32">
                         <div class="lwa-surface border lwa-border rounded-lg p-4 shadow-sm">
                             <div class="text-xs font-semibold text-slate-800 dark:text-slate-200 mb-3">UTM Sources</div>
-                            @include('web-analytics::partials.breakdown-list', ['items' => $analytics['breakdowns']['top_utm_sources'] ?? []])
+                            @include('web-analytics::partials.breakdown-list', ['items' => $analytics['breakdowns']['top_utm_sources'] ?? [], 'key' => 'top_utm_sources'])
                         </div>
                         <div class="lwa-surface border lwa-border rounded-lg p-4 shadow-sm">
                             <div class="text-xs font-semibold text-slate-800 dark:text-slate-200 mb-3">UTM Mediums</div>
-                            @include('web-analytics::partials.breakdown-list', ['items' => $analytics['breakdowns']['top_utm_mediums'] ?? []])
+                            @include('web-analytics::partials.breakdown-list', ['items' => $analytics['breakdowns']['top_utm_mediums'] ?? [], 'key' => 'top_utm_mediums'])
                         </div>
                         <div class="lwa-surface border lwa-border rounded-lg p-4 shadow-sm">
                             <div class="text-xs font-semibold text-slate-800 dark:text-slate-200 mb-3">UTM Campaigns</div>
-                            @include('web-analytics::partials.breakdown-list', ['items' => $analytics['breakdowns']['top_utm_campaigns'] ?? []])
+                            @include('web-analytics::partials.breakdown-list', ['items' => $analytics['breakdowns']['top_utm_campaigns'] ?? [], 'key' => 'top_utm_campaigns'])
                         </div>
                     </div>

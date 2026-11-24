@@ -3,6 +3,7 @@
     $listJson = json_encode($listItems, JSON_HEX_TAG | JSON_HEX_AMP | JSON_HEX_APOS | JSON_HEX_QUOT);
 @endphp
 <div class="lwa-breakdown-list relative group" data-lwa-breakdown-list
+     data-lwa-breakdown-key="{{ $key ?? '' }}"
      data-lwa-title="{{ $title ?? '' }}" data-lwa-items='{!! $listJson !!}'>
     <button type="button" data-lwa-open-detail
             class="absolute right-0 -top-1 p-0.5 rounded text-slate-400 hover:text-slate-700 hover:bg-slate-100 dark:hover:bg-slate-800 opacity-0 group-hover:opacity-100 focus:opacity-100 transition"

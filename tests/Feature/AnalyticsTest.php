@@ -85,17 +85,44 @@ class AnalyticsTest extends TestCase
         $this->assertStringContainsString("'=SUM(A1:A9)", $response->streamedContent());
     }
 
+    public function test_light_data_endpoint_skips_heavy_log_payloads(): void
+    {
+        LwaLogs::create($this->log(['path' => '/light-check']));
+
+        $full = $this->getJson(route('lwa_data', ['range' => 'all']))->json('analytics');
+        $light = $this->getJson(route('lwa_data', ['range' => 'all', 'light' => 1]))->json('analytics');
+
+        $this->assertNotEmpty($full['recent_logs']);
+        $this->assertSame([], $light['recent_logs']);
+        $this->assertSame([], $light['top_error_paths']);
+        $this->assertSame([], $light['recent_error_logs']);
+        $this->assertSame($full['breakdowns']['top_paths'], $light['breakdowns']['top_paths']);
+    }
+
+    public function test_live_update_controls_and_keys_are_rendered(): void
+    {
+        $content = $this->get(route('lwa_devices'))->getContent();
+
+        $this->assertStringContainsString('id="lwaAutoRefresh"', $content);
+        $this->assertStringContainsString('data-lwa-breakdown-key="top_browsers"', $content);
+        $this->assertStringContainsString('window.lwaRefreshAnalytics', $content);
+    }
+
     public function test_stream_response_is_short_lived_and_paced_by_eventsource(): void
     {
         LwaLogs::create($this->log(['path' => '/stream-check']));
+        $cursor = (int) LwaLogs::max('id');
+        LwaLogs::create($this->log(['path' => '/stream-check-2']));
 
         $started = microtime(true);
-        $content = $this->get('/web-analytics/stream?last_id=0')->streamedContent();
+        $content = $this->get('/web-analytics/stream?last_id=' . $cursor)->streamedContent();
         $elapsed = microtime(true) - $started;
 
         $this->assertLessThan(2, $elapsed);
         $this->assertStringContainsString('retry: ', $content);
         $this->assertStringContainsString('event: stats', $content);
+        $this->assertStringContainsString('event: analytics', $content);
+        $this->assertStringContainsString('"breakdowns"', $content);
         $this->assertStringContainsString('id: ', $content);
     }
 
