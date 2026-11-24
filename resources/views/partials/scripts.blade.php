@@ -1808,7 +1808,6 @@
             const defaults = {
                 chartOverviewTraffic: [{ name: 'Requests', data: requestsData }],
                 chartRequestsOverTime: [{ name: 'Requests', data: requestsData }],
-                chartLogOutcomes: ((window.lwaBreakdownTrends || {}).top_cache_statuses || {}).series || [],
             };
 
             document.querySelectorAll('[data-lwa-group-by]').forEach(function(select) {
@@ -1905,6 +1904,17 @@
                     ]);
                 }
                 if (registry.chartLatency) registry.chartLatency.updateSeries(seriesOf('latency', 'Latency (ms)'));
+
+                if (registry.chartLogOutcomes) {
+                    const select = document.querySelector('[data-lwa-group-by][data-chart-id="chartLogOutcomes"]');
+                    let logSeries = seriesOf('requests', 'Requests');
+                    if (select && select.value && analytics.breakdown_trends) {
+                        const grouped = (analytics.breakdown_trends[select.value] || {}).series || [];
+                        if (grouped.length) logSeries = grouped.slice(0, 6).map(s => ({ name: s.name, data: s.data || [] }));
+                    }
+                    registry.chartLogOutcomes.updateSeries(logSeries);
+                    registry.chartLogOutcomes.updateOptions({ xaxis: { categories: (analytics.time_series || {}).labels || [] } });
+                }
 
                 const device = analytics.time_series?.device_over_time;
                 if (registry.chartDeviceTypes && device) {

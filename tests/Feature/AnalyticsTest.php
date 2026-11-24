@@ -125,6 +125,9 @@ class AnalyticsTest extends TestCase
                   '/logs-check', 'LogsTestAgent/1.0', 'lwaLogsData'] as $needle) {
             $this->assertStringContainsString($needle, $content);
         }
+
+        $this->assertStringContainsString('value="top_cache_statuses" selected', $content);
+        $this->assertStringContainsString('Cache status (all)', $content);
     }
 
     public function test_live_update_controls_and_keys_are_rendered(): void
