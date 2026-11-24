@@ -20,6 +20,46 @@
             return chart;
         }
 
+        function lwaEscapeHtml(value) {
+            return String(value ?? '').replace(/&/g, '&amp;').replace(/</g, '&lt;')
+                .replace(/>/g, '&gt;').replace(/"/g, '&quot;').replace(/'/g, '&#039;');
+        }
+
+        // Soft, card-style tooltip shared by the time-series charts.
+        function lwaChartTooltip(suffix) {
+            const unit = suffix || '';
+            return {
+                enabled: true,
+                theme: isDarkMode() ? 'dark' : 'light',
+                shared: false,
+                intersect: false,
+                custom: function(context) {
+                    const dark = isDarkMode();
+                    const bg = dark ? '#111827' : '#ffffff';
+                    const border = dark ? '#374151' : '#e2e8f0';
+                    const text = dark ? '#f3f4f6' : '#0f172a';
+                    const muted = '#94a3b8';
+                    const labels = context.w.globals.labels || [];
+                    const label = labels[context.dataPointIndex] || '';
+                    const names = context.w.globals.seriesNames || [];
+                    const colors = context.w.globals.colors || [];
+                    const rows = (context.series || []).map(function(series, index) {
+                        const value = Number(series[context.dataPointIndex] || 0).toLocaleString();
+                        return '<div style="display:flex;align-items:center;gap:8px;margin-top:4px">' +
+                            '<span style="width:8px;height:8px;border-radius:9999px;flex:none;background:' + (colors[index] || '#0051c3') + '"></span>' +
+                            '<span style="font-size:11px;color:' + muted + ';max-width:150px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">' + lwaEscapeHtml(names[index]) + '</span>' +
+                            '<strong style="margin-left:auto;font-size:12px;color:' + text + '">' + value + lwaEscapeHtml(unit) + '</strong>' +
+                            '</div>';
+                    }).join('');
+                    return '<div style="min-width:160px;background:' + bg + ';border:1px solid ' + border +
+                        ';border-radius:8px;box-shadow:0 8px 24px rgba(15,23,42,.12);padding:8px 10px;font-family:Plus Jakarta Sans,sans-serif">' +
+                        '<div style="font-size:10px;color:' + muted + '">' + lwaEscapeHtml(label) + '</div>' + rows + '</div>';
+                }
+            };
+        }
+
+        const lwaSmoothArea = { curve: 'smooth', width: 2 };
+
         // 1. Dark Mode Toggle (synced with Settings > Appearance)
         (function() {
             const toggle = document.getElementById('themeToggle');
@@ -216,10 +256,8 @@
             dataLabels: {
                 enabled: false
             },
-            stroke: {
-                curve: 'straight',
-                width: 2
-            },
+            stroke: lwaSmoothArea,
+            markers: { size: 0, hover: { size: 5 } },
             xaxis: {
                 categories: timeLabels,
                 labels: {
@@ -247,12 +285,7 @@
                 borderColor: isDarkMode() ? '#1f2937' : '#f1f5f9',
                 strokeDashArray: 3
             },
-            tooltip: {
-                theme: isDarkMode() ? 'dark' : 'light',
-                y: {
-                    formatter: (val) => Number(val).toLocaleString() + ' reqs'
-                }
-            }
+            tooltip: lwaChartTooltip(' requests')
         });
 
 
@@ -270,7 +303,7 @@
                 xaxis: { categories: timeLabels, labels: { style: { fontSize: '10px', colors: '#94a3b8' } }, axisBorder: { show: false }, axisTicks: { show: false } },
                 yaxis: { labels: { style: { fontSize: '10px', colors: '#94a3b8' } } },
                 grid: { borderColor: isDarkMode() ? '#26344b' : '#e4e8f0', strokeDashArray: 3 },
-                tooltip: { theme: isDarkMode() ? 'dark' : 'light', y: { formatter: (val) => Number(val).toLocaleString() + ' reqs' } }
+                tooltip: lwaChartTooltip(' requests')
             });
             chartOverviewTraffic.render();
         }
@@ -304,10 +337,8 @@
             dataLabels: {
                 enabled: false
             },
-            stroke: {
-                curve: 'straight',
-                width: 2
-            },
+            stroke: lwaSmoothArea,
+            markers: { size: 0, hover: { size: 5 } },
             xaxis: {
                 categories: timeLabels,
                 labels: {
@@ -336,12 +367,7 @@
                 borderColor: isDarkMode() ? '#1f2937' : '#f1f5f9',
                 strokeDashArray: 3
             },
-            tooltip: {
-                theme: isDarkMode() ? 'dark' : 'light',
-                y: {
-                    formatter: (val) => val + ' MB'
-                }
-            }
+            tooltip: lwaChartTooltip(' MB')
         });
 
 
@@ -537,9 +563,7 @@
                     borderColor: isDarkMode() ? '#1f2937' : '#f1f5f9',
                     strokeDashArray: 3
                 },
-                tooltip: {
-                    theme: isDarkMode() ? 'dark' : 'light'
-                }
+                tooltip: lwaChartTooltip(' ms')
             });
             chartLatency.render();
         }
@@ -2028,13 +2052,13 @@
                     chart: { type: 'area', height: 224, stacked: false, toolbar: { show: false }, zoom: { enabled: false } },
                     colors: ['#0051c3', '#f59e0b', '#8b5cf6', '#10b981', '#ef4444', '#06b6d4'],
                     dataLabels: { enabled: false },
-                    stroke: { curve: 'straight', width: 2 },
+                    stroke: lwaSmoothArea,
                     fill: { type: 'gradient', gradient: { shadeIntensity: 1, opacityFrom: 0.3, opacityTo: 0.05, stops: [0, 95, 100] } },
                     xaxis: { categories: labels, labels: { style: { fontSize: '10px', colors: '#94a3b8' } }, axisBorder: { show: false } },
                     yaxis: { labels: { style: { fontSize: '10px', colors: '#94a3b8' } } },
                     grid: { borderColor: isDarkMode() ? '#1f2937' : '#f1f5f9', strokeDashArray: 3 },
                     legend: { show: series.length > 1, position: 'top' },
-                    tooltip: { theme: isDarkMode() ? 'dark' : 'light' }
+                    tooltip: lwaChartTooltip('')
                 });
                 chart.render();
                 if (!window.lwaChartRegistry) window.lwaChartRegistry = {};
