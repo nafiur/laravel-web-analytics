@@ -99,6 +99,30 @@ class AnalyticsTest extends TestCase
         $this->assertSame($full['breakdowns']['top_paths'], $light['breakdowns']['top_paths']);
     }
 
+    public function test_dashboards_can_be_created_edited_and_deleted(): void
+    {
+        $this->get(route('lwa_dashboards'))->assertOk()->assertSee('Dashboards', false);
+
+        $created = $this->postJson(route('lwa_dashboards_store'), [
+            'name'     => 'My board',
+            'template' => 'traffic',
+        ])->assertCreated();
+
+        $id = $created->json('id');
+        $this->assertNotEmpty(\Nafiur\WebAnalytics\Models\Analytics\Dashboard::findOrFail($id)->widgets);
+
+        $this->get(route('lwa_dashboard_view', $id))->assertOk()->assertSee('My board', false);
+        $this->get(route('lwa_dashboard_edit', $id))->assertOk()
+            ->assertSee('Add widgets', false)
+            ->assertSee('data-widget-add="list_cache"', false);
+
+        $this->putJson(route('lwa_dashboard_update', $id), [
+            'widgets' => [['widget' => 'kpi_requests', 'w' => 12, 'h' => 1, 'title' => '']],
+        ])->assertOk()->assertJsonPath('dashboard.widgets.0.widget', 'kpi_requests');
+
+        $this->deleteJson(route('lwa_dashboard_destroy', $id))->assertOk();
+    }
+
     public function test_logs_page_filters_and_exposes_row_details(): void
     {
         LwaLogs::create($this->log([
@@ -191,9 +215,9 @@ class AnalyticsTest extends TestCase
 
         $this->assertStringContainsString('href="' . route('lwa_overview') . '"', $content);
         $this->assertStringContainsString('href="' . route('lwa_events') . '"', $content);
-        $this->assertSame(14, substr_count($content, 'class="sidebar-link'));
+        $this->assertSame(15, substr_count($content, 'class="sidebar-link'));
 
-        foreach (['Overview', 'Real-time', 'Logs', 'Visitors', 'Traffic Sources', 'Pages &amp; Screens', 'Geography',
+        foreach (['Overview', 'Real-time', 'Logs', 'Dashboards', 'Visitors', 'Traffic Sources', 'Pages &amp; Screens', 'Geography',
                   'Devices &amp; Browsers', 'Campaigns', 'Events &amp; Goals', 'Conversions',
                   'Performance', 'Error Monitoring', 'Settings'] as $label) {
             $this->assertStringContainsString($label, $content);

@@ -2147,6 +2147,159 @@
             }
         })();
 
+        // 9g. Custom dashboards: modal, editor state and widget charts
+        (function() {
+            function json(id) {
+                const el = document.getElementById(id);
+                try { return el ? JSON.parse(el.textContent || '{}') : {}; } catch (err) { return {}; }
+            }
+            function csrfToken() {
+                return document.querySelector('meta[name="csrf-token"]')?.content || '';
+            }
+            async function request(url, method, body) {
+                return fetch(url, {
+                    method: method,
+                    headers: {
+                        'Accept': 'application/json',
+                        'Content-Type': 'application/json',
+                        'X-CSRF-TOKEN': csrfToken(),
+                        'X-Requested-With': 'XMLHttpRequest',
+                    },
+                    body: body ? JSON.stringify(body) : undefined,
+                });
+            }
+
+            // --- Dashboards index ---
+            const modal = document.querySelector('[data-lwa-create-modal]');
+            const nameInput = document.querySelector('[data-create-name]');
+            const createSearch = document.querySelector('[data-create-search]');
+            let selectedTemplate = '';
+            if (modal) {
+                const open = function(template, label) {
+                    selectedTemplate = template || '';
+                    if (nameInput && label) nameInput.value = label;
+                    modal.classList.remove('hidden');
+                    if (nameInput) nameInput.focus();
+                };
+                const close = function() { modal.classList.add('hidden'); };
+
+                document.querySelectorAll('[data-lwa-create-dashboard]').forEach(btn =>
+                    btn.addEventListener('click', () => open('', '')));
+                document.querySelectorAll('[data-lwa-create-close], [data-lwa-create-backdrop]').forEach(el =>
+                    el.addEventListener('click', close));
+                document.addEventListener('keydown', event => { if (event.key === 'Escape') close(); });
+
+                document.querySelectorAll('[data-lwa-template]').forEach(button => {
+                    button.addEventListener('click', async function() {
+                        const key = button.dataset.lwaTemplate || '';
+                        const label = (button.dataset.createItem || button.textContent || '').trim();
+                        if (modal.classList.contains('hidden')) { open(key, label); return; }
+                        selectedTemplate = key;
+                        if (nameInput && !nameInput.value) nameInput.value = label;
+                        if (!nameInput?.value) { nameInput?.focus(); return; }
+                        const url = json('lwaDashboardStoreUrl');
+                        const viewBase = json('lwaDashboardViewUrl');
+                        const response = await request(url, 'POST', {
+                            name: nameInput.value,
+                            template: selectedTemplate,
+                        });
+                        if (!response.ok) return;
+                        const payload = await response.json();
+                        if (payload.success) {
+                            location.href = String(viewBase).replace('__ID__', payload.id);
+                        }
+                    });
+                });
+                createSearch?.addEventListener('input', function() {
+                    const term = this.value.trim().toLowerCase();
+                    modal.querySelectorAll('[data-create-item]').forEach(item => {
+                        item.classList.toggle('hidden', !item.dataset.createItem.includes(term));
+                    });
+                });
+            }
+
+            document.querySelector('[data-dashboard-search]')?.addEventListener('input', function() {
+                const term = this.value.trim().toLowerCase();
+                document.querySelectorAll('[data-dashboard-item]').forEach(item => {
+                    item.classList.toggle('hidden', !item.dataset.dashboardItem.includes(term));
+                });
+            });
+
+            document.querySelectorAll('[data-lwa-dashboard-delete]').forEach(button => {
+                button.addEventListener('click', async function() {
+                    if (!window.confirm('Delete this dashboard?')) return;
+                    const url = String(json('lwaDashboardDeleteUrl')).replace('__ID__', button.dataset.lwaDashboardDelete);
+                    const response = await request(url, 'DELETE', {});
+                    if (response.ok) location.reload();
+                });
+            });
+
+            // --- Widget charts ---
+            const palette = ['#0051c3', '#f59e0b', '#8b5cf6', '#10b981', '#ef4444', '#06b6d4'];
+            document.querySelectorAll('[data-widget-chart]').forEach(function(el) {
+                if (!window.ApexCharts) return;
+                const data = json('lwaWidgetChartData-' + el.dataset.widgetChart);
+                const series = (data.series || []).length ? data.series : [{ name: 'No data', data: [] }];
+                new ApexCharts(el, {
+                    series: series,
+                    chart: { type: data.stacked ? 'bar' : 'area', height: 192, stacked: !!data.stacked, toolbar: { show: false }, zoom: { enabled: false } },
+                    colors: series.map((_, i) => palette[i % palette.length]),
+                    stroke: data.stacked ? { width: 0 } : lwaSmoothArea,
+                    fill: data.stacked ? { opacity: 1 } : { type: 'gradient', gradient: { shadeIntensity: 1, opacityFrom: 0.3, opacityTo: 0.05, stops: [0, 95, 100] } },
+                    dataLabels: { enabled: false },
+                    xaxis: { categories: data.labels || [], labels: { style: { fontSize: '10px', colors: '#94a3b8' } }, axisBorder: { show: false } },
+                    yaxis: { labels: { style: { fontSize: '10px', colors: '#94a3b8' } } },
+                    grid: { borderColor: isDarkMode() ? '#1f2937' : '#f1f5f9', strokeDashArray: 3 },
+                    legend: { show: series.length > 1, position: 'bottom' },
+                    tooltip: lwaChartTooltip(''),
+                }).render();
+            });
+
+            // --- Editor state ---
+            const stateEl = document.getElementById('lwaDashboardState');
+            if (!stateEl) return;
+            const state = json('lwaDashboardState');
+            if (!state.editing) return;
+
+            async function persist(reload) {
+                const response = await request(state.url, 'PUT', { widgets: state.widgets });
+                if (response.ok && reload) location.reload();
+            }
+            document.querySelectorAll('[data-widget-add]').forEach(button => {
+                button.addEventListener('click', function() {
+                    state.widgets.push({ widget: button.dataset.widgetAdd, w: 6, h: 1, title: '' });
+                    persist(true);
+                });
+            });
+            document.querySelectorAll('[data-widget-remove]').forEach(button => {
+                button.addEventListener('click', function() {
+                    const index = parseInt((button.dataset.widgetRemove || '').replace('dw', ''), 10);
+                    if (Number.isInteger(index)) state.widgets.splice(index, 1);
+                    persist(true);
+                });
+            });
+            document.querySelectorAll('[data-widget-move]').forEach(button => {
+                button.addEventListener('click', function() {
+                    const index = parseInt((button.dataset.widgetMove || '').replace('dw', ''), 10);
+                    const target = index + parseInt(button.dataset.direction || '0', 10);
+                    if (Number.isInteger(index) && target >= 0 && target < state.widgets.length) {
+                        [state.widgets[index], state.widgets[target]] = [state.widgets[target], state.widgets[index]];
+                        persist(true);
+                    }
+                });
+            });
+            document.querySelectorAll('[data-widget-size]').forEach(button => {
+                button.addEventListener('click', function() {
+                    const index = parseInt((button.dataset.widgetSize || '').replace('dw', ''), 10);
+                    if (!Number.isInteger(index) || !state.widgets[index]) return;
+                    const current = Number(state.widgets[index].w || 6);
+                    state.widgets[index].w = current === 6 ? 12 : (current === 12 ? 4 : 6);
+                    persist(true);
+                });
+            });
+            document.querySelector('[data-dashboard-save]')?.addEventListener('click', () => persist(true));
+        })();
+
         // 10. Render Lucide icons / clear chart skeletons after the DOM is ready
         function lwaFinishLoading() {
             window.lwaRenderIcons();

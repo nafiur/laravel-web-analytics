@@ -18,3 +18,19 @@ Route::post('/events', [AnalyticsApiController::class, 'event'])
 Route::get('/websites', [AnalyticsApiController::class, 'websites'])
     ->middleware('lwa.api:admin')
     ->name('lwa_api_websites');
+
+Route::get('/dashboards', [AnalyticsApiController::class, 'dashboards'])
+    ->middleware('lwa.api:read')
+    ->name('lwa_api_dashboards');
+Route::post('/dashboards', [AnalyticsApiController::class, 'dashboardStore'])
+    ->middleware('lwa.api:admin')
+    ->name('lwa_api_dashboards_store');
+Route::get('/dashboards/{dashboard}', [AnalyticsApiController::class, 'dashboardShow'])
+    ->middleware('lwa.api:read')
+    ->name('lwa_api_dashboards_show');
+Route::put('/dashboards/{dashboard}', [AnalyticsApiController::class, 'dashboardUpdate'])
+    ->middleware('lwa.api:admin')
+    ->name('lwa_api_dashboards_update');
+Route::delete('/dashboards/{dashboard}', [AnalyticsApiController::class, 'dashboardDestroy'])
+    ->middleware('lwa.api:admin')
+    ->name('lwa_api_dashboards_destroy');

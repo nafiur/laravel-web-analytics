@@ -13,7 +13,7 @@ A modern, fast, and self-hosted Web Traffic & Visitor Analytics Dashboard for La
 ## ⚡ Highlights & Key Features
 
 - 🚀 **Real-Time Live Stream (SSE)**: Live active visitor count and instant real-time traffic feed without WebSockets, Node.js, or Pusher. Each stream response is short-lived and paced by EventSource, so no PHP worker is held open while waiting for new traffic.
-- 🧭 **Sidebar Navigation**: 14 sidebar sections — Overview, Real-time, Logs, Visitors, Traffic Sources, Pages & Screens, Geography, Devices & Browsers, Campaigns, Events & Goals, Conversions, Performance, Error Monitoring and Settings. Each has its own bookmarkable route and Blade page; the Settings screen has no analytics tab bar.
+- 🧭 **Sidebar Navigation**: 15 sidebar sections — Overview, Real-time, Logs, Dashboards, Visitors, Traffic Sources, Pages & Screens, Geography, Devices & Browsers, Campaigns, Events & Goals, Conversions, Performance, Error Monitoring and Settings. Each has its own bookmarkable route and Blade page; the Settings screen has no analytics tab bar.
 - 🎨 **Tailwind CSS UI with Dark Mode**: Modern, responsive dashboard powered by Tailwind CSS Play CDN (zero build step / zero npm dependencies). Uses CSS design tokens (`--lwa-*`, `[data-theme="dark"]`), Lucide outline icons, visible focus states, skeleton loaders, explicit empty/error states, and a 1-click persistent Dark/Light/System preference.
 - 📊 **Comprehensive Metrics**: Total Requests, Unique Visitors, Bandwidth (Data Transferred in GB/MB), Avg Response Time, Error Rate.
 - 🧪 **Built-In Live Traffic Simulator**: Easily generate realistic live traffic every second with `php artisan lwa:live` to demo and test live streaming.
@@ -32,6 +32,7 @@ A modern, fast, and self-hosted Web Traffic & Visitor Analytics Dashboard for La
 - 📈 **Chart Group by**: Traffic charts can be grouped by country, path, status code, browser, OS, device type, HTTP method, referrer, data center (city), host or cache status — trend series are computed for both database and file-log sources.
 - 🔗 **Observability deep links**: Row-level "View in Observability" opens the Real-time feed pre-filtered by that breakdown value.
 - 📜 **Raw request logs**: Dedicated `/web-analytics/logs` page with an outcomes-over-time chart, a collapsible field sidebar (Request / Client / Response / Other fields — click a field to add a filter chip), paginated table, expandable rows with full request details and filtered CSV export. Edge/security fields (bot score, edge status) are intentionally not collected.
+- 🧩 **Custom dashboards**: `/web-analytics/dashboards` with a create modal (blank or preset templates) and a DB-backed editor. Users pick widgets from a catalog of existing KPIs, charts, breakdowns, visitors map and recent logs; add/remove/reorder/resize them and save. Layouts are scoped by website and tenant, and also manageable through the token-authenticated REST API (`read` for listing, `admin` for writes).
 
 ---
 
@@ -106,7 +107,7 @@ use Nafiur\WebAnalytics\Models\Analytics\ApiToken;
 // store $plainToken securely — only its hash is kept
 ```
 
-Send it as `Authorization: Bearer <token>`. Abilities: `read`, `write`, `admin`, or `*`. Tokens support expiry, rotation and are tracked with `last_used_at`:
+Send it as `Authorization: Bearer <token>`. Abilities: `read`, `write`, `admin`, or `*`. Tokens support expiry, rotation and are tracked with `last_used_at`. Dashboard layouts are available at `GET/POST /dashboards`, `GET/PUT/DELETE /dashboards/{id}` (`read` for reads, `admin` for writes):
 
 ```bash
 php artisan lwa:token                       # list tokens
@@ -325,13 +326,14 @@ The legacy `dashboard.blade.php` simply extends the shared layout and renders th
 
 ## 🧭 Dashboard Navigation
 
-The sidebar exposes 14 sections, each rendered by its own route and Blade page:
+The sidebar exposes 15 sections, each rendered by its own route and Blade page:
 
 | Menu item | Shows |
 |-----------|-------|
 | **Overview** | KPI cards, traffic chart, top pages, sources, countries, devices |
 | **Real-time** | Live SSE traffic feed and active visitors |
 | **Logs** | Raw request log explorer — outcomes chart, filters, expandable rows and CSV export |
+| **Dashboards** | Create and edit custom dashboards from existing widgets/templates |
 | **Visitors** | Unique visitors, IPs, geography, devices, browsers |
 | **Traffic Sources** | Referrers / UTM sources (scrolls to Top referrers) |
 | **Pages & Screens** | Top paths (scrolls to Top paths) |

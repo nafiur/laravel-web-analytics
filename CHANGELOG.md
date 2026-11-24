@@ -4,6 +4,10 @@ All notable changes to this project are documented here. The format is based on 
 
 ## [Unreleased]
 
+### Added
+
+- **Custom dashboards** — DB-backed `lwa_dashboards` table (website/tenant scoped) plus a Dashboards page with a create modal (blank or preset templates) and an editor that picks widgets from the existing catalog (KPIs, charts, breakdowns, visitors map, recent logs). Widgets can be added, removed, reordered and resized. Full CRUD is also exposed through the token-authenticated REST API with `read` / `admin` abilities.
+
 ### Changed
 
 - Logs page "Group by" now opens with **None** (a single total-requests line). Select **Cache status (all)** to see all delivery outcomes together.

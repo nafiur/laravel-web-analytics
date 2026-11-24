@@ -1,6 +1,7 @@
 <?php
 
 use Illuminate\Support\Facades\Route;
+use Nafiur\WebAnalytics\Http\Controllers\DashboardController;
 use Nafiur\WebAnalytics\Http\Controllers\WebAnalyticsController;
 
 Route::get('/', [WebAnalyticsController::class, 'index'])->name('lwa_dashboard');
@@ -11,6 +12,13 @@ Route::get('/export', [WebAnalyticsController::class, 'export'])->name('lwa_expo
 Route::post('/settings/prune', [WebAnalyticsController::class, 'prune'])->name('lwa_settings_prune');
 Route::post('/settings/empty', [WebAnalyticsController::class, 'emptyTable'])->name('lwa_settings_empty');
 Route::post('/settings/test-alert', [WebAnalyticsController::class, 'testAlert'])->name('lwa_settings_test_alert');
+
+Route::get('/dashboards', [DashboardController::class, 'index'])->name('lwa_dashboards');
+Route::post('/dashboards', [DashboardController::class, 'store'])->name('lwa_dashboards_store');
+Route::get('/dashboards/{dashboard}', [DashboardController::class, 'show'])->name('lwa_dashboard_view');
+Route::get('/dashboards/{dashboard}/edit', [DashboardController::class, 'edit'])->name('lwa_dashboard_edit');
+Route::put('/dashboards/{dashboard}', [DashboardController::class, 'update'])->name('lwa_dashboard_update');
+Route::delete('/dashboards/{dashboard}', [DashboardController::class, 'destroy'])->name('lwa_dashboard_destroy');
 Route::get('/websites', [WebAnalyticsController::class, 'websitesIndex'])->name('lwa_websites_index');
 Route::post('/websites', [WebAnalyticsController::class, 'storeWebsite'])->name('lwa_websites_store');
 Route::post('/websites/switch', [WebAnalyticsController::class, 'switchWebsite'])->name('lwa_websites_switch');

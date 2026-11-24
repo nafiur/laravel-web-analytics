@@ -10,7 +10,8 @@ The advanced analytics **collector and API are opt-in**. The v3 migrations are a
 - Breakdown detail modal (grid icon) with search, sorting, row limits and per-row actions, plus reusable card menus (Proportion/Trend, per-card export, pin-to-dashboard).
 - Chart **Group by** across 11 dimensions, including new **Host** and **Cache status** columns populated by the middleware.
 - Row-level "View in Observability" deep links into the Real-time feed.
-- A **Logs** page (`/web-analytics/logs`) for filtering, inspecting and exporting recorded requests. It adds a 14th sidebar link; sidebar-link count tests in downstream apps should be updated. Edge/security/bot fields are not collected.
+- A **Logs** page (`/web-analytics/logs`) for filtering, inspecting and exporting recorded requests.
+- A **Dashboards** page (`/web-analytics/dashboards`) with DB-backed custom dashboards and REST API endpoints. This adds a 15th sidebar link in total; sidebar-link count tests in downstream apps should be updated. Edge/security/bot fields are not collected.
 
 No config keys were removed. After upgrading, run `php artisan migrate` (additive), then `php artisan optimize:clear` and re-publish views with `--force` if you had published them before.
 

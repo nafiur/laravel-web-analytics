@@ -86,6 +86,43 @@ class ApiTest extends TestCase
         $this->assertSame(1, AnalyticEvent::where('name', 'allowed')->count());
     }
 
+    public function test_api_dashboard_crud_respects_token_abilities(): void
+    {
+        $websiteId = (int) config('laravel-web-analytics.analytics.website_id');
+        [, $read] = ApiToken::issue($websiteId, 'dash-read', ['read']);
+        [, $admin] = ApiToken::issue($websiteId, 'dash-admin', ['admin']);
+
+        $this->withHeader('Authorization', 'Bearer ' . $read)
+            ->getJson(route('lwa_api_dashboards'))
+            ->assertOk()
+            ->assertJsonPath('success', true);
+
+        $this->withHeader('Authorization', 'Bearer ' . $read)
+            ->postJson(route('lwa_api_dashboards_store'), ['name' => 'Denied'])
+            ->assertStatus(403);
+
+        $created = $this->withHeader('Authorization', 'Bearer ' . $admin)
+            ->postJson(route('lwa_api_dashboards_store'), [
+                'name'     => 'Traffic board',
+                'template' => 'traffic',
+            ])
+            ->assertCreated();
+
+        $id = $created->json('data.id');
+        $this->assertNotEmpty($created->json('data.widgets'));
+
+        $this->withHeader('Authorization', 'Bearer ' . $admin)
+            ->putJson(route('lwa_api_dashboards_update', $id), [
+                'widgets' => [['widget' => 'chart_traffic', 'w' => 12, 'h' => 1, 'title' => '']],
+            ])
+            ->assertOk()
+            ->assertJsonPath('data.widgets.0.widget', 'chart_traffic');
+
+        $this->withHeader('Authorization', 'Bearer ' . $admin)
+            ->deleteJson(route('lwa_api_dashboards_destroy', $id))
+            ->assertOk();
+    }
+
     public function test_token_can_be_rotated_and_old_token_stops_working(): void
     {
         $websiteId = (int) config('laravel-web-analytics.analytics.website_id');

@@ -6,7 +6,9 @@ use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Routing\Controller;
 use Nafiur\WebAnalytics\Facades\Analytics;
+use Nafiur\WebAnalytics\Models\Analytics\Dashboard;
 use Nafiur\WebAnalytics\Models\Analytics\Website;
+use Nafiur\WebAnalytics\Services\DashboardWidgets;
 
 class AnalyticsApiController extends Controller
 {
@@ -72,6 +74,89 @@ class AnalyticsApiController extends Controller
             'success' => true,
             'data'    => Website::select('id', 'name', 'domain', 'tracking_id')->get(),
         ]);
+    }
+
+    public function dashboards(Request $request): JsonResponse
+    {
+        $query = Dashboard::query();
+        $websiteId = $this->websiteId($request);
+        if ($websiteId !== null) {
+            $query->where('website_id', $websiteId);
+        }
+
+        return response()->json([
+            'success' => true,
+            'data'    => $query->latest()->get(),
+        ]);
+    }
+
+    public function dashboardStore(Request $request): JsonResponse
+    {
+        $data = $request->validate([
+            'name'     => 'required|string|max:150',
+            'template' => 'sometimes|nullable|string|max:50',
+            'widgets'  => 'sometimes|array',
+            'settings' => 'sometimes|array',
+        ]);
+
+        $template = (string) ($data['template'] ?? '');
+        $widgets = $data['widgets'] ?? [];
+        if ($template !== '' && empty($widgets) && isset(DashboardWidgets::templates()[$template])) {
+            $widgets = array_map(
+                fn (string $id): array => ['widget' => $id, 'w' => 6, 'h' => 1, 'title' => ''],
+                DashboardWidgets::templates()[$template]['widgets']
+            );
+        }
+
+        $dashboard = Dashboard::create([
+            'name'      => $data['name'],
+            'template'  => $template !== '' ? $template : null,
+            'widgets'   => array_values($widgets),
+            'settings'  => $data['settings'] ?? [],
+            'website_id'=> $this->websiteId($request),
+        ]);
+
+        return response()->json(['success' => true, 'data' => $dashboard], 201);
+    }
+
+    public function dashboardShow(Request $request, int $dashboard): JsonResponse
+    {
+        return response()->json([
+            'success' => true,
+            'data'    => $this->findDashboard($request, $dashboard),
+        ]);
+    }
+
+    public function dashboardUpdate(Request $request, int $dashboard): JsonResponse
+    {
+        $model = $this->findDashboard($request, $dashboard);
+        $data = $request->validate([
+            'name'     => 'sometimes|required|string|max:150',
+            'widgets'  => 'sometimes|array',
+            'settings' => 'sometimes|array',
+        ]);
+        $model->fill($data);
+        $model->save();
+
+        return response()->json(['success' => true, 'data' => $model->fresh()]);
+    }
+
+    public function dashboardDestroy(Request $request, int $dashboard): JsonResponse
+    {
+        $this->findDashboard($request, $dashboard)->delete();
+
+        return response()->json(['success' => true]);
+    }
+
+    private function findDashboard(Request $request, int $id): Dashboard
+    {
+        $query = Dashboard::query();
+        $websiteId = $this->websiteId($request);
+        if ($websiteId !== null) {
+            $query->where('website_id', $websiteId);
+        }
+
+        return $query->findOrFail($id);
     }
 
     private function websiteId(Request $request): ?int
