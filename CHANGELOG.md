@@ -12,6 +12,7 @@ All notable changes to this project are documented here. The format is based on 
 - **Breakdown detail modal** — the grid icon opens a full-table detail view with search, Proportion/Value/Name sorting, 10/25/50 row limits, select-all checkboxes and per-row actions. Works on every breakdown list, not just Technology cards.
 - **Chart Group by** — time-series charts can be broken down by country, path, status code, browser, OS, device type, method, referrer, data center (city), host or cache status. `breakdown_trends` now covers all of these dimensions in both data sources. ApexCharts initialisation is guarded so a blocked CDN cannot stop the rest of the dashboard JS.
 - **Host & cache status** — additive migration adds `host` and `cache_status` to `lwa_logs` (hosts backfilled from `full_url`). The middleware records the request host and normalises `cf-cache-status` / `x-cache` headers. Row-level "View in Observability" links carry a `?filter=` deep link into the Real-time feed, which pre-fills the quick filter.
+- **Documentation** — README, UPGRADE and ARCHITECTURE updated for the reporting additions, host/cache-status migration and observability deep links.
 
 ## [3.0.0] - 2026-11-23
 

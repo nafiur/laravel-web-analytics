@@ -1,8 +1,17 @@
 # Upgrade guide — v2 request logs → advanced analytics schema
 
-**Target:** v3.0.0 · **Source:** any supported v2 release on PHP 8.2+ / Laravel 11+
+**Target:** v3.1.0 (reporting additions; `v3.0.0` remains the stable tag) · **Source:** any supported v2 release on PHP 8.2+ / Laravel 11+
 
-The advanced analytics **collector and API are opt-in**. The v3 migrations themselves are additive and always create their tables — they never touch `lwa_logs`. Existing v2 dashboards keep working with no configuration changes.
+The advanced analytics **collector and API are opt-in**. The v3 migrations are additive: they create their tables and add nullable `host` / `cache_status` columns to `lwa_logs` (backfilling `host` from `full_url`). They never rewrite or delete existing `lwa_logs` rows, and existing v2 dashboards keep working with no configuration changes.
+
+## What's new in v3.1.0 (reporting additions)
+
+- Technology page with a device-types-over-time chart and icon-decorated OS/browser/user-agent breakdowns.
+- Breakdown detail modal (grid icon) with search, sorting, row limits and per-row actions, plus reusable card menus (Proportion/Trend, per-card export, pin-to-dashboard).
+- Chart **Group by** across 11 dimensions, including new **Host** and **Cache status** columns populated by the middleware.
+- Row-level "View in Observability" deep links into the Real-time feed.
+
+No config keys were removed. After upgrading, run `php artisan migrate` (additive), then `php artisan optimize:clear` and re-publish views with `--force` if you had published them before.
 
 ---
 
@@ -196,6 +205,8 @@ Non-secret values can also be set in published `config/laravel-web-analytics.php
 | `Reconnecting…` flashes on Real-time | Fixed in v3 — a single normal SSE EOF no longer flips the badge |
 | Map shows country codes as `BD BD` | Old published views — re-publish with `--force` and `view:clear` |
 | City list empty | City data requires GeoIP; configure MaxMind or Cloudflare headers |
+| "Host"/"Cache status" group-by is empty | Run `php artisan migrate` — the additive migration adds the columns. Cache status only appears on requests logged after the upgrade (from `cf-cache-status` / `x-cache` headers) |
+| New card menu/modal not visible | Old published views are still in use → `php artisan vendor:publish --tag=web-analytics-views --force` and `php artisan view:clear` |
 | Exposed MaxMind license key | Revoke it in the MaxMind portal immediately, then use `.env` only |
 
 ---
@@ -205,7 +216,7 @@ Non-secret values can also be set in published `config/laravel-web-analytics.php
 1. Set `WEB_ANALYTICS_SCHEMA_ENABLED=false` and `WEB_ANALYTICS_WRITE_LEGACY=true`.
 2. `php artisan optimize:clear`.
 3. Re-publish/restore v2 views if you customized them.
-4. Remove advanced tables: `php artisan migrate:rollback --step=2` (two v3 migrations: idempotency keys + table creation). Verify with `php artisan lwa:doctor` afterwards.
+4. Remove advanced tables: `php artisan migrate:rollback --step=3` (three v3 migrations: host/cache-status columns, idempotency keys, table creation). Verify with `php artisan lwa:doctor` afterwards.
 5. Restore the DB backup if you ran `--prune-legacy`.
 
 No v2 config keys were removed, so a config rollback is not strictly required.

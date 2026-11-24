@@ -31,6 +31,10 @@ A modern, fast, and self-hosted Web Traffic & Visitor Analytics Dashboard for La
 - 🎯 **UTM Campaigns**: `utm_source`, `utm_medium` and `utm_campaign` are captured automatically and shown on the dedicated Campaigns page.
 - 🏳️ **Country Flags**: IP breakdowns and the live traffic feed show emoji flags resolved from the recorded country; the Settings language picker shows the active language flag.
 - 🏢 **Multi-Tenancy Ready**: Native support for single-database multi-tenant applications (`stancl/tenancy`, `spatie/laravel-multitenancy`, or custom resolvers) with tenant-scoped dashboards and streams.
+- 🖥️ **Technology report**: A dedicated Devices & Browsers page with a "Device types over time" stacked chart, Top operating systems, Top browsers, Top user agents and inline SVG icons for each technology (no extra network requests).
+- 🔍 **Breakdown explorer**: Every breakdown has a grid icon that opens a full-table detail modal with search, sorting, row limits, checkboxes and per-row actions. Card menus also offer Proportion/Trend views, per-card CSV/JSON export, expand and pin-to-dashboard.
+- 📈 **Chart Group by**: Traffic charts can be grouped by country, path, status code, browser, OS, device type, HTTP method, referrer, data center (city), host or cache status — trend series are computed for both database and file-log sources.
+- 🔗 **Observability deep links**: Row-level "View in Observability" opens the Real-time feed pre-filtered by that breakdown value.
 
 ---
 
@@ -46,7 +50,7 @@ WEB_ANALYTICS_WRITE_LEGACY=true     # keep writing lwa_logs during migration
 WEB_ANALYTICS_QUEUE=                # optional named queue
 ```
 
-This creates separate `lwa_websites`, `lwa_visitors`, `lwa_sessions`, `lwa_pageviews`, `lwa_events`, hourly/daily rollup and upgrade-checkpoint tables. The legacy `lwa_logs` table is untouched by default (`WEB_ANALYTICS_WRITE_LEGACY=true`). When enabled, the middleware also feeds the collector, which resolves visitors/sessions with a 30-minute inactivity timeout and either writes inline (`sync`) or dispatches `RecordPageview` / `RecordEvent` jobs (`queue`). Custom event properties are validated and stripped of sensitive keys. Run `php artisan lwa:aggregate` (or schedule it hourly/daily) to build rollups; `MetricService` then answers KPI/chart queries from those rollups instead of scanning raw events.
+This creates separate `lwa_websites`, `lwa_visitors`, `lwa_sessions`, `lwa_pageviews`, `lwa_events`, hourly/daily rollup and upgrade-checkpoint tables. Existing `lwa_logs` rows are never rewritten or deleted by these migrations; a later additive migration only adds nullable `host` and `cache_status` columns (with `host` backfilled from `full_url`). `WEB_ANALYTICS_WRITE_LEGACY=true` keeps new requests in `lwa_logs` as well. When enabled, the middleware also feeds the collector, which resolves visitors/sessions with a 30-minute inactivity timeout and either writes inline (`sync`) or dispatches `RecordPageview` / `RecordEvent` jobs (`queue`). Custom event properties are validated and stripped of sensitive keys. Run `php artisan lwa:aggregate` (or schedule it hourly/daily) to build rollups; `MetricService` then answers KPI/chart queries from those rollups instead of scanning raw events.
 
 If tables are missing, the dashboard shows a setup page with the `php artisan migrate` instruction, the API returns `503`, the SSE stream emits an `error` event, and commands exit with guidance — no raw stack traces.
 
@@ -315,7 +319,9 @@ resources/views/
 │   ├── events.blade.php           ├── conversions.blade.php  ├── errors.blade.php
 │   └── settings.blade.php
 ├── sections/                      # content-only partials included by the pages
-└── partials/                      # header, sidebar, subheader, scripts, breakdown list
+└── partials/                      # header, sidebar, subheader, scripts, breakdown-list,
+                                   # breakdown-card, breakdown-trend-list, card-menu,
+                                   # breakdown-detail-modal, group-by-select
 ```
 
 The legacy `dashboard.blade.php` simply extends the shared layout and renders the Overview section.
@@ -348,6 +354,31 @@ The sidebar exposes 13 sections, each rendered by its own route and Blade page:
 > - **Sessions** — distinct visitor session identifiers
 > - **Bounce Rate** — sessions with exactly one recorded request
 > - **Avg Engagement Time** — average time between first and last request in a session |
+
+## 🔍 Technology & breakdown reports
+
+The **Devices & Browsers** page (`/web-analytics/devices`) shows a stacked "Device types over time" chart plus Top operating systems, browsers and user agents. Each card has an expand icon and a "..." menu:
+
+| Option | Behaviour |
+|---|---|
+| **View as → Proportion** | Horizontal bars with percentages (default) |
+| **View as → Trend** | Inline SVG sparkline per item using `analytics.breakdown_trends` |
+| **Export → CSV / JSON** | Downloads that card's own breakdown data (CSV cells are hardened against formula injection) |
+| **View in Observability** | Opens the Real-time feed; row-level links carry `?filter=<name>` and pre-fill the quick filter |
+| **Add to dashboard** | Pins the card into a "Pinned reports" section on Overview (stored in `localStorage`) |
+| **Expand (grid icon)** | Opens a full-table detail modal with search, Proportion/Value/Name sorting, 10/25/50 items, select-all checkboxes and per-row actions |
+
+The grid icon is available on **every** breakdown list, not only on the Technology page. View mode, pin and expand preferences are browser-local — no server-side user state and no cookies.
+
+### Chart Group by
+
+Time-series charts include a **Group by** select. Available dimensions depend on recorded data:
+
+`Country · Path · Origin status code · Browser · Operating system · Device type · HTTP protocol · Referrer · Data center (city) · Host · Cache status`
+
+- **Host** is recorded from the request host; older rows are backfilled from `full_url` by an additive migration.
+- **Cache status** is normalised from `cf-cache-status` / `x-cache` headers (`HIT`, `MISS`, `BYPASS`, `EXPIRED`, …). Rows logged before upgrading have no cache status, so they are excluded from that breakdown.
+- **Data center** uses the recorded city/country — full IATA codes are not inferred.
 
 ### Time Range Filtering
 Select from predefined or custom time ranges via the segmented dropdown:
@@ -771,7 +802,7 @@ composer install
 vendor/bin/phpunit
 ```
 
-The suite uses Orchestra Testbench. Locally it defaults to an in-memory SQLite database (`pdo_sqlite` required). CI runs the same suite against **SQLite, MySQL 8 and PostgreSQL 16** through service containers; set `DB_CONNECTION`, `DB_HOST`, `DB_PORT`, `DB_DATABASE`, `DB_USERNAME` and `DB_PASSWORD` to run it against another database locally.
+The suite uses Orchestra Testbench. Locally it defaults to an in-memory SQLite database (`pdo_sqlite` required). CI runs the same suite against **SQLite, MySQL 8 and PostgreSQL 16** through service containers; set `DB_CONNECTION`, `DB_HOST`, `DB_PORT`, `DB_DATABASE`, `DB_USERNAME` and `DB_PASSWORD` to run it against another database locally. The reporting queries are also verified against MySQL's strict `ONLY_FULL_GROUP_BY` mode.
 
 ---
 
