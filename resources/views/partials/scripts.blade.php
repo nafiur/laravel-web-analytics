@@ -135,6 +135,14 @@
                         r.style.display = text.includes(filter) ? '' : 'none';
                     });
                 });
+
+                // Deep link from a breakdown row: ?filter=<name>
+                const preselected = new URLSearchParams(window.location.search).get('filter');
+                if (preselected) {
+                    input.value = preselected;
+                    input.classList.remove('hidden');
+                    input.dispatchEvent(new Event('keyup'));
+                }
             }
         })();
 
@@ -1722,7 +1730,7 @@
                         '<td class="px-2 py-2 text-right relative">' +
                             '<button type="button" data-row-menu="' + index + '" class="p-1 rounded text-slate-400 hover:text-slate-700 hover:bg-slate-100 dark:hover:bg-slate-800" aria-label="Row options">...</button>' +
                             '<div data-row-menu-panel="' + index + '" class="hidden absolute right-2 top-full z-10 w-44 rounded-md border lwa-border bg-white dark:bg-slate-800 shadow-lg py-1 text-left">' +
-                                '<a href="' + observabilityUrl + '" class="block px-3 py-1.5 text-xs text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-slate-700">View in Observability</a>' +
+                                '<a href="' + observabilityUrl + (observabilityUrl.includes('?') ? '&' : '?') + 'filter=' + encodeURIComponent(item.name) + '" class="block px-3 py-1.5 text-xs text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-slate-700">View in Observability</a>' +
                                 '<button type="button" data-row-copy="' + escapeHtml(item.name) + '" class="block w-full text-left px-3 py-1.5 text-xs text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-slate-700">Copy name</button>' +
                             '</div>' +
                         '</td></tr>';

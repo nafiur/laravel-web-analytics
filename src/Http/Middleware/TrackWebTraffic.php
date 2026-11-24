@@ -165,7 +165,9 @@ class TrackWebTraffic
                     'method'           => strtoupper($request->method()),
                     'path'             => substr($path, 0, 490),
                     'full_url'         => substr((string) $maskedFullUrl, 0, 1000),
+                    'host'             => substr($request->getHost(), 0, 255),
                     'status_code'      => $response->getStatusCode(),
+                    'cache_status'     => $this->resolveCacheStatus($response),
                     'response_time_ms' => $durationMs,
                     'bytes_sent'       => $bytes,
                     'country'          => $location['country'],
@@ -384,5 +386,28 @@ class TrackWebTraffic
             'os'      => $os,
             'device'  => $device,
         ];
+    }
+
+    /**
+     * Normalise common CDN/proxy cache headers into a short, groupable value.
+     */
+    private function resolveCacheStatus($response): ?string
+    {
+        $raw = $response->headers->get('cf-cache-status')
+            ?: $response->headers->get('x-cache')
+            ?: $response->headers->get('x-cache-status');
+
+        if (! $raw) {
+            return null;
+        }
+
+        $value = strtoupper((string) $raw);
+        foreach (['BYPASS', 'EXPIRED', 'MISS', 'HIT', 'STALE', 'REVALIDATED', 'DYNAMIC'] as $status) {
+            if (str_contains($value, $status)) {
+                return $status;
+            }
+        }
+
+        return substr($value, 0, 20);
     }
 }

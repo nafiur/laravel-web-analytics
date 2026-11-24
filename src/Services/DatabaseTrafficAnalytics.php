@@ -130,6 +130,8 @@ class DatabaseTrafficAnalytics
             'top_browsers'        => $this->getTopBreakdown($baseQuery, 'browser', $totalRequests, 8, 'browser'),
             'top_os'              => $this->getTopBreakdown($baseQuery, 'os', $totalRequests, 8, 'os'),
             'top_devices'         => $this->getTopBreakdown($baseQuery, 'device', $totalRequests, 5, 'device'),
+            'top_hosts'           => $this->getTopBreakdown($baseQuery, 'host', $totalRequests, 8),
+            'top_cache_statuses'  => $this->getTopBreakdown($baseQuery, 'cache_status', $totalRequests, 8),
             'top_user_agents'     => $this->getTopUserAgentBreakdown($baseQuery, $totalRequests, 8),
             'top_status_codes'    => $this->getTopBreakdown($baseQuery, 'status_code', $totalRequests, 8),
             'top_referrers'       => $this->getTopBreakdown($baseQuery, 'referrer', $totalRequests, 8),
@@ -472,6 +474,8 @@ class DatabaseTrafficAnalytics
             'method'      => 'top_methods',
             'referrer'    => 'top_referrers',
             'city'        => 'top_cities',
+            'host'        => 'top_hosts',
+            'cache_status' => 'top_cache_statuses',
         ] as $column => $breakdownKey) {
             $trendRows = $applyFilters(LwaLogs::query())
                 ->whereNotNull($column)

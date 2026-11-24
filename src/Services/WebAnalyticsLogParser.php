@@ -568,6 +568,8 @@ class WebAnalyticsLogParser
             'status_code' => 'top_status_codes',
             'method'      => 'top_methods',
             'referrer'    => 'top_referrers',
+            'host'        => 'top_hosts',
+            'cache_status' => 'top_cache_statuses',
         ] as $trendColumn => $trendKey) {
             $ranked = collect($trendCounts[$trendColumn] ?? [])
                 ->map(fn (array $buckets, string $name): array => [
@@ -661,6 +663,8 @@ class WebAnalyticsLogParser
                 'top_utm_mediums'   => $this->formatBreakdownList($utmMediumsCount, $totalRequests, 8),
                 'top_utm_campaigns' => $this->formatBreakdownList($utmCampaignsCount, $totalRequests, 8),
                 'top_user_agents'   => $this->formatBreakdownList($userAgentsCount, $totalRequests, 8),
+                'top_hosts'         => [],
+                'top_cache_statuses' => [],
             ],
             'recent_logs'       => $recentLogs,
             'top_error_paths'   => $topErrorPaths,
@@ -920,6 +924,8 @@ class WebAnalyticsLogParser
                 'top_methods'      => ['labels' => [], 'series' => []],
                 'top_referrers'    => ['labels' => [], 'series' => []],
                 'top_cities'       => ['labels' => [], 'series' => []],
+                'top_hosts'        => ['labels' => [], 'series' => []],
+                'top_cache_statuses' => ['labels' => [], 'series' => []],
             ],
             'breakdowns' => [
                 'top_paths'        => [],
@@ -935,6 +941,8 @@ class WebAnalyticsLogParser
                 'top_utm_mediums'  => [],
                 'top_utm_campaigns'=> [],
                 'top_user_agents'  => [],
+                'top_hosts'        => [],
+                'top_cache_statuses' => [],
             ],
             'recent_logs'       => [],
             'top_error_paths'   => [],

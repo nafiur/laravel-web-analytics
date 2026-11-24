@@ -4,6 +4,7 @@ namespace Nafiur\WebAnalytics\Tests\Feature;
 
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Schema;
 use Nafiur\WebAnalytics\Models\LwaLogs;
 use Nafiur\WebAnalytics\Services\CountryFlag;
 use Nafiur\WebAnalytics\Tests\TestCase;
@@ -295,6 +296,24 @@ class AnalyticsTest extends TestCase
         }
     }
 
+    public function test_host_and_cache_status_dimensions_are_available(): void
+    {
+        $this->assertTrue(Schema::hasColumn('lwa_logs', 'host'));
+        $this->assertTrue(Schema::hasColumn('lwa_logs', 'cache_status'));
+
+        LwaLogs::create($this->log([
+            'host'         => 'example.test',
+            'cache_status' => 'HIT',
+        ]));
+
+        $analytics = $this->getJson(route('lwa_data', ['range' => 'all']))->json('analytics');
+
+        $this->assertSame('example.test', $analytics['breakdowns']['top_hosts'][0]['name'] ?? null);
+        $this->assertSame('HIT', $analytics['breakdowns']['top_cache_statuses'][0]['name'] ?? null);
+        $this->assertArrayHasKey('top_hosts', $analytics['breakdown_trends']);
+        $this->assertArrayHasKey('top_cache_statuses', $analytics['breakdown_trends']);
+    }
+
     public function test_chart_exposes_group_by_select(): void
     {
         $content = $this->get(route('lwa_overview'))->getContent();
@@ -303,6 +322,8 @@ class AnalyticsTest extends TestCase
         $this->assertStringContainsString('data-chart-id="chartOverviewTraffic"', $content);
         $this->assertStringContainsString('value="top_browsers"', $content);
         $this->assertStringContainsString('value="top_cities"', $content);
+        $this->assertStringContainsString('value="top_hosts"', $content);
+        $this->assertStringContainsString('value="top_cache_statuses"', $content);
     }
 
     public function test_overview_contains_pinned_report_slots(): void

@@ -13,5 +13,7 @@
         <option value="top_methods">HTTP protocol</option>
         <option value="top_referrers">Referrer</option>
         <option value="top_cities">Data center</option>
+        <option value="top_hosts">Host</option>
+        <option value="top_cache_statuses">Cache status</option>
     </select>
 </div>
