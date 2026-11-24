@@ -170,6 +170,8 @@
         const status5xx = {!! json_encode($analytics['time_series']['status_5xx'] ?? [0]) !!};
 
         const methodBreakdown = {!! json_encode($analytics['breakdowns']['top_methods'] ?? []) !!};
+        const deviceOverTime = {!! json_encode($analytics['time_series']['device_over_time'] ?? ['labels' => [], 'series' => []]) !!};
+        const deviceColors = { Desktop: '#0051c3', Mobile: '#f59e0b', Tablet: '#8b5cf6', Bot: '#94a3b8' };
 
         const isDarkMode = () => document.documentElement.classList.contains('dark');
         const getChartTheme = () => ({
@@ -405,6 +407,34 @@
         });
 
 
+        // 3b. Device types over time (stacked columns, only on Devices & Browsers)
+        let chartDeviceTypes = null;
+        const deviceChartEl = document.querySelector("#chartDeviceTypes");
+        if (deviceChartEl) {
+            const deviceSeries = (deviceOverTime.series || []).map(s => ({
+                name: s.name,
+                data: s.data || []
+            }));
+            chartDeviceTypes = new ApexCharts(deviceChartEl, {
+                series: deviceSeries,
+                chart: { type: 'bar', height: 250, stacked: true, toolbar: { show: false }, zoom: { enabled: false } },
+                colors: deviceSeries.map(s => deviceColors[s.name] || '#0051c3'),
+                plotOptions: { bar: { columnWidth: '45%', borderRadius: 2 } },
+                dataLabels: { enabled: false },
+                xaxis: {
+                    categories: deviceOverTime.labels || timeLabels,
+                    labels: { style: { fontSize: '10px', colors: '#94a3b8' } },
+                    axisBorder: { show: false },
+                    axisTicks: { show: false }
+                },
+                yaxis: { labels: { style: { fontSize: '10px', colors: '#94a3b8' } } },
+                legend: { show: false },
+                grid: { borderColor: isDarkMode() ? '#1f2937' : '#f1f5f9', strokeDashArray: 3 },
+                tooltip: { theme: isDarkMode() ? 'dark' : 'light', y: { formatter: val => Number(val).toLocaleString() } }
+            });
+            chartDeviceTypes.render();
+        }
+
         // 4. Method Breakdown Bar Chart
         let chartMethod = lwaChart("#chartMethodBars", {
             series: [{
@@ -542,7 +572,7 @@
         renderSparkline('#sparklineVisits', visitorsData, '#0051c3');
 
         // Charts whose x-axis is the shared time series (used by timezone settings)
-        window.lwaTimeCharts = [chartOverviewTraffic, chartRequests, chartBandwidth, chartStatus, chartLatency].filter(Boolean);
+        window.lwaTimeCharts = [chartOverviewTraffic, chartRequests, chartBandwidth, chartStatus, chartDeviceTypes, chartLatency].filter(Boolean);
 
         // ============ OFFLINE GEOIP VISITOR MAPS ============
         (function() {
@@ -1488,6 +1518,81 @@
                 } finally {
                     btn.disabled = originalDisabled;
                 }
+            });
+        })();
+
+        // 9b. Technology card menu + breakdown export (CSV / JSON)
+        (function() {
+            const menu = document.querySelector('[data-lwa-card-menu]');
+            if (!menu) return;
+
+            const toggle = menu.querySelector('[data-lwa-card-menu-toggle]');
+            const panel = menu.querySelector('[data-lwa-card-menu-panel]');
+            if (!toggle || !panel) return;
+
+            function closeMenu() {
+                panel.classList.add('hidden');
+                toggle.setAttribute('aria-expanded', 'false');
+            }
+
+            toggle.addEventListener('click', function(event) {
+                event.stopPropagation();
+                const willOpen = panel.classList.contains('hidden');
+                panel.classList.toggle('hidden', !willOpen);
+                toggle.setAttribute('aria-expanded', willOpen ? 'true' : 'false');
+            });
+            document.addEventListener('click', function(event) {
+                if (!menu.contains(event.target)) closeMenu();
+            });
+            document.addEventListener('keydown', function(event) {
+                if (event.key === 'Escape') closeMenu();
+            });
+
+            function csvCell(value) {
+                let text = String(value ?? '');
+                // Spreadsheet formula injection guard (UA strings are user data).
+                if (/^[=+\-@\t\r]/.test(text)) text = "'" + text;
+                return '"' + text.replace(/"/g, '""') + '"';
+            }
+
+            function download(filename, content, mime) {
+                const blob = new Blob([content], { type: mime });
+                const url = URL.createObjectURL(blob);
+                const link = document.createElement('a');
+                link.href = url;
+                link.download = filename;
+                document.body.appendChild(link);
+                link.click();
+                document.body.removeChild(link);
+                URL.revokeObjectURL(url);
+            }
+
+            menu.querySelectorAll('[data-lwa-export]').forEach(function(button) {
+                button.addEventListener('click', function() {
+                    let data = {};
+                    try {
+                        data = JSON.parse(document.getElementById('lwaTechnologyExportData').textContent || '{}');
+                    } catch (err) { data = {}; }
+
+                    if (button.dataset.lwaExport === 'json') {
+                        download('technology-report.json', JSON.stringify(data, null, 2), 'application/json');
+                    } else {
+                        const rows = [['section', 'name', 'count', 'percentage']];
+                        ['operating_systems', 'browsers', 'user_agents', 'device_types'].forEach(function(section) {
+                            (data[section] || []).forEach(function(item) {
+                                rows.push([section, item.name, item.count, item.percentage]);
+                            });
+                        });
+                        const chart = data.device_types_over_time || {};
+                        (chart.series || []).forEach(function(series) {
+                            (series.data || []).forEach(function(count, index) {
+                                rows.push(['device_types_over_time', ((chart.labels || [])[index] || index) + ' / ' + series.name, count, '']);
+                            });
+                        });
+                        download('technology-report.csv', '\ufeff' + rows.map(row => row.map(csvCell).join(',')).join('\r\n'), 'text/csv;charset=utf-8');
+                    }
+                    closeMenu();
+                });
             });
         })();
 

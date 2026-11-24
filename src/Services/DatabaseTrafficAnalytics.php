@@ -4,6 +4,7 @@ namespace Nafiur\WebAnalytics\Services;
 
 use Nafiur\WebAnalytics\Models\LwaLogs;
 use Nafiur\WebAnalytics\Services\CountryFlag;
+use Nafiur\WebAnalytics\Services\DeviceCategory;
 use Nafiur\WebAnalytics\Services\GeoIpService;
 use Nafiur\WebAnalytics\Services\TenantResolver;
 use Carbon\Carbon;
@@ -127,6 +128,7 @@ class DatabaseTrafficAnalytics
             'top_browsers'        => $this->getTopBreakdown($baseQuery, 'browser', $totalRequests, 8),
             'top_os'              => $this->getTopBreakdown($baseQuery, 'os', $totalRequests, 8),
             'top_devices'         => $this->getTopBreakdown($baseQuery, 'device', $totalRequests, 5),
+            'top_user_agents'     => $this->getTopUserAgentBreakdown($baseQuery, $totalRequests, 8),
             'top_status_codes'    => $this->getTopBreakdown($baseQuery, 'status_code', $totalRequests, 8),
             'top_referrers'       => $this->getTopBreakdown($baseQuery, 'referrer', $totalRequests, 8),
             'top_utm_sources'     => $this->getTopBreakdown($baseQuery, 'utm_source', $totalRequests, 8),
@@ -321,11 +323,30 @@ class DatabaseTrafficAnalytics
         ->orderBy('bucket_time', 'ASC')
         ->get();
 
+        // Device categories per bucket for the stacked "Device types over time"
+        // chart. Kept in a separate query so the main aggregate stays 1 row/bucket.
+        $deviceRows = (clone $query)
+            ->selectRaw("{$dateExpr} as bucket_time, device, COUNT(*) as device_count")
+            ->groupBy('bucket_time', 'device')
+            ->get();
+
+        $deviceCountsByBucket = [];
+        foreach ($deviceRows as $row) {
+            $device = DeviceCategory::normalize($row->device);
+            if ($device === null) {
+                continue;
+            }
+            $key = (string) $row->bucket_time;
+            $deviceCountsByBucket[$key][$device] =
+                ($deviceCountsByBucket[$key][$device] ?? 0) + (int) $row->device_count;
+        }
+
         $emptyBucket = [
             'req_count'     => 0,
             'byte_sum'      => 0,
             'avg_latency'   => 0,
             'visitor_count' => 0,
+            'devices'       => [],
             's2xx'          => 0,
             's3xx'          => 0,
             's4xx'          => 0,
@@ -339,6 +360,7 @@ class DatabaseTrafficAnalytics
                 'byte_sum'      => (int) $row->byte_sum,
                 'avg_latency'   => (float) $row->avg_latency,
                 'visitor_count' => (int) $row->visitor_count,
+                'devices'       => $deviceCountsByBucket[(string) $row->bucket_time] ?? [],
                 's2xx'          => (int) $row->s2xx,
                 's3xx'          => (int) $row->s3xx,
                 's4xx'          => (int) $row->s4xx,
@@ -405,6 +427,29 @@ class DatabaseTrafficAnalytics
             $status5xx[] = $bucket['s5xx'];
         }
 
+        // Only emit categories that actually occur in the selected period, in
+        // a stable order — an empty chart is handled by the view.
+        $deviceSeries = [];
+        foreach (DeviceCategory::ORDER as $deviceName) {
+            $hasData = false;
+            foreach ($bucketMap as $bucket) {
+                if (!empty($bucket['devices'][$deviceName])) {
+                    $hasData = true;
+                    break;
+                }
+            }
+            if (! $hasData) {
+                continue;
+            }
+            $deviceSeries[] = [
+                'name' => $deviceName,
+                'data' => array_map(
+                    fn (array $bucket): int => (int) ($bucket['devices'][$deviceName] ?? 0),
+                    array_values($bucketMap)
+                ),
+            ];
+        }
+
         if (empty($labels)) {
             $labels = ['No Data'];
             $timestamps = [''];
@@ -430,6 +475,10 @@ class DatabaseTrafficAnalytics
             'status_3xx'   => $status3xx,
             'status_4xx'   => $status4xx,
             'status_5xx'   => $status5xx,
+            'device_over_time' => [
+                'labels' => $labels,
+                'series' => $deviceSeries,
+            ],
         ];
     }
 
@@ -494,6 +543,36 @@ class DatabaseTrafficAnalytics
                 'count_fmt'  => $this->formatNumber($cnt),
                 'percentage' => $pct,
                 'flag'       => CountryFlag::emoji($column === 'country' ? $val : ($row->group_country ?? null)),
+            ];
+        }
+
+        return $result;
+    }
+
+    /**
+     * Top raw user agents. The full string is used for grouping; the displayed
+     * name is truncated so long UAs cannot break the breakdown layout.
+     */
+    protected function getTopUserAgentBreakdown($baseQuery, int $totalRequests, int $limit = 8): array
+    {
+        $rows = (clone $baseQuery)
+            ->whereNotNull('user_agent')
+            ->where('user_agent', '!=', '')
+            ->select('user_agent', DB::raw('COUNT(*) as total_count'))
+            ->groupBy('user_agent')
+            ->orderByDesc('total_count')
+            ->limit($limit)
+            ->get();
+
+        $result = [];
+        foreach ($rows as $row) {
+            $cnt = (int) $row->total_count;
+            $result[] = [
+                'name'       => \Illuminate\Support\Str::limit((string) $row->user_agent, 80, ''),
+                'count'      => $cnt,
+                'count_fmt'  => $this->formatNumber($cnt),
+                'percentage' => $totalRequests > 0 ? round(($cnt / $totalRequests) * 100, 1) : 0.0,
+                'flag'       => '',
             ];
         }
 

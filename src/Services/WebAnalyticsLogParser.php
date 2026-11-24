@@ -314,10 +314,17 @@ class WebAnalyticsLogParser
                     '3xx'       => 0,
                     '4xx'       => 0,
                     '5xx'       => 0,
+                    'devices'   => [],
                 ];
             }
             $timeSeriesBuckets[$bucketKey]['requests']++;
             $timeSeriesBuckets[$bucketKey]['bytes'] += $r['bytes'];
+
+            $deviceName = DeviceCategory::normalize($r['device']);
+            if ($deviceName !== null) {
+                $timeSeriesBuckets[$bucketKey]['devices'][$deviceName] =
+                    ($timeSeriesBuckets[$bucketKey]['devices'][$deviceName] ?? 0) + 1;
+            }
             if (isset($timeSeriesBuckets[$bucketKey][$stGroup])) {
                 $timeSeriesBuckets[$bucketKey][$stGroup]++;
             }
@@ -352,6 +359,7 @@ class WebAnalyticsLogParser
                             '3xx'       => 0,
                             '4xx'       => 0,
                             '5xx'       => 0,
+                            'devices'   => [],
                         ];
                     }
                     $filled[] = $key;
@@ -507,6 +515,27 @@ class WebAnalyticsLogParser
             ];
         }
 
+        $deviceSeries = [];
+        foreach (DeviceCategory::ORDER as $deviceName) {
+            $hasData = false;
+            foreach ($timeSeriesBuckets as $bucket) {
+                if (!empty($bucket['devices'][$deviceName])) {
+                    $hasData = true;
+                    break;
+                }
+            }
+            if (! $hasData) {
+                continue;
+            }
+            $deviceSeries[] = [
+                'name' => $deviceName,
+                'data' => array_values(array_map(
+                    fn (array $bucket): int => (int) ($bucket['devices'][$deviceName] ?? 0),
+                    $timeSeriesBuckets
+                )),
+            ];
+        }
+
         return [
             'summary' => [
                 'total_requests'       => $totalRequests,
@@ -552,6 +581,10 @@ class WebAnalyticsLogParser
                 'status_3xx'=> array_values(array_column($timeSeriesBuckets, '3xx')),
                 'status_4xx'=> array_values(array_column($timeSeriesBuckets, '4xx')),
                 'status_5xx'=> array_values(array_column($timeSeriesBuckets, '5xx')),
+                'device_over_time' => [
+                    'labels' => array_values(array_column($timeSeriesBuckets, 'label')),
+                    'series' => $deviceSeries,
+                ],
             ],
             'sparklines' => [
                 'requests' => $sparklineRequests,
@@ -813,6 +846,7 @@ class WebAnalyticsLogParser
                 'status_3xx' => [],
                 'status_4xx' => [],
                 'status_5xx' => [],
+                'device_over_time' => ['labels' => [], 'series' => []],
             ],
             'sparklines' => [
                 'requests' => [],

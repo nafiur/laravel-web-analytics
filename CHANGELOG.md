@@ -2,6 +2,12 @@
 
 All notable changes to this project are documented here. The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
+## [Unreleased]
+
+### Added
+
+- **Technology report** — Devices & Browsers page now shows a stacked "Device types over time" chart, Top operating systems, Top browsers and Top user agents, plus a card menu with CSV/JSON export. Device categories are normalised through `DeviceCategory` so both database and file-log sources produce identical series.
+
 ## [3.0.0] - 2026-11-23
 
 ### Added

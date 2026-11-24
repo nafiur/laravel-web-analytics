@@ -178,7 +178,7 @@ class AnalyticsTest extends TestCase
             'lwa_sources'     => 'Top Referrers',
             'lwa_pages'       => 'Top Paths by Bandwidth',
             'lwa_geography'   => 'lwaGeographyMap',
-            'lwa_devices'     => 'Device Types',
+            'lwa_devices'     => 'Device types over time',
             'lwa_campaigns'   => 'UTM Campaigns',
             'lwa_events'      => 'No events recorded yet',
             'lwa_conversions' => 'Conversions',
@@ -192,6 +192,58 @@ class AnalyticsTest extends TestCase
             $response->assertOk();
             $response->assertSee($needle, false);
         }
+    }
+
+    public function test_devices_page_renders_full_technology_dashboard(): void
+    {
+        LwaLogs::create($this->log([
+            'device'     => 'Mobile',
+            'os'         => 'Android',
+            'browser'    => 'Chrome',
+            'user_agent' => 'Mozilla/5.0 (Linux; Android 14) Mobile Safari/537.36',
+        ]));
+        LwaLogs::create($this->log([
+            'device'     => 'Desktop',
+            'os'         => 'Windows',
+            'browser'    => 'Firefox',
+            'user_agent' => 'Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:160.0) Gecko/20100101 Firefox/160.0',
+        ]));
+
+        $content = $this->get(route('lwa_devices'))->getContent();
+
+        foreach ([
+            'Device types over time',
+            'Top operating systems',
+            'Top browsers',
+            'Top user agents',
+            'chartDeviceTypes',
+            'lwaTechnologyExportData',
+            'Export CSV',
+            'Export JSON',
+            'Mobile',
+            'Android',
+            'Firefox',
+        ] as $needle) {
+            $this->assertStringContainsString($needle, $content);
+        }
+    }
+
+    public function test_device_over_time_and_user_agents_are_exposed_in_data_payload(): void
+    {
+        LwaLogs::create($this->log([
+            'device'     => 'Mobile',
+            'user_agent' => 'MobileTestAgent/1.0',
+        ]));
+
+        $analytics = $this->getJson(route('lwa_data', ['range' => '24h']))->json('analytics');
+
+        $series = collect($analytics['time_series']['device_over_time']['series'] ?? []);
+        $mobile = $series->firstWhere('name', 'Mobile');
+
+        $this->assertNotNull($mobile);
+        $this->assertSame(1, array_sum($mobile['data']));
+        $this->assertSame(count($analytics['time_series']['labels']), count($mobile['data']));
+        $this->assertSame('MobileTestAgent/1.0', $analytics['breakdowns']['top_user_agents'][0]['name'] ?? null);
     }
 
     public function test_geography_city_breakdown_is_dynamic(): void
