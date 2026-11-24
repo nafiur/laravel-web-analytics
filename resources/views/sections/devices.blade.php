@@ -11,6 +11,7 @@
                          'Tablet'  => '#8b5cf6',
                          'Bot'     => '#94a3b8',
                      ];
+                     $breakdownTrends = $analytics['breakdown_trends'] ?? [];
                      $technologyExport = [
                          'device_types_over_time' => $deviceOverTime,
                          'operating_systems'      => $analytics['breakdowns']['top_os'] ?? [],
@@ -28,7 +29,7 @@
 
                      <div class="grid grid-cols-1 lg:grid-cols-2 gap-4">
                          <!-- Device types over time -->
-                         <div class="lwa-surface border lwa-border rounded-lg p-4 shadow-sm">
+                         <div class="lwa-surface border lwa-border rounded-lg p-4 shadow-sm" data-lwa-card data-card-id="device-types-over-time">
                              <div class="flex items-start justify-between gap-3">
                                  <div class="min-w-0">
                                      <div class="text-xs font-semibold text-slate-800 dark:text-slate-200">Device types over time</div>
@@ -45,24 +46,11 @@
                                      </div>
                                  </div>
 
-                                 <div class="relative shrink-0" data-lwa-card-menu>
-                                     <button type="button" data-lwa-card-menu-toggle
-                                             class="p-1 rounded text-slate-400 hover:text-slate-600 hover:bg-slate-100 dark:hover:bg-slate-800 transition"
-                                             aria-label="Technology report options" aria-haspopup="true" aria-expanded="false">
-                                         <i data-lucide="ellipsis" class="text-base"></i>
-                                     </button>
-                                     <div data-lwa-card-menu-panel
-                                          class="hidden absolute right-0 top-full mt-1 z-20 w-40 rounded-md border lwa-border bg-white dark:bg-slate-800 shadow-lg py-1">
-                                         <button type="button" data-lwa-export="csv"
-                                                 class="w-full text-left px-3 py-1.5 text-xs text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-slate-700">
-                                             Export CSV
-                                         </button>
-                                         <button type="button" data-lwa-export="json"
-                                                 class="w-full text-left px-3 py-1.5 text-xs text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-slate-700">
-                                             Export JSON
-                                         </button>
-                                     </div>
-                                 </div>
+                                 @include('web-analytics::partials.card-menu', [
+                                     'cardId'     => 'device-types-over-time',
+                                     'exportData' => $technologyExport,
+                                     'pinnable'   => false,
+                                 ])
                              </div>
 
                              <div class="relative mt-3 h-64">
@@ -76,25 +64,34 @@
                          </div>
 
                          <!-- Operating systems -->
-                         <div class="lwa-surface border lwa-border rounded-lg p-4 shadow-sm">
-                             <div class="text-xs font-semibold text-slate-800 dark:text-slate-200 mb-3">Top operating systems</div>
-                             @include('web-analytics::partials.breakdown-list', ['items' => $analytics['breakdowns']['top_os'] ?? []])
-                         </div>
+                         @include('web-analytics::partials.breakdown-card', [
+                             'cardId'     => 'top-os',
+                             'cardTitle'  => 'Top operating systems',
+                             'cardItems'  => $analytics['breakdowns']['top_os'] ?? [],
+                             'cardTrend'  => $breakdownTrends['top_os'] ?? null,
+                             'iconKind'   => 'os',
+                             'exportData' => ['operating_systems' => $analytics['breakdowns']['top_os'] ?? []],
+                         ])
                      </div>
 
                      <div class="grid grid-cols-1 lg:grid-cols-2 gap-4">
                          <!-- Browsers -->
-                         <div class="lwa-surface border lwa-border rounded-lg p-4 shadow-sm">
-                             <div class="text-xs font-semibold text-slate-800 dark:text-slate-200 mb-3">Top browsers</div>
-                             @include('web-analytics::partials.breakdown-list', ['items' => $analytics['breakdowns']['top_browsers'] ?? []])
-                         </div>
+                         @include('web-analytics::partials.breakdown-card', [
+                             'cardId'     => 'top-browsers',
+                             'cardTitle'  => 'Top browsers',
+                             'cardItems'  => $analytics['breakdowns']['top_browsers'] ?? [],
+                             'cardTrend'  => $breakdownTrends['top_browsers'] ?? null,
+                             'iconKind'   => 'browser',
+                             'exportData' => ['browsers' => $analytics['breakdowns']['top_browsers'] ?? []],
+                         ])
 
                          <!-- Raw user agents -->
-                         <div class="lwa-surface border lwa-border rounded-lg p-4 shadow-sm">
-                             <div class="text-xs font-semibold text-slate-800 dark:text-slate-200 mb-3">Top user agents</div>
-                             @include('web-analytics::partials.breakdown-list', ['items' => $analytics['breakdowns']['top_user_agents'] ?? []])
-                         </div>
+                         @include('web-analytics::partials.breakdown-card', [
+                             'cardId'     => 'top-user-agents',
+                             'cardTitle'  => 'Top user agents',
+                             'cardItems'  => $analytics['breakdowns']['top_user_agents'] ?? [],
+                             'cardTrend'  => null,
+                             'exportData' => ['user_agents' => $analytics['breakdowns']['top_user_agents'] ?? []],
+                         ])
                      </div>
-
-                     <script type="application/json" id="lwaTechnologyExportData">{!! json_encode($technologyExport, JSON_HEX_TAG | JSON_HEX_AMP | JSON_HEX_APOS | JSON_HEX_QUOT) !!}</script>
                  </div>

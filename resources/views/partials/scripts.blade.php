@@ -1521,32 +1521,15 @@
             });
         })();
 
-        // 9b. Technology card menu + breakdown export (CSV / JSON)
+        // 9b. Reusable card menus: View as, Export, Observability, pin, expand
         (function() {
-            const menu = document.querySelector('[data-lwa-card-menu]');
-            if (!menu) return;
-
-            const toggle = menu.querySelector('[data-lwa-card-menu-toggle]');
-            const panel = menu.querySelector('[data-lwa-card-menu-panel]');
-            if (!toggle || !panel) return;
-
-            function closeMenu() {
-                panel.classList.add('hidden');
-                toggle.setAttribute('aria-expanded', 'false');
+            function closeAllMenus() {
+                document.querySelectorAll('[data-lwa-card-menu-panel]:not(.hidden)').forEach(function(panel) {
+                    panel.classList.add('hidden');
+                    const toggle = panel.closest('[data-lwa-card-tools]')?.querySelector('[data-lwa-card-menu-toggle]');
+                    if (toggle) toggle.setAttribute('aria-expanded', 'false');
+                });
             }
-
-            toggle.addEventListener('click', function(event) {
-                event.stopPropagation();
-                const willOpen = panel.classList.contains('hidden');
-                panel.classList.toggle('hidden', !willOpen);
-                toggle.setAttribute('aria-expanded', willOpen ? 'true' : 'false');
-            });
-            document.addEventListener('click', function(event) {
-                if (!menu.contains(event.target)) closeMenu();
-            });
-            document.addEventListener('keydown', function(event) {
-                if (event.key === 'Escape') closeMenu();
-            });
 
             function csvCell(value) {
                 let text = String(value ?? '');
@@ -1567,33 +1550,130 @@
                 URL.revokeObjectURL(url);
             }
 
-            menu.querySelectorAll('[data-lwa-export]').forEach(function(button) {
-                button.addEventListener('click', function() {
-                    let data = {};
-                    try {
-                        data = JSON.parse(document.getElementById('lwaTechnologyExportData').textContent || '{}');
-                    } catch (err) { data = {}; }
+            function pinnedWidgets() {
+                try {
+                    const stored = JSON.parse(localStorage.getItem('lwa_pinned_widgets') || '[]');
+                    return Array.isArray(stored) ? stored : [];
+                } catch (err) { return []; }
+            }
 
-                    if (button.dataset.lwaExport === 'json') {
-                        download('technology-report.json', JSON.stringify(data, null, 2), 'application/json');
-                    } else {
-                        const rows = [['section', 'name', 'count', 'percentage']];
-                        ['operating_systems', 'browsers', 'user_agents', 'device_types'].forEach(function(section) {
-                            (data[section] || []).forEach(function(item) {
-                                rows.push([section, item.name, item.count, item.percentage]);
-                            });
-                        });
-                        const chart = data.device_types_over_time || {};
-                        (chart.series || []).forEach(function(series) {
-                            (series.data || []).forEach(function(count, index) {
-                                rows.push(['device_types_over_time', ((chart.labels || [])[index] || index) + ' / ' + series.name, count, '']);
-                            });
-                        });
-                        download('technology-report.csv', '\ufeff' + rows.map(row => row.map(csvCell).join(',')).join('\r\n'), 'text/csv;charset=utf-8');
-                    }
-                    closeMenu();
+            function applyPinned() {
+                const pinned = pinnedWidgets();
+                document.querySelectorAll('[data-lwa-pin-slot]').forEach(function(slot) {
+                    slot.classList.toggle('hidden', !pinned.includes(slot.dataset.lwaPinSlot));
                 });
+                const wrap = document.getElementById('lwaPinnedReports');
+                if (wrap) {
+                    const anyVisible = !!wrap.querySelector('[data-lwa-pin-slot]:not(.hidden)');
+                    wrap.classList.toggle('hidden', !anyVisible);
+                }
+                document.querySelectorAll('[data-lwa-card-tools][data-card-id]').forEach(function(tools) {
+                    const button = tools.querySelector('[data-lwa-pin]');
+                    if (!button) return;
+                    const active = pinned.includes(tools.dataset.cardId);
+                    const label = button.querySelector('[data-pin-label]');
+                    if (label) label.textContent = active ? 'Remove from dashboard' : 'Add to dashboard';
+                    button.classList.toggle('text-blue-600', active);
+                    const icon = button.querySelector('i[data-lucide]');
+                    if (icon) icon.setAttribute('data-lucide', active ? 'pin-off' : 'pin');
+                });
+                if (window.lwaRenderIcons) window.lwaRenderIcons();
+            }
+
+            document.querySelectorAll('[data-lwa-card]').forEach(function(card) {
+                const id = card.dataset.cardId;
+                if (!id) return;
+                const mode = localStorage.getItem('lwa_view_' + id);
+                if (mode === 'proportion' || mode === 'trend') card.dataset.mode = mode;
+                if (localStorage.getItem('lwa_expanded_' + id) === '1') card.classList.add('lwa-card-expanded');
             });
+
+            document.querySelectorAll('[data-lwa-card-tools]').forEach(function(tools) {
+                const cardId = tools.dataset.cardId;
+                const card = tools.closest('[data-lwa-card]');
+                const toggle = tools.querySelector('[data-lwa-card-menu-toggle]');
+                const panel = tools.querySelector('[data-lwa-card-menu-panel]');
+
+                if (toggle && panel) {
+                    toggle.addEventListener('click', function(event) {
+                        event.stopPropagation();
+                        const willOpen = panel.classList.contains('hidden');
+                        closeAllMenus();
+                        panel.classList.toggle('hidden', !willOpen);
+                        toggle.setAttribute('aria-expanded', willOpen ? 'true' : 'false');
+                    });
+                }
+                if (!panel) return;
+
+                panel.querySelectorAll('[data-view-mode]').forEach(function(button) {
+                    button.addEventListener('click', function() {
+                        if (!card) return;
+                        card.dataset.mode = button.dataset.viewMode;
+                        localStorage.setItem('lwa_view_' + cardId, button.dataset.viewMode);
+                        closeAllMenus();
+                    });
+                });
+
+                panel.querySelectorAll('[data-lwa-export]').forEach(function(button) {
+                    button.addEventListener('click', function() {
+                        let data = {};
+                        const source = document.getElementById('lwa-card-data-' + cardId);
+                        try { data = JSON.parse(source?.textContent || '{}'); } catch (err) { data = {}; }
+
+                        if (button.dataset.lwaExport === 'json') {
+                            download(cardId + '.json', JSON.stringify(data, null, 2), 'application/json');
+                        } else {
+                            const rows = [['section', 'name', 'count', 'percentage']];
+                            Object.keys(data).forEach(function(section) {
+                                const value = data[section];
+                                if (Array.isArray(value)) {
+                                    value.forEach(function(item) {
+                                        rows.push([section, item.name, item.count, item.percentage]);
+                                    });
+                                } else if (value && Array.isArray(value.series)) {
+                                    (value.series || []).forEach(function(series) {
+                                        (series.data || []).forEach(function(count, index) {
+                                            rows.push([section, ((value.labels || [])[index] || index) + ' / ' + series.name, count, '']);
+                                        });
+                                    });
+                                }
+                            });
+                            download(cardId + '.csv', '\ufeff' + rows.map(row => row.map(csvCell).join(',')).join('\r\n'), 'text/csv;charset=utf-8');
+                        }
+                        closeAllMenus();
+                    });
+                });
+
+                const pinButton = panel.querySelector('[data-lwa-pin]');
+                if (pinButton) {
+                    pinButton.addEventListener('click', function() {
+                        const list = pinnedWidgets();
+                        const index = list.indexOf(cardId);
+                        if (index >= 0) list.splice(index, 1); else list.push(cardId);
+                        localStorage.setItem('lwa_pinned_widgets', JSON.stringify(list));
+                        applyPinned();
+                        closeAllMenus();
+                    });
+                }
+
+                const expandButton = tools.querySelector('[data-lwa-card-expand]');
+                if (expandButton && card) {
+                    expandButton.addEventListener('click', function() {
+                        const expanded = card.classList.toggle('lwa-card-expanded');
+                        localStorage.setItem('lwa_expanded_' + cardId, expanded ? '1' : '0');
+                        window.dispatchEvent(new Event('resize'));
+                        if (window.lwaRenderIcons) window.lwaRenderIcons();
+                    });
+                }
+            });
+
+            document.addEventListener('click', function(event) {
+                if (!event.target.closest('[data-lwa-card-tools]')) closeAllMenus();
+            });
+            document.addEventListener('keydown', function(event) {
+                if (event.key === 'Escape') closeAllMenus();
+            });
+            applyPinned();
         })();
 
         // 10. Render Lucide icons / clear chart skeletons after the DOM is ready

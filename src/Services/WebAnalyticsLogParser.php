@@ -244,6 +244,7 @@ class WebAnalyticsLogParser
         $utmMediumsCount = [];
         $utmCampaignsCount = [];
         $ipCountries = [];
+        $trendCounts = [];
 
         // Time Series Buckets (by hour or by day depending on range)
         $isHourly = in_array($timeRange, ['1h', '6h', '12h', '24h', 'today'], true);
@@ -319,6 +320,17 @@ class WebAnalyticsLogParser
             }
             $timeSeriesBuckets[$bucketKey]['requests']++;
             $timeSeriesBuckets[$bucketKey]['bytes'] += $r['bytes'];
+
+            foreach (['browser' => $r['browser'], 'os' => $r['os'], 'device' => $r['device']] as $trendColumn => $trendValue) {
+                $trendName = $trendColumn === 'device'
+                    ? DeviceCategory::normalize($trendValue)
+                    : trim((string) $trendValue);
+                if ($trendName === null || $trendName === '') {
+                    continue;
+                }
+                $trendCounts[$trendColumn][$trendName][$bucketKey] =
+                    ($trendCounts[$trendColumn][$trendName][$bucketKey] ?? 0) + 1;
+            }
 
             $deviceName = DeviceCategory::normalize($r['device']);
             if ($deviceName !== null) {
@@ -536,6 +548,31 @@ class WebAnalyticsLogParser
             ];
         }
 
+        $breakdownTrends = [];
+        $bucketKeys = array_keys($timeSeriesBuckets);
+        foreach (['browser' => 'top_browsers', 'os' => 'top_os', 'device' => 'top_devices'] as $trendColumn => $trendKey) {
+            $ranked = collect($trendCounts[$trendColumn] ?? [])
+                ->map(fn (array $buckets, string $name): array => [
+                    'name'    => $name,
+                    'total'   => array_sum($buckets),
+                    'buckets' => $buckets,
+                ])
+                ->sortByDesc('total')
+                ->take(8)
+                ->values();
+
+            $breakdownTrends[$trendKey] = [
+                'labels' => array_values(array_column($timeSeriesBuckets, 'label')),
+                'series' => $ranked->map(fn (array $item): array => [
+                    'name' => $item['name'],
+                    'data' => array_map(
+                        fn (string $bucketKey): int => (int) ($item['buckets'][$bucketKey] ?? 0),
+                        $bucketKeys
+                    ),
+                ])->values()->all(),
+            ];
+        }
+
         return [
             'summary' => [
                 'total_requests'       => $totalRequests,
@@ -591,6 +628,7 @@ class WebAnalyticsLogParser
                 'bytes'    => $sparklineBytes,
                 'visitors' => $sparklineVisitors,
             ],
+            'breakdown_trends' => $breakdownTrends,
             'breakdowns' => [
                 'top_paths'         => $this->formatBreakdownList($pathsCount, $totalRequests, 12),
                 'top_ips'           => $this->formatIpBreakdown($uniqueIps, $ipCountries, $totalRequests, 10),
@@ -853,6 +891,11 @@ class WebAnalyticsLogParser
                 'requests' => [],
                 'bytes'    => [],
                 'visitors' => [],
+            ],
+            'breakdown_trends' => [
+                'top_browsers' => ['labels' => [], 'series' => []],
+                'top_os'       => ['labels' => [], 'series' => []],
+                'top_devices'  => ['labels' => [], 'series' => []],
             ],
             'breakdowns' => [
                 'top_paths'        => [],

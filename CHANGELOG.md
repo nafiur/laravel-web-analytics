@@ -8,6 +8,7 @@ All notable changes to this project are documented here. The format is based on 
 
 - **Technology report** — Devices & Browsers page now shows a stacked "Device types over time" chart, Top operating systems, Top browsers and Top user agents, plus a card menu with CSV/JSON export. Device categories are normalised through `DeviceCategory` so both database and file-log sources produce identical series.
 - **Technology icons** — OS/browser/device breakdowns render inline SVG marks (no external requests) through `TechnologyIcon`; misleading country flags no longer appear on non-location breakdowns.
+- **Card menus** — reusable `card-menu` partial with expand, **View as** (Proportion/Trend), per-card CSV/JSON export, "View in Observability" and pin-to-dashboard. Trend series are exposed as `analytics.breakdown_trends` for both database and file-log sources and drawn as inline sparklines. View/expand/pin preferences persist in localStorage; overview renders pinned report slots.
 
 ## [3.0.0] - 2026-11-23
 

@@ -295,6 +295,15 @@
         .apexcharts-yaxistooltip {
             display: none !important;
         }
+
+        /* Card menu: Proportion / Trend views and expand state */
+        .lwa-breakdown-card [data-view="trend"] { display: none; }
+        .lwa-breakdown-card[data-mode="trend"] [data-view="proportion"] { display: none; }
+        .lwa-breakdown-card[data-mode="trend"] [data-view="trend"] { display: block; }
+        .lwa-view-option [data-view-check] { visibility: hidden; }
+        .lwa-breakdown-card[data-mode="proportion"] [data-view-mode="proportion"] [data-view-check],
+        .lwa-breakdown-card[data-mode="trend"] [data-view-mode="trend"] [data-view-check] { visibility: visible; }
+        .lwa-card-expanded { grid-column: 1 / -1; }
     </style>
 </head>
 

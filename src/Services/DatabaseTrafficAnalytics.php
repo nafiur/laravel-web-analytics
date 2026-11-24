@@ -117,6 +117,8 @@ class DatabaseTrafficAnalytics
 
         // Time Series
         $timeSeries = $this->buildTimeSeries($timeRange, $start, $end, $tenantId);
+        $breakdownTrends = $timeSeries['breakdown_trends'] ?? [];
+        unset($timeSeries['breakdown_trends']);
 
         // Breakdowns
         $breakdowns = [
@@ -274,6 +276,7 @@ class DatabaseTrafficAnalytics
                 'visitors' => $sparklineVisitors,
             ],
             'breakdowns'        => $breakdowns,
+            'breakdown_trends'  => $breakdownTrends,
             'recent_logs'       => $recentLogs,
             'top_error_paths'   => $topErrorPaths,
             'recent_error_logs' => $recentErrorLogs,
@@ -456,6 +459,52 @@ class DatabaseTrafficAnalytics
             ];
         }
 
+        // Per-item series for the "View as: Trend" mode of breakdown cards.
+        $breakdownTrends = [];
+        $bucketKeys = array_keys($bucketMap);
+        foreach (['browser' => 'top_browsers', 'os' => 'top_os', 'device' => 'top_devices'] as $column => $breakdownKey) {
+            $trendRows = $applyFilters(LwaLogs::query())
+                ->whereNotNull($column)
+                ->selectRaw("{$dateExpr} as bucket_time, {$column} as breakdown_value, COUNT(*) as trend_count")
+                ->groupBy('bucket_time', $column)
+                ->get();
+
+            $counts = [];
+            foreach ($trendRows as $row) {
+                $value = $column === 'device'
+                    ? DeviceCategory::normalize($row->breakdown_value)
+                    : trim((string) $row->breakdown_value);
+                if ($value === null || $value === '') {
+                    continue;
+                }
+                $key = (string) $row->bucket_time;
+                $counts[$value][$key] = ($counts[$value][$key] ?? 0) + (int) $row->trend_count;
+            }
+
+            $ranked = collect($counts)
+                ->map(fn (array $buckets, string $name): array => [
+                    'name'    => $name,
+                    'total'   => array_sum($buckets),
+                    'buckets' => $buckets,
+                ])
+                ->sortByDesc('total')
+                ->take(8)
+                ->values();
+
+            $series = $ranked->map(fn (array $item): array => [
+                'name' => $item['name'],
+                'data' => array_map(
+                    fn (string $bucketKey): int => (int) ($item['buckets'][$bucketKey] ?? 0),
+                    $bucketKeys
+                ),
+            ])->all();
+
+            $breakdownTrends[$breakdownKey] = [
+                'labels' => $labels,
+                'series' => array_values($series),
+            ];
+        }
+
         if (empty($labels)) {
             $labels = ['No Data'];
             $timestamps = [''];
@@ -485,6 +534,7 @@ class DatabaseTrafficAnalytics
                 'labels' => $labels,
                 'series' => $deviceSeries,
             ],
+            'breakdown_trends' => $breakdownTrends,
         ];
     }
 

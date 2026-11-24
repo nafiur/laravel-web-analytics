@@ -246,15 +246,49 @@ class AnalyticsTest extends TestCase
             'Top browsers',
             'Top user agents',
             'chartDeviceTypes',
-            'lwaTechnologyExportData',
-            'Export CSV',
-            'Export JSON',
+            'lwa-card-data-device-types-over-time',
+            'lwa-card-data-top-os',
+            'lwa-card-data-top-browsers',
+            'View as',
+            'Proportion',
+            'Trend',
+            'View in Observability',
+            'Add to dashboard',
             'Mobile',
             'Android',
             'Firefox',
         ] as $needle) {
             $this->assertStringContainsString($needle, $content);
         }
+    }
+
+    public function test_breakdown_trends_are_exposed_for_browsers_os_and_devices(): void
+    {
+        LwaLogs::create($this->log([
+            'browser' => 'Chrome',
+            'os'      => 'Windows',
+            'device'  => 'Mobile',
+        ]));
+
+        $trends = $this->getJson(route('lwa_data', ['range' => '24h']))
+            ->json('analytics.breakdown_trends');
+
+        foreach (['top_browsers' => 'Chrome', 'top_os' => 'Windows', 'top_devices' => 'Mobile'] as $key => $name) {
+            $this->assertSame($name, $trends[$key]['series'][0]['name']);
+            $this->assertSame(1, array_sum($trends[$key]['series'][0]['data']));
+        }
+    }
+
+    public function test_overview_contains_pinned_report_slots(): void
+    {
+        LwaLogs::create($this->log(['browser' => 'PinnedBrowser']));
+
+        $content = $this->get(route('lwa_overview'))->getContent();
+
+        $this->assertStringContainsString('id="lwaPinnedReports"', $content);
+        $this->assertStringContainsString('data-lwa-pin-slot="top-browsers"', $content);
+        $this->assertStringContainsString('Add to dashboard', $content);
+        $this->assertStringContainsString('PinnedBrowser', $content);
     }
 
     public function test_device_series_query_has_one_select_and_group_by(): void

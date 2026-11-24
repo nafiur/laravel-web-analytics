@@ -34,6 +34,32 @@
                         @endforeach
                     </div>
 
+                    <!-- Reports pinned from card menus (stored in localStorage) -->
+                    <div id="lwaPinnedReports" class="space-y-4 hidden">
+                        <div class="text-xs font-semibold text-slate-800 dark:text-slate-200">Pinned reports</div>
+                        <div class="grid grid-cols-1 lg:grid-cols-2 gap-4">
+                            @php
+                                $pinnedReports = [
+                                    'top-os'          => ['breakdown' => 'top_os', 'title' => 'Top operating systems', 'icon' => 'os'],
+                                    'top-browsers'    => ['breakdown' => 'top_browsers', 'title' => 'Top browsers', 'icon' => 'browser'],
+                                    'top-user-agents' => ['breakdown' => 'top_user_agents', 'title' => 'Top user agents', 'icon' => null],
+                                ];
+                            @endphp
+                            @foreach($pinnedReports as $pinId => $pinReport)
+                                <div data-lwa-pin-slot="{{ $pinId }}" class="hidden">
+                                    @include('web-analytics::partials.breakdown-card', [
+                                        'cardId'     => $pinId,
+                                        'cardTitle'  => $pinReport['title'],
+                                        'cardItems'  => $analytics['breakdowns'][$pinReport['breakdown']] ?? [],
+                                        'cardTrend'  => $analytics['breakdown_trends'][$pinReport['breakdown']] ?? null,
+                                        'iconKind'   => $pinReport['icon'],
+                                        'exportData' => [$pinReport['breakdown'] => $analytics['breakdowns'][$pinReport['breakdown']] ?? []],
+                                    ])
+                                </div>
+                            @endforeach
+                        </div>
+                    </div>
+
                     <!-- Visitor geography (uses the same offline GeoIP data as Real-time) -->
                     @include('web-analytics::partials.visitors-map', [
                         'mapId' => 'lwaOverviewMap',
