@@ -251,7 +251,7 @@
         // Overview traffic chart (same series, separate container)
         let chartOverviewTraffic = null;
         const overviewChartEl = document.querySelector("#chartOverviewTraffic");
-        if (overviewChartEl) {
+        if (overviewChartEl && window.ApexCharts) {
             chartOverviewTraffic = new ApexCharts(overviewChartEl, {
                 series: [{ name: 'Requests', data: requestsData }],
                 chart: { type: 'area', height: 250, toolbar: { show: false }, zoom: { enabled: false } },
@@ -410,7 +410,7 @@
         // 3b. Device types over time (stacked columns, only on Devices & Browsers)
         let chartDeviceTypes = null;
         const deviceChartEl = document.querySelector("#chartDeviceTypes");
-        if (deviceChartEl) {
+        if (deviceChartEl && window.ApexCharts) {
             const deviceSeries = (deviceOverTime.series || []).map(s => ({
                 name: s.name,
                 data: s.data || []
@@ -489,7 +489,7 @@
         // 5. Origin Latency Chart
         let chartLatency = null;
         let chartLatencyEl = document.querySelector("#chartLatency");
-        if (chartLatencyEl) {
+        if (chartLatencyEl && window.ApexCharts) {
             chartLatency = new ApexCharts(chartLatencyEl, {
                 series: [{
                     name: 'Latency (ms)',
@@ -539,7 +539,7 @@
         // Mini Sparklines
         function renderSparkline(selector, data, color) {
             let el = document.querySelector(selector);
-            if (!el) return;
+            if (!el || !window.ApexCharts) return;
             new ApexCharts(el, {
                 series: [{
                     data: data && data.length ? data : [0]
@@ -573,6 +573,15 @@
 
         // Charts whose x-axis is the shared time series (used by timezone settings)
         window.lwaTimeCharts = [chartOverviewTraffic, chartRequests, chartBandwidth, chartStatus, chartDeviceTypes, chartLatency].filter(Boolean);
+        window.lwaChartRegistry = {
+            chartOverviewTraffic: chartOverviewTraffic,
+            chartRequestsOverTime: chartRequests,
+            chartBandwidth: chartBandwidth,
+            chartStatus: chartStatus,
+            chartDeviceTypes: chartDeviceTypes,
+            chartLatency: chartLatency,
+        };
+        window.lwaBreakdownTrends = {!! json_encode($analytics['breakdown_trends'] ?? []) !!};
 
         // ============ OFFLINE GEOIP VISITOR MAPS ============
         (function() {
@@ -1656,15 +1665,6 @@
                     });
                 }
 
-                const expandButton = tools.querySelector('[data-lwa-card-expand]');
-                if (expandButton && card) {
-                    expandButton.addEventListener('click', function() {
-                        const expanded = card.classList.toggle('lwa-card-expanded');
-                        localStorage.setItem('lwa_expanded_' + cardId, expanded ? '1' : '0');
-                        window.dispatchEvent(new Event('resize'));
-                        if (window.lwaRenderIcons) window.lwaRenderIcons();
-                    });
-                }
             });
 
             document.addEventListener('click', function(event) {
@@ -1674,6 +1674,171 @@
                 if (event.key === 'Escape') closeAllMenus();
             });
             applyPinned();
+        })();
+
+        // 9c. Breakdown detail modal (search / sort / limit / row actions)
+        (function() {
+            const modal = document.querySelector('[data-lwa-breakdown-modal]');
+            if (!modal) return;
+
+            const body = modal.querySelector('[data-lwa-modal-body]');
+            const emptyEl = modal.querySelector('[data-lwa-modal-empty]');
+            const search = modal.querySelector('[data-lwa-modal-search]');
+            const sortSelect = modal.querySelector('[data-lwa-modal-sort]');
+            const limitSelect = modal.querySelector('[data-lwa-modal-limit]');
+            const titleEl = modal.querySelector('[data-lwa-modal-title]');
+            const subtitleEl = modal.querySelector('[data-lwa-modal-subtitle]');
+            const observabilityUrl = modal.dataset.observabilityUrl || '#';
+            let rows = [];
+
+            function escapeHtml(value) {
+                return String(value ?? '').replace(/&/g, '&amp;').replace(/</g, '&lt;')
+                    .replace(/>/g, '&gt;').replace(/"/g, '&quot;').replace(/'/g, '&#039;');
+            }
+
+            function renderRows() {
+                const term = search.value.trim().toLowerCase();
+                let visible = rows.filter(item => String(item.name ?? '').toLowerCase().includes(term));
+                const mode = sortSelect.value;
+                if (mode === 'value') {
+                    visible.sort((a, b) => (Number(b.count) || 0) - (Number(a.count) || 0));
+                } else if (mode === 'name') {
+                    visible.sort((a, b) => String(a.name).localeCompare(String(b.name)));
+                } else {
+                    visible.sort((a, b) => (Number(b.percentage) || 0) - (Number(a.percentage) || 0));
+                }
+                const limit = parseInt(limitSelect.value, 10) || 25;
+                visible = visible.slice(0, limit);
+
+                body.innerHTML = visible.map((item, index) => {
+                    const pct = Math.min(100, Math.max(2, Number(item.percentage) || 0));
+                    const icon = item.icon || '';
+                    const name = escapeHtml(item.name);
+                    return '<tr class="hover:bg-slate-50/60 dark:hover:bg-slate-800/40">' +
+                        '<td class="px-4 py-2"><input type="checkbox" class="lwa-row-check" aria-label="Select ' + name + '"></td>' +
+                        '<td class="px-4 py-2"><span class="flex items-center gap-2 min-w-0 truncate" title="' + name + '">' + icon + '<span class="truncate">' + name + '</span></span></td>' +
+                        '<td class="px-4 py-2"><div class="flex items-center gap-2"><div class="flex-1 bg-slate-100 dark:bg-slate-800 h-1.5 rounded-full overflow-hidden"><div class="bg-[#0051c3] dark:bg-[#38bdf8] h-full rounded-full" style="width:' + pct + '%"></div></div><span class="w-10 text-right text-slate-400">' + pct.toFixed(1) + '%</span></div></td>' +
+                        '<td class="px-4 py-2 text-right font-mono text-slate-600 dark:text-slate-300">' + escapeHtml(item.count_fmt ?? item.count ?? 0) + '</td>' +
+                        '<td class="px-2 py-2 text-right relative">' +
+                            '<button type="button" data-row-menu="' + index + '" class="p-1 rounded text-slate-400 hover:text-slate-700 hover:bg-slate-100 dark:hover:bg-slate-800" aria-label="Row options">...</button>' +
+                            '<div data-row-menu-panel="' + index + '" class="hidden absolute right-2 top-full z-10 w-44 rounded-md border lwa-border bg-white dark:bg-slate-800 shadow-lg py-1 text-left">' +
+                                '<a href="' + observabilityUrl + '" class="block px-3 py-1.5 text-xs text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-slate-700">View in Observability</a>' +
+                                '<button type="button" data-row-copy="' + escapeHtml(item.name) + '" class="block w-full text-left px-3 py-1.5 text-xs text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-slate-700">Copy name</button>' +
+                            '</div>' +
+                        '</td></tr>';
+                }).join('');
+                emptyEl.classList.toggle('hidden', visible.length > 0);
+                const all = modal.querySelector('[data-modal-select-all]');
+                if (all) all.checked = false;
+                if (window.lwaRenderIcons) window.lwaRenderIcons();
+            }
+
+            function open(title, items, subtitle) {
+                rows = Array.isArray(items) ? items : [];
+                titleEl.textContent = title || 'Breakdown';
+                subtitleEl.textContent = subtitle || (rows.length + ' items');
+                search.value = '';
+                sortSelect.value = 'proportion';
+                limitSelect.value = '25';
+                modal.classList.remove('hidden');
+                renderRows();
+            }
+
+            function close() {
+                modal.classList.add('hidden');
+            }
+
+            document.addEventListener('click', function(event) {
+                const listOpener = event.target.closest('[data-lwa-open-detail]');
+                if (listOpener) {
+                    const list = listOpener.closest('[data-lwa-breakdown-list]');
+                    let items = [];
+                    try { items = JSON.parse(list?.dataset.lwaItems || '[]'); } catch (err) { items = []; }
+                    open(list?.dataset.lwaTitle || 'Breakdown', items);
+                    return;
+                }
+
+                const cardOpener = event.target.closest('[data-lwa-card-expand]');
+                if (cardOpener) {
+                    const tools = cardOpener.closest('[data-lwa-card-tools]');
+                    const card = cardOpener.closest('[data-lwa-card]');
+                    const id = tools?.dataset.cardId;
+                    let data = {};
+                    const source = document.getElementById('lwa-card-data-' + id);
+                    try { data = JSON.parse(source?.textContent || '{}'); } catch (err) { data = {}; }
+                    const values = Object.values(data).find(value => Array.isArray(value)) || [];
+                    const heading = card?.querySelector('.text-xs.font-semibold') || card?.querySelector('h2');
+                    open(heading?.textContent?.trim() || 'Breakdown', values);
+                    return;
+                }
+
+                if (event.target.closest('[data-lwa-modal-close]') || event.target.closest('[data-lwa-modal-backdrop]')) {
+                    close();
+                    return;
+                }
+
+                const rowMenu = event.target.closest('[data-row-menu]');
+                if (rowMenu) {
+                    const panel = body.querySelector('[data-row-menu-panel="' + rowMenu.dataset.rowMenu + '"]');
+                    const willOpen = panel?.classList.contains('hidden');
+                    body.querySelectorAll('[data-row-menu-panel]').forEach(p => p.classList.add('hidden'));
+                    panel?.classList.toggle('hidden', !willOpen);
+                    return;
+                }
+
+                const copy = event.target.closest('[data-row-copy]');
+                if (copy) {
+                    try { navigator.clipboard?.writeText(copy.dataset.rowCopy); } catch (err) { /* clipboard unavailable */ }
+                    body.querySelectorAll('[data-row-menu-panel]').forEach(p => p.classList.add('hidden'));
+                }
+            });
+
+            search.addEventListener('input', renderRows);
+            sortSelect.addEventListener('change', renderRows);
+            limitSelect.addEventListener('change', renderRows);
+            document.addEventListener('keydown', function(event) {
+                if (event.key === 'Escape') close();
+            });
+            modal.addEventListener('change', function(event) {
+                if (event.target.matches('[data-modal-select-all]')) {
+                    body.querySelectorAll('.lwa-row-check').forEach(check => { check.checked = event.target.checked; });
+                }
+            });
+        })();
+
+        // 9d. Group by on time-series charts
+        (function() {
+            const trends = window.lwaBreakdownTrends || {};
+            const palette = ['#0051c3', '#f59e0b', '#8b5cf6', '#10b981', '#ef4444', '#06b6d4'];
+            const defaults = {
+                chartOverviewTraffic: [{ name: 'Requests', data: requestsData }],
+                chartRequestsOverTime: [{ name: 'Requests', data: requestsData }],
+            };
+
+            document.querySelectorAll('[data-lwa-group-by]').forEach(function(select) {
+                select.addEventListener('change', function() {
+                    const chartId = select.dataset.chartId;
+                    const chart = window.lwaChartRegistry[chartId];
+                    if (!chart) return;
+
+                    const key = select.value;
+                    if (!key) {
+                        chart.updateSeries(defaults[chartId] || [{ name: 'Requests', data: requestsData }]);
+                        chart.updateOptions({ colors: ['#0051c3'], legend: { show: false } });
+                        return;
+                    }
+
+                    const trend = trends[key] || {};
+                    const series = (trend.series || []).slice(0, 6).map(function(item) {
+                        return { name: item.name, data: item.data || [] };
+                    });
+                    if (!series.length) {
+                        series.push({ name: 'No data', data: requestsData.map(function() { return 0; }) });
+                    }
+                    chart.updateSeries(series);
+                    chart.updateOptions({ colors: palette, legend: { show: series.length > 1, position: 'bottom' } });
+                });
+            });
         })();
 
         // 10. Render Lucide icons / clear chart skeletons after the DOM is ready

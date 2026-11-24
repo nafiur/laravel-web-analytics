@@ -83,14 +83,7 @@
                             <div class="flex items-center justify-between mb-3">
                                 <div class="text-xs font-semibold text-slate-800 dark:text-slate-200">Requests over time
                                 </div>
-                                <div class="flex items-center gap-2 text-[11px]">
-                                    <span class="text-slate-400">Group by:</span>
-                                    <select
-                                        class="text-xs bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded px-1.5 py-0.5 text-slate-700 dark:text-slate-300 focus:outline-none">
-                                        <option>None</option>
-                                        <option>Status Code</option>
-                                    </select>
-                                </div>
+                                @include('web-analytics::partials.group-by-select', ['chartId' => 'chartRequestsOverTime'])
                             </div>
                             <div class="flex items-center gap-1.5 text-[11px] text-slate-500 mb-2">
                                 <span class="w-2 h-2 rounded-full bg-[#0051c3]"></span> Requests: <strong

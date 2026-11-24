@@ -462,7 +462,17 @@ class DatabaseTrafficAnalytics
         // Per-item series for the "View as: Trend" mode of breakdown cards.
         $breakdownTrends = [];
         $bucketKeys = array_keys($bucketMap);
-        foreach (['browser' => 'top_browsers', 'os' => 'top_os', 'device' => 'top_devices'] as $column => $breakdownKey) {
+        foreach ([
+            'browser'     => 'top_browsers',
+            'os'          => 'top_os',
+            'device'      => 'top_devices',
+            'path'        => 'top_paths',
+            'country'     => 'top_countries',
+            'status_code' => 'top_status_codes',
+            'method'      => 'top_methods',
+            'referrer'    => 'top_referrers',
+            'city'        => 'top_cities',
+        ] as $column => $breakdownKey) {
             $trendRows = $applyFilters(LwaLogs::query())
                 ->whereNotNull($column)
                 ->selectRaw("{$dateExpr} as bucket_time, {$column} as breakdown_value, COUNT(*) as trend_count")

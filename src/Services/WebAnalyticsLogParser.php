@@ -321,7 +321,16 @@ class WebAnalyticsLogParser
             $timeSeriesBuckets[$bucketKey]['requests']++;
             $timeSeriesBuckets[$bucketKey]['bytes'] += $r['bytes'];
 
-            foreach (['browser' => $r['browser'], 'os' => $r['os'], 'device' => $r['device']] as $trendColumn => $trendValue) {
+            foreach ([
+                'browser'     => $r['browser'],
+                'os'          => $r['os'],
+                'device'      => $r['device'],
+                'path'        => $r['path'],
+                'country'     => $r['country'],
+                'status_code' => (string) $r['status'],
+                'method'      => $r['method'],
+                'referrer'    => $r['referrer'],
+            ] as $trendColumn => $trendValue) {
                 $trendName = $trendColumn === 'device'
                     ? DeviceCategory::normalize($trendValue)
                     : trim((string) $trendValue);
@@ -550,7 +559,16 @@ class WebAnalyticsLogParser
 
         $breakdownTrends = [];
         $bucketKeys = array_keys($timeSeriesBuckets);
-        foreach (['browser' => 'top_browsers', 'os' => 'top_os', 'device' => 'top_devices'] as $trendColumn => $trendKey) {
+        foreach ([
+            'browser'     => 'top_browsers',
+            'os'          => 'top_os',
+            'device'      => 'top_devices',
+            'path'        => 'top_paths',
+            'country'     => 'top_countries',
+            'status_code' => 'top_status_codes',
+            'method'      => 'top_methods',
+            'referrer'    => 'top_referrers',
+        ] as $trendColumn => $trendKey) {
             $ranked = collect($trendCounts[$trendColumn] ?? [])
                 ->map(fn (array $buckets, string $name): array => [
                     'name'    => $name,
@@ -893,9 +911,15 @@ class WebAnalyticsLogParser
                 'visitors' => [],
             ],
             'breakdown_trends' => [
-                'top_browsers' => ['labels' => [], 'series' => []],
-                'top_os'       => ['labels' => [], 'series' => []],
-                'top_devices'  => ['labels' => [], 'series' => []],
+                'top_browsers'     => ['labels' => [], 'series' => []],
+                'top_os'           => ['labels' => [], 'series' => []],
+                'top_devices'      => ['labels' => [], 'series' => []],
+                'top_paths'        => ['labels' => [], 'series' => []],
+                'top_countries'    => ['labels' => [], 'series' => []],
+                'top_status_codes' => ['labels' => [], 'series' => []],
+                'top_methods'      => ['labels' => [], 'series' => []],
+                'top_referrers'    => ['labels' => [], 'series' => []],
+                'top_cities'       => ['labels' => [], 'series' => []],
             ],
             'breakdowns' => [
                 'top_paths'        => [],

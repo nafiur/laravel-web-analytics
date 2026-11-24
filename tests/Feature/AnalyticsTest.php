@@ -262,6 +262,18 @@ class AnalyticsTest extends TestCase
         }
     }
 
+    public function test_breakdown_lists_expose_detail_modal_data(): void
+    {
+        LwaLogs::create($this->log(['browser' => 'ModalBrowser']));
+
+        $content = $this->get(route('lwa_devices'))->getContent();
+
+        $this->assertStringContainsString('data-lwa-breakdown-modal', $content);
+        $this->assertStringContainsString('data-lwa-open-detail', $content);
+        $this->assertStringContainsString('data-lwa-items=', $content);
+        $this->assertStringContainsString('ModalBrowser', $content);
+    }
+
     public function test_breakdown_trends_are_exposed_for_browsers_os_and_devices(): void
     {
         LwaLogs::create($this->log([
@@ -277,6 +289,20 @@ class AnalyticsTest extends TestCase
             $this->assertSame($name, $trends[$key]['series'][0]['name']);
             $this->assertSame(1, array_sum($trends[$key]['series'][0]['data']));
         }
+
+        foreach (['top_paths', 'top_countries', 'top_status_codes', 'top_methods', 'top_referrers', 'top_cities'] as $key) {
+            $this->assertArrayHasKey($key, $trends);
+        }
+    }
+
+    public function test_chart_exposes_group_by_select(): void
+    {
+        $content = $this->get(route('lwa_overview'))->getContent();
+
+        $this->assertStringContainsString('data-lwa-group-by', $content);
+        $this->assertStringContainsString('data-chart-id="chartOverviewTraffic"', $content);
+        $this->assertStringContainsString('value="top_browsers"', $content);
+        $this->assertStringContainsString('value="top_cities"', $content);
     }
 
     public function test_overview_contains_pinned_report_slots(): void

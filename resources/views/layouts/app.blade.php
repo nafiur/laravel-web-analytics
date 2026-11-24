@@ -330,6 +330,7 @@
         </div>
     </div>
 
+    @include('web-analytics::partials.breakdown-detail-modal')
     @include('web-analytics::partials.scripts')
 </body>
 
