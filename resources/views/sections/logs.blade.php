@@ -38,7 +38,7 @@
                       <div class="space-y-4 min-w-0">
                   <div class="space-y-4">
                      <div>
-                         <h2 class="text-sm font-semibold text-slate-900 dark:text-white">Logs</h2>
+                         <h2 class="lwa-page-title">Logs</h2>
                          <p class="text-[11px] text-slate-400 mt-0.5">Recorded HTTP requests — filter, inspect and export the raw rows in the selected range.</p>
                      </div>
 
@@ -91,7 +91,7 @@
                              <input type="text" name="ip_address" value="{{ $logFilters['ip_address'] ?? '' }}" placeholder="Source IP"
                                     class="w-32 text-xs px-2 py-1.5 border border-slate-200 dark:border-slate-700 rounded-md bg-white dark:bg-slate-800 text-slate-700 dark:text-slate-200">
                              <button type="submit"
-                                     class="px-3 py-1.5 text-xs font-semibold text-white bg-[#0051c3] hover:bg-[#003d94] rounded-md">Apply</button>
+                                     class="px-3 py-1.5 text-xs font-semibold text-white bg-[#0051c3] hover:bg-[#003d94] lwa-btn-primary rounded-md">Apply</button>
                              <button type="button" data-lwa-export-logs
                                      class="px-3 py-1.5 text-xs font-medium text-slate-700 dark:text-slate-200 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-md">Export CSV</button>
                          </div>
@@ -100,7 +100,7 @@
                      <!-- Raw request table -->
                      <div class="lwa-surface border lwa-border rounded-lg shadow-sm overflow-hidden">
                          <div class="overflow-x-auto">
-                             <table class="w-full text-xs">
+                             <table class="w-full text-xs lwa-table">
                                  <thead class="bg-slate-50 dark:bg-slate-800/60 text-[11px] uppercase tracking-wide text-slate-400">
                                      <tr>
                                          <th class="w-10"></th>

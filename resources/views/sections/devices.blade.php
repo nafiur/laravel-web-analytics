@@ -23,7 +23,7 @@
 
                  <div class="space-y-4">
                      <div>
-                         <h2 class="text-sm font-semibold text-slate-900 dark:text-white">Technology</h2>
+                         <h2 class="lwa-page-title">Technology</h2>
                          <p class="text-[11px] text-slate-400 mt-0.5">Device, operating system and browser breakdowns for the selected period — {{ $timeRange ?? '24h' }}</p>
                      </div>
 

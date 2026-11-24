@@ -7,13 +7,13 @@
                      <div class="flex flex-wrap items-start justify-between gap-3">
                          <div>
                              <div class="flex items-center gap-2">
-                                 <h2 class="text-sm font-semibold text-slate-900 dark:text-white">Dashboards</h2>
+                                 <h2 class="lwa-page-title">Dashboards</h2>
                                  <span class="text-[10px] px-1.5 py-0.5 rounded border lwa-border text-slate-400">View docs</span>
                              </div>
                              <p class="text-[11px] text-slate-400 mt-0.5">Create custom dashboards to monitor the metrics you care about.</p>
                          </div>
                          <button type="button" data-lwa-create-dashboard
-                                 class="inline-flex items-center gap-1.5 px-3 py-2 text-xs font-semibold text-white bg-[#0051c3] hover:bg-[#003d94] rounded-md">
+                                 class="inline-flex items-center gap-1.5 px-3 py-2 text-xs font-semibold text-white bg-[#0051c3] lwa-btn-primary hover:bg-[#003d94] rounded-md">
                              <i data-lucide="plus" class="text-sm"></i> Create a Dashboard
                          </button>
                      </div>
@@ -32,7 +32,7 @@
                              <div class="text-sm font-semibold text-slate-800 dark:text-slate-100">You don't have any dashboards yet</div>
                              <p class="text-[11px] text-slate-400 mt-1">Pick a template or build your own from scratch.</p>
                              <button type="button" data-lwa-create-dashboard
-                                     class="mt-4 inline-flex items-center gap-1.5 px-3 py-2 text-xs font-semibold text-white bg-[#0051c3] rounded-md">
+                                     class="mt-4 inline-flex items-center gap-1.5 px-3 py-2 text-xs font-semibold text-white bg-[#0051c3] lwa-btn-primary rounded-md">
                                  <i data-lucide="plus" class="text-sm"></i> Create a Dashboard
                              </button>
                          </div>

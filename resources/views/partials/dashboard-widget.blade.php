@@ -6,7 +6,7 @@
     $widgetWidth = max(3, min(12, (int) ($widget['w'] ?? 6)));
     $widgetSuffix = $widget['suffix'] ?? '';
 @endphp
-<div class="lwa-surface border lwa-border rounded-lg p-4 shadow-sm lwa-dashboard-widget"
+<div class="lwa-surface border lwa-border rounded-lg p-4 shadow-sm lwa-dashboard-widget @if($widgetType === 'kpi') lwa-kpi @endif"
      data-dashboard-widget data-widget-id="{{ $widgetId }}" style="grid-column: span {{ $widgetWidth }}">
     <div class="flex items-start justify-between gap-2 mb-3">
         <div class="text-xs font-semibold text-slate-800 dark:text-slate-200">{{ $widgetTitle }}</div>

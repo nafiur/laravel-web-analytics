@@ -12,6 +12,7 @@ All notable changes to this project are documented here. The format is based on 
 
 - Logs page "Group by" now opens with **None** (a single total-requests line). Select **Cache status (all)** to see all delivery outcomes together.
 - Time-series charts use smooth curves, hover markers and a shared card-style tooltip showing the bucket label, series colour/name and formatted value.
+- Modern UI refresh across all pages: token-driven surfaces with soft shadows/rounded corners, subtle gradient background, gradient-accent KPI cards, pill-style navigation, left-indicator active sidebar items, sticky/hover table rows, primary-action gradient buttons, and matched light/dark themes. No routes, metrics or features changed.
 
 ## [3.1.0] - 2026-11-24
 
