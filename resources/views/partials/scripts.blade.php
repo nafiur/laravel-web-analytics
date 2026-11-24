@@ -1808,6 +1808,7 @@
             const defaults = {
                 chartOverviewTraffic: [{ name: 'Requests', data: requestsData }],
                 chartRequestsOverTime: [{ name: 'Requests', data: requestsData }],
+                chartLogOutcomes: ((window.lwaBreakdownTrends || {}).top_cache_statuses || {}).series || [],
             };
 
             document.querySelectorAll('[data-lwa-group-by]').forEach(function(select) {
@@ -2003,6 +2004,66 @@
                     applyTimer();
                 });
                 applyTimer();
+            }
+        })();
+
+        // 9f. Logs page: outcomes chart, expandable rows, CSV export
+        (function() {
+            const el = document.querySelector('#chartLogOutcomes');
+            if (el && window.ApexCharts) {
+                const trend = (window.lwaBreakdownTrends || {}).top_cache_statuses || {};
+                const series = (trend.series || []).map(item => ({ name: item.name, data: item.data || [] }));
+                const chart = new ApexCharts(el, {
+                    series: series.length ? series : [{ name: 'No data', data: [] }],
+                    chart: { type: 'area', height: 224, stacked: false, toolbar: { show: false }, zoom: { enabled: false } },
+                    colors: ['#0051c3', '#f59e0b', '#8b5cf6', '#10b981', '#ef4444', '#06b6d4'],
+                    dataLabels: { enabled: false },
+                    stroke: { curve: 'straight', width: 2 },
+                    fill: { type: 'gradient', gradient: { shadeIntensity: 1, opacityFrom: 0.3, opacityTo: 0.05, stops: [0, 95, 100] } },
+                    xaxis: { categories: trend.labels || [], labels: { style: { fontSize: '10px', colors: '#94a3b8' } }, axisBorder: { show: false } },
+                    yaxis: { labels: { style: { fontSize: '10px', colors: '#94a3b8' } } },
+                    grid: { borderColor: isDarkMode() ? '#1f2937' : '#f1f5f9', strokeDashArray: 3 },
+                    legend: { show: series.length > 1, position: 'top' },
+                    tooltip: { theme: isDarkMode() ? 'dark' : 'light' }
+                });
+                chart.render();
+                if (!window.lwaChartRegistry) window.lwaChartRegistry = {};
+                window.lwaChartRegistry.chartLogOutcomes = chart;
+            }
+
+            document.querySelectorAll('[data-log-expand]').forEach(function(button) {
+                button.addEventListener('click', function() {
+                    const index = button.dataset.logExpand;
+                    const detail = document.querySelector('[data-log-detail="' + index + '"]');
+                    const icon = button.querySelector('i[data-lucide]');
+                    const open = detail?.classList.toggle('hidden') === false;
+                    if (icon) icon.setAttribute('data-lucide', open ? 'chevron-down' : 'chevron-right');
+                    if (window.lwaRenderIcons) window.lwaRenderIcons();
+                });
+            });
+
+            const exportButton = document.querySelector('[data-lwa-export-logs]');
+            if (exportButton) {
+                exportButton.addEventListener('click', function() {
+                    let rows = [];
+                    try { rows = JSON.parse(document.getElementById('lwaLogsData')?.textContent || '[]'); } catch (err) { rows = []; }
+                    const columns = ['created_at', 'method', 'host', 'path', 'status_code', 'cache_status', 'ip_address', 'country', 'city', 'browser', 'os', 'device', 'response_time_ms', 'bytes_sent'];
+                    function cell(value) {
+                        let text = String(value ?? '');
+                        if (/^[=+\-@\t\r]/.test(text)) text = "'" + text;
+                        return '"' + text.replace(/"/g, '""') + '"';
+                    }
+                    const lines = [columns.join(',')].concat(rows.map(row => columns.map(column => cell(row[column])).join(',')));
+                    const blob = new Blob(['\ufeff' + lines.join('\r\n')], { type: 'text/csv;charset=utf-8' });
+                    const url = URL.createObjectURL(blob);
+                    const link = document.createElement('a');
+                    link.href = url;
+                    link.download = 'web-analytics-logs.csv';
+                    document.body.appendChild(link);
+                    link.click();
+                    document.body.removeChild(link);
+                    URL.revokeObjectURL(url);
+                });
             }
         })();
 

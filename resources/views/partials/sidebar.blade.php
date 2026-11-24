@@ -13,6 +13,11 @@
                         <span class="live-dot"></span> <span class="sidebar-label" data-i18n="realtime">Real-time</span>
                     </a>
 
+                    <a href="{{ route('lwa_logs') }}"
+                       class="sidebar-link flex items-center gap-2.5 px-2.5 py-2 rounded-md font-medium transition {{ $current === 'logs' ? 'active' : 'text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800/80 hover:text-slate-900 dark:hover:text-white' }}">
+                        <i data-lucide="scroll-text" class="text-sm text-slate-400"></i> <span class="sidebar-label">Logs</span>
+                    </a>
+
                     <a href="{{ route('lwa_visitors') }}"
                        class="sidebar-link flex items-center gap-2.5 px-2.5 py-2 rounded-md font-medium transition {{ $current === 'visitors' ? 'active' : 'text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800/80 hover:text-slate-900 dark:hover:text-white' }}">
                         <i data-lucide="users" class="text-sm text-slate-400"></i> <span class="sidebar-label" data-i18n="visitors">Visitors</span>

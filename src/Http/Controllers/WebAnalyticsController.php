@@ -97,6 +97,7 @@ class WebAnalyticsController extends Controller
         $panes = [
             'overview'    => ['#tab-overview', null],
             'realtime'    => ['#tab-live', null],
+            'logs'        => ['#tab-overview', null],
             'visitors'    => ['#tab-visitors', null],
             'sources'     => ['#tab-requests', '#section-traffic-sources'],
             'pages'       => ['#tab-requests', '#section-top-pages'],
@@ -160,6 +161,9 @@ class WebAnalyticsController extends Controller
         $timeRange = $request->input('range', '24h');
         $customStart = $request->input('start_date');
         $customEnd = $request->input('end_date');
+        $cutoff = $this->dbAnalytics->resolveCutoffTime($timeRange, $customStart, $customEnd);
+        $start = $cutoff['start'];
+        $end = $cutoff['end'];
         $source = $request->input('source', 'database'); // 'database' or 'file'
         $tenantId = $this->resolveDashboardTenant($request);
 
@@ -174,6 +178,47 @@ class WebAnalyticsController extends Controller
             $logPath = 'Database Table (' . config('laravel-web-analytics.table_name', 'lwa_logs') . ')';
             $logExists = true;
             $logSize = number_format($totalCount) . ' records';
+        }
+
+        $logFilters = $request->only([
+            'q', 'method', 'host', 'path', 'status', 'cache_status', 'country', 'device', 'os', 'browser', 'ip_address',
+        ]);
+        $logRows = collect();
+        if ($section === 'logs' && $source !== 'file') {
+            $logQuery = LwaLogs::forTenant($tenantId);
+            if ($start) {
+                $logQuery->where('created_at', '>=', $start);
+            }
+            if ($end) {
+                $logQuery->where('created_at', '<=', $end);
+            }
+            foreach (['method', 'host', 'cache_status', 'country', 'device', 'os', 'browser', 'ip_address'] as $field) {
+                if (!empty($logFilters[$field])) {
+                    $logQuery->where($field, $logFilters[$field]);
+                }
+            }
+            if (!empty($logFilters['path'])) {
+                $logQuery->where('path', 'like', '%' . $logFilters['path'] . '%');
+            }
+            if (!empty($logFilters['status'])) {
+                $status = (string) $logFilters['status'];
+                if (preg_match('/^([1-5])xx$/i', $status, $match)) {
+                    $logQuery->whereBetween('status_code', [(int) $match[1] * 100, (int) $match[1] * 100 + 99]);
+                } else {
+                    $logQuery->where('status_code', (int) $status);
+                }
+            }
+            if (!empty($logFilters['q'])) {
+                $term = '%' . $logFilters['q'] . '%';
+                $logQuery->where(function ($query) use ($term) {
+                    $query->where('path', 'like', $term)
+                        ->orWhere('full_url', 'like', $term)
+                        ->orWhere('ip_address', 'like', $term)
+                        ->orWhere('host', 'like', $term)
+                        ->orWhere('user_agent', 'like', $term);
+                });
+            }
+            $logRows = $logQuery->latest('id')->paginate(25)->withQueryString();
         }
 
         $tableStats = [
@@ -211,7 +256,9 @@ class WebAnalyticsController extends Controller
             'websites',
             'activeWebsite',
             'recentEvents',
-            'geoipReady'
+            'geoipReady',
+            'logRows',
+            'logFilters'
         ));
     }
 

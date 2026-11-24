@@ -23,6 +23,7 @@ Route::delete('/websites/{website}', [WebAnalyticsController::class, 'destroyWeb
 $sections = [
     'overview'    => 'lwa_overview',
     'realtime'    => 'lwa_realtime',
+    'logs'        => 'lwa_logs',
     'visitors'    => 'lwa_visitors',
     'sources'     => 'lwa_sources',
     'pages'       => 'lwa_pages',

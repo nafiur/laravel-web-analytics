@@ -99,6 +99,34 @@ class AnalyticsTest extends TestCase
         $this->assertSame($full['breakdowns']['top_paths'], $light['breakdowns']['top_paths']);
     }
 
+    public function test_logs_page_filters_and_exposes_row_details(): void
+    {
+        LwaLogs::create($this->log([
+            'method'       => 'POST',
+            'host'         => 'logs.test',
+            'path'         => '/logs-check',
+            'status_code'  => 404,
+            'cache_status' => 'MISS',
+            'user_agent'   => 'LogsTestAgent/1.0',
+        ]));
+
+        $response = $this->get(route('lwa_logs', [
+            'range'  => 'all',
+            'method' => 'POST',
+            'host'   => 'logs.test',
+            'status' => '4xx',
+        ]));
+
+        $response->assertOk();
+        $this->assertCount(1, $response->viewData('logRows'));
+
+        $content = $response->getContent();
+        foreach (['Request outcomes over time', 'data-log-expand', 'data-log-detail',
+                  '/logs-check', 'LogsTestAgent/1.0', 'lwaLogsData'] as $needle) {
+            $this->assertStringContainsString($needle, $content);
+        }
+    }
+
     public function test_live_update_controls_and_keys_are_rendered(): void
     {
         $content = $this->get(route('lwa_devices'))->getContent();
@@ -149,9 +177,9 @@ class AnalyticsTest extends TestCase
 
         $this->assertStringContainsString('href="' . route('lwa_overview') . '"', $content);
         $this->assertStringContainsString('href="' . route('lwa_events') . '"', $content);
-        $this->assertSame(13, substr_count($content, 'class="sidebar-link'));
+        $this->assertSame(14, substr_count($content, 'class="sidebar-link'));
 
-        foreach (['Overview', 'Real-time', 'Visitors', 'Traffic Sources', 'Pages &amp; Screens', 'Geography',
+        foreach (['Overview', 'Real-time', 'Logs', 'Visitors', 'Traffic Sources', 'Pages &amp; Screens', 'Geography',
                   'Devices &amp; Browsers', 'Campaigns', 'Events &amp; Goals', 'Conversions',
                   'Performance', 'Error Monitoring', 'Settings'] as $label) {
             $this->assertStringContainsString($label, $content);
@@ -203,6 +231,7 @@ class AnalyticsTest extends TestCase
         $sections = [
             'lwa_overview'    => 'chartOverviewTraffic',
             'lwa_realtime'    => 'lwaLiveMap',
+            'lwa_logs'        => 'Request outcomes over time',
             'lwa_visitors'    => 'Top Client IPs',
             'lwa_sources'     => 'Top Referrers',
             'lwa_pages'       => 'Top Paths by Bandwidth',
