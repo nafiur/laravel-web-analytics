@@ -125,9 +125,9 @@ class DatabaseTrafficAnalytics
             'top_ips'             => $this->getTopIpBreakdown($baseQuery, $totalRequests, 10),
             'top_countries'       => $this->getTopBreakdown($baseQuery, 'country', $totalRequests, 10),
             'top_cities'          => $this->getTopBreakdown($baseQuery, 'city', $totalRequests, 10),
-            'top_browsers'        => $this->getTopBreakdown($baseQuery, 'browser', $totalRequests, 8),
-            'top_os'              => $this->getTopBreakdown($baseQuery, 'os', $totalRequests, 8),
-            'top_devices'         => $this->getTopBreakdown($baseQuery, 'device', $totalRequests, 5),
+            'top_browsers'        => $this->getTopBreakdown($baseQuery, 'browser', $totalRequests, 8, 'browser'),
+            'top_os'              => $this->getTopBreakdown($baseQuery, 'os', $totalRequests, 8, 'os'),
+            'top_devices'         => $this->getTopBreakdown($baseQuery, 'device', $totalRequests, 5, 'device'),
             'top_user_agents'     => $this->getTopUserAgentBreakdown($baseQuery, $totalRequests, 8),
             'top_status_codes'    => $this->getTopBreakdown($baseQuery, 'status_code', $totalRequests, 8),
             'top_referrers'       => $this->getTopBreakdown($baseQuery, 'referrer', $totalRequests, 8),
@@ -520,7 +520,7 @@ class DatabaseTrafficAnalytics
     /**
      * Get Top Breakdown for a column.
      */
-    protected function getTopBreakdown($baseQuery, string $column, int $totalRequests, int $limit = 10): array
+    protected function getTopBreakdown($baseQuery, string $column, int $totalRequests, int $limit = 10, ?string $iconKind = null): array
     {
         $query = (clone $baseQuery)->whereNotNull($column);
 
@@ -548,7 +548,11 @@ class DatabaseTrafficAnalytics
                 'count'      => $cnt,
                 'count_fmt'  => $this->formatNumber($cnt),
                 'percentage' => $pct,
-                'flag'       => CountryFlag::emoji($column === 'country' ? $val : ($row->group_country ?? null)),
+                // Country flags only make sense for location breakdowns.
+                'flag'       => in_array($column, ['country', 'city'], true)
+                    ? CountryFlag::emoji($column === 'country' ? $val : ($row->group_country ?? null))
+                    : '',
+                'icon'       => $iconKind ? TechnologyIcon::render($iconKind, $val) : '',
             ];
         }
 

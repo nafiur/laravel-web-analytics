@@ -596,9 +596,9 @@ class WebAnalyticsLogParser
                 'top_ips'           => $this->formatIpBreakdown($uniqueIps, $ipCountries, $totalRequests, 10),
                 'top_countries'     => $this->formatBreakdownList($countriesCount, $totalRequests, 10, true),
                 'top_cities'        => [],
-                'top_browsers'      => $this->formatBreakdownList($browsersCount, $totalRequests, 8),
-                'top_os'            => $this->formatBreakdownList($osCount, $totalRequests, 8),
-                'top_devices'       => $this->formatBreakdownList($devicesCount, $totalRequests, 5),
+                'top_browsers'      => $this->formatBreakdownList($browsersCount, $totalRequests, 8, false, 'browser'),
+                'top_os'            => $this->formatBreakdownList($osCount, $totalRequests, 8, false, 'os'),
+                'top_devices'       => $this->formatBreakdownList($devicesCount, $totalRequests, 5, false, 'device'),
                 'top_status_codes'  => $this->formatBreakdownList($detailedStatusCodes, $totalRequests, 8),
                 'top_referrers'     => $this->formatBreakdownList($referrersCount, $totalRequests, 8),
                 'top_utm_sources'   => $this->formatBreakdownList($utmSourcesCount, $totalRequests, 8),
@@ -612,7 +612,7 @@ class WebAnalyticsLogParser
         ];
     }
 
-    protected function formatBreakdownList(array $items, int $total, int $limit = 10, bool $withFlags = false): array
+    protected function formatBreakdownList(array $items, int $total, int $limit = 10, bool $withFlags = false, ?string $iconKind = null): array
     {
         arsort($items);
         $slice = array_slice($items, 0, $limit, true);
@@ -626,6 +626,7 @@ class WebAnalyticsLogParser
                 'count_fmt'  => $this->formatNumber($count),
                 'percentage' => $pct,
                 'flag'       => $withFlags ? CountryFlag::emoji((string) $name) : '',
+                'icon'       => $iconKind ? TechnologyIcon::render($iconKind, (string) $name) : '',
             ];
         }
 

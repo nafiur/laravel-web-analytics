@@ -2,7 +2,9 @@
     @forelse($items as $item)
         <div class="flex items-center justify-between text-xs py-1 border-b border-slate-100 dark:border-slate-800/80 last:border-0 hover:bg-slate-50/50 dark:hover:bg-slate-800/30 px-1 rounded transition">
             <span class="flex items-center gap-1.5 min-w-0 truncate max-w-[180px] sm:max-w-[280px] font-mono text-slate-700 dark:text-slate-300" title="{{ $item['name'] }}">
-                @if(!empty($item['flag']))
+                @if(!empty($item['icon']))
+                    {!! $item['icon'] !!}
+                @elseif(!empty($item['flag']))
                     @include('web-analytics::partials.flag', ['country' => $item['name'], 'emoji' => $item['flag']])
                 @endif
                 <span class="truncate">{{ $item['name'] }}</span>

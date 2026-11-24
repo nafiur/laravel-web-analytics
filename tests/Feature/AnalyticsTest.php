@@ -195,6 +195,34 @@ class AnalyticsTest extends TestCase
         }
     }
 
+    public function test_technology_breakdowns_use_icons_instead_of_country_flags(): void
+    {
+        LwaLogs::create($this->log([
+            'country' => 'Bangladesh',
+            'city'    => 'Dhaka',
+            'os'      => 'Windows 10/11',
+            'browser' => 'Google Chrome',
+            'device'  => 'Mobile',
+        ]));
+
+        $breakdowns = $this->getJson(route('lwa_data', ['range' => 'all']))
+            ->json('analytics.breakdowns');
+
+        $os = collect($breakdowns['top_os'])->firstWhere('name', 'Windows 10/11');
+        $browser = collect($breakdowns['top_browsers'])->firstWhere('name', 'Google Chrome');
+
+        $this->assertSame('', $os['flag']);
+        $this->assertStringContainsString('<svg', $os['icon']);
+        $this->assertSame('', $browser['flag']);
+        $this->assertStringContainsString('<svg', $browser['icon']);
+
+        $country = collect($breakdowns['top_countries'])->firstWhere('name', 'Bangladesh');
+        $this->assertNotEmpty($country['flag']);
+
+        $content = $this->get(route('lwa_devices'))->getContent();
+        $this->assertStringContainsString('<svg viewBox="0 0 24 24"', $content);
+    }
+
     public function test_devices_page_renders_full_technology_dashboard(): void
     {
         LwaLogs::create($this->log([
