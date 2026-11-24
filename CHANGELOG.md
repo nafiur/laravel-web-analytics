@@ -2,7 +2,7 @@
 
 All notable changes to this project are documented here. The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
-## [Unreleased]
+## [3.1.0] - 2026-11-24
 
 ### Added
 
@@ -15,8 +15,11 @@ All notable changes to this project are documented here. The format is based on 
 - **Live report updates** — subheader auto-refresh (Off/5s/10s/30s, persisted) polls a compact `?light=1` data endpoint, and the SSE stream pushes an `analytics` event on new traffic. Breakdowns (including pinned reports), sparklines, device legend, KPIs and chart series update in place; the manual Refresh button uses the same path.
 - **Logs page** — new `lwa_logs` route/sidebar item with an outcomes-over-time chart, filters (method, status class/code, cache status, host, path, IP, free-text), paginated table, expandable rows with full request detail and filtered CSV export. Edge status, security decisions and bot scores are intentionally out of scope. The chart defaults to "Cache status (all)"; "None" now consistently shows a single total-requests series.
 - **Log field sidebar** — collapsible field groups (Request / Client / Response / Other fields) beside the log table; clicking a field adds a removable filter chip. Added server-side support for country, city, user agent, referrer, full URL, UTM, session/user and tenant filters.
-- **Fixed** — Logs page with the File data source no longer throws `Collection::hasPages()`; an empty paginator and an explanatory notice are rendered instead.
 - **Documentation** — README, UPGRADE and ARCHITECTURE updated for the reporting additions, host/cache-status migration and observability deep links. README badges now use Markdown image syntax (with an absolute banner URL) so they render on both GitHub and Packagist.
+
+### Fixed
+
+- Logs page with the File data source no longer throws `Collection::hasPages()`; an empty paginator and an explanatory notice are rendered instead.
 
 ## [3.0.0] - 2026-11-23
 
