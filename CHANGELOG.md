@@ -4,6 +4,8 @@ All notable changes to this project are documented here. The format is based on 
 
 ## [Unreleased]
 
+## [3.3.0] - 2026-11-25
+
 ### Added
 
 - **Trends / Insights builder (v3.3)** — new `/web-analytics/trends` page and `GET /web-analytics/api/v1/insights/trend` endpoint backed by one documented `InsightQuery` → `InsightService` → `EventStore` path. Metrics: event count, distinct users (anonymous ids folded into profiles) and summed event value, with hourly/daily/weekly/monthly buckets, property filters and up-to-six-series breakdowns. Queries are bounded at 20,000 events / 1,000 buckets; long hourly windows auto-coarsen, and every response ships its metric definitions, source and sample-size notes.
