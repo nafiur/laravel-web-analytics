@@ -9,6 +9,7 @@ use Nafiur\WebAnalytics\Data\EventQuery;
 use Nafiur\WebAnalytics\Data\PruneWindow;
 use Nafiur\WebAnalytics\Data\UnifiedEvent;
 use Nafiur\WebAnalytics\Models\Analytics\AnalyticEvent;
+use Nafiur\WebAnalytics\Services\IdentityService;
 
 /**
  * Relational EventStore implementation used by the default (self-hosted) setup.
@@ -18,13 +19,27 @@ use Nafiur\WebAnalytics\Models\Analytics\AnalyticEvent;
  */
 class EloquentEventStore implements EventStore
 {
-    public function __construct(private StorageDriver $storage)
-    {
+    public function __construct(
+        private StorageDriver $storage,
+        private IdentityService $identity,
+    ) {
     }
 
     public function insert(array $events): void
     {
         foreach ($events as $event) {
+            if ($event instanceof UnifiedEvent
+                && $event->name === 'identify'
+                && $event->distinctId !== null
+                && $event->anonymousId !== null) {
+                $this->identity->alias(
+                    $event->websiteId,
+                    $event->anonymousId,
+                    $event->distinctId,
+                    $event->properties,
+                );
+            }
+
             $payload = $event instanceof UnifiedEvent ? $event->toStoragePayload() : (array) $event;
             $this->storage->storeEvent($payload);
         }

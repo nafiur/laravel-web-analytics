@@ -23,6 +23,14 @@ Route::get('/websites', [AnalyticsApiController::class, 'websites'])
     ->middleware('lwa.api:admin')
     ->name('lwa_api_websites');
 
+Route::get('/users', [AnalyticsApiController::class, 'users'])
+    ->middleware('lwa.api:read')
+    ->name('lwa_api_users');
+Route::get('/users/{distinctId}', [AnalyticsApiController::class, 'userShow'])
+    ->where('distinctId', '.*')
+    ->middleware('lwa.api:read')
+    ->name('lwa_api_user');
+
 Route::get('/dashboards', [AnalyticsApiController::class, 'dashboards'])
     ->middleware('lwa.api:read')
     ->name('lwa_api_dashboards');

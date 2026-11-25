@@ -60,6 +60,40 @@ class UnifiedEventMapper
         );
     }
 
+    /**
+     * Map a raw ingestion payload (batch endpoint / queued job) onto the same
+     * envelope, reusing the shared sanitisation rules.
+     *
+     * @param array<string, mixed> $payload
+     */
+    public function mapPayload(array $payload, int $websiteId): UnifiedEvent
+    {
+        $timestamp = isset($payload['timestamp']) && $payload['timestamp'] !== null
+            ? CarbonImmutable::parse((string) $payload['timestamp'])
+            : CarbonImmutable::now();
+
+        $distinctId = isset($payload['distinct_id']) && $payload['distinct_id'] !== null
+            ? (string) $payload['distinct_id']
+            : null;
+        $anonymousId = isset($payload['anonymous_id']) && $payload['anonymous_id'] !== null
+            ? (string) $payload['anonymous_id']
+            : null;
+
+        return new UnifiedEvent(
+            uuid:         (string) ($payload['uuid'] ?? (string) Str::uuid()),
+            name:         substr((string) ($payload['name'] ?? ''), 0, self::MAX_NAME_LENGTH),
+            timestamp:    $timestamp,
+            distinctId:  $distinctId,
+            anonymousId: $anonymousId,
+            sessionId:    isset($payload['session_id']) ? (string) $payload['session_id'] : null,
+            websiteId:   $websiteId,
+            properties:  self::sanitizeProperties(is_array($payload['properties'] ?? null) ? $payload['properties'] : []),
+            context:      array_merge(self::DEFAULT_CONTEXT, is_array($payload['context'] ?? null) ? $payload['context'] : []),
+            value:        isset($payload['value']) ? (float) $payload['value'] : null,
+            createdAt:    isset($payload['created_at']) ? CarbonImmutable::parse((string) $payload['created_at']) : $timestamp,
+        );
+    }
+
     /** @param array<string, mixed> $properties */
     private function sanitizeProperties(array $properties): array
     {

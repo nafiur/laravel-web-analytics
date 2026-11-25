@@ -156,10 +156,12 @@
 
     function identify(id, traits) {
         if (!granted() || !id) { return; }
+        if (!anonymousId) { anonymousId = randomId('f'); }
+        var previousAnonymous = anonymousId;
         userId = 'u_' + String(id).replace(/^u_/, '');
         var event = build('identify', traits || {}, null);
         event.distinct_id = userId;
-        event.anonymous_id = null;
+        event.anonymous_id = previousAnonymous;
         queue.push(event);
         flush();
     }

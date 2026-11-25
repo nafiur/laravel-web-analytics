@@ -2,13 +2,13 @@
 
 namespace Nafiur\WebAnalytics\Jobs;
 
-use Carbon\CarbonImmutable;
 use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Bus\Dispatchable;
 use Illuminate\Queue\InteractsWithQueue;
 use Nafiur\WebAnalytics\Contracts\EventStore;
 use Nafiur\WebAnalytics\Data\UnifiedEvent;
+use Nafiur\WebAnalytics\Services\UnifiedEventMapper;
 
 /**
  * Queued ingestion job for batches of normalized events.
@@ -34,43 +34,14 @@ class ProcessEvent implements ShouldQueue
         }
     }
 
-    public function handle(EventStore $store): void
+    public function handle(EventStore $store, UnifiedEventMapper $mapper): void
     {
         $store->insert(array_map(
             fn (UnifiedEvent|array $event): UnifiedEvent =>
-                $event instanceof UnifiedEvent ? $event : $this->fromPayload($event),
+                $event instanceof UnifiedEvent
+                    ? $event
+                    : $mapper->mapPayload($event, (int) ($event['website_id'] ?? config('laravel-web-analytics.analytics.website_id', 0))),
             $this->events,
         ));
-    }
-
-    /**
-     * @param array<string, mixed> $payload
-     */
-    private function fromPayload(array $payload): UnifiedEvent
-    {
-        $timestamp = isset($payload['timestamp']) && $payload['timestamp'] !== null
-            ? CarbonImmutable::parse((string) $payload['timestamp'])
-            : CarbonImmutable::now();
-
-        $distinctId = isset($payload['distinct_id']) && $payload['distinct_id'] !== null
-            ? (string) $payload['distinct_id']
-            : null;
-        $anonymousId = isset($payload['anonymous_id']) && $payload['anonymous_id'] !== null
-            ? (string) $payload['anonymous_id']
-            : null;
-
-        return new UnifiedEvent(
-            uuid:         (string) ($payload['uuid'] ?? ''),
-            name:         (string) ($payload['name'] ?? ''),
-            timestamp:    $timestamp,
-            distinctId:  $distinctId,
-            anonymousId: $anonymousId,
-            sessionId:    isset($payload['session_id']) ? (string) $payload['session_id'] : null,
-            websiteId:   (int) ($payload['website_id'] ?? 0),
-            properties:  is_array($payload['properties'] ?? null) ? $payload['properties'] : [],
-            context:      is_array($payload['context'] ?? null) ? $payload['context'] : [],
-            value:        isset($payload['value']) ? (float) $payload['value'] : null,
-            createdAt:    isset($payload['created_at']) ? CarbonImmutable::parse((string) $payload['created_at']) : $timestamp,
-        );
     }
 }

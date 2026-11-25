@@ -2,17 +2,17 @@
 
 namespace Nafiur\WebAnalytics\Http\Controllers\Api;
 
-use Carbon\CarbonImmutable;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Routing\Controller;
-use Illuminate\Support\Str;
 use Nafiur\WebAnalytics\Contracts\EventStore;
-use Nafiur\WebAnalytics\Data\UnifiedEvent;
 use Nafiur\WebAnalytics\Facades\Analytics;
 use Nafiur\WebAnalytics\Models\Analytics\Dashboard;
+use Nafiur\WebAnalytics\Models\Analytics\UserProfile;
 use Nafiur\WebAnalytics\Models\Analytics\Website;
 use Nafiur\WebAnalytics\Services\DashboardWidgets;
+use Nafiur\WebAnalytics\Services\IdentityService;
+use Nafiur\WebAnalytics\Services\UnifiedEventMapper;
 
 class AnalyticsApiController extends Controller
 {
@@ -95,25 +95,10 @@ class AnalyticsApiController extends Controller
 
         $websiteId = $this->websiteId($request) ?? 0;
         $events = [];
+        $mapper = app(UnifiedEventMapper::class);
 
         foreach ($data['events'] as $raw) {
-            $timestamp = isset($raw['timestamp']) && $raw['timestamp'] !== null
-                ? CarbonImmutable::parse((string) $raw['timestamp'])
-                : CarbonImmutable::now();
-
-            $events[] = new UnifiedEvent(
-                uuid:         (string) ($raw['uuid'] ?? Str::uuid()),
-                name:         (string) $raw['name'],
-                timestamp:    $timestamp,
-                distinctId:  isset($raw['distinct_id']) ? (string) $raw['distinct_id'] : (isset($raw['anonymous_id']) ? (string) $raw['anonymous_id'] : null),
-                anonymousId: isset($raw['anonymous_id']) ? (string) $raw['anonymous_id'] : null,
-                sessionId:    isset($raw['session_id']) ? (string) $raw['session_id'] : null,
-                websiteId:   $websiteId,
-                properties:  is_array($raw['properties'] ?? null) ? $raw['properties'] : [],
-                context:      is_array($raw['context'] ?? null) ? $raw['context'] : [],
-                value:        isset($raw['value']) ? (float) $raw['value'] : null,
-                createdAt:    $timestamp,
-            );
+            $events[] = $mapper->mapPayload($raw, $websiteId);
         }
 
         app(EventStore::class)->insert($events);
@@ -126,6 +111,44 @@ class AnalyticsApiController extends Controller
         return response()->json([
             'success' => true,
             'data'    => Website::select('id', 'name', 'domain', 'tracking_id')->get(),
+        ]);
+    }
+
+    public function users(Request $request): JsonResponse
+    {
+        $request->validate(['search' => 'sometimes|string|max:100']);
+
+        $query = UserProfile::query();
+        $websiteId = $this->websiteId($request);
+        if ($websiteId !== null) {
+            $query->where('website_id', $websiteId);
+        }
+        if ($request->filled('search')) {
+            $query->where('distinct_id', 'like', '%' . $request->string('search') . '%');
+        }
+
+        return response()->json([
+            'success' => true,
+            'data'    => $query->latest('last_seen_at')->limit(100)->get(),
+        ]);
+    }
+
+    public function userShow(Request $request, string $distinctId): JsonResponse
+    {
+        $websiteId = $this->websiteId($request) ?? 0;
+        $profile = app(IdentityService::class)->profileFor($websiteId, $distinctId);
+
+        if ($profile === null) {
+            return response()->json(['success' => false, 'message' => 'Profile not found'], 404);
+        }
+
+        return response()->json([
+            'success' => true,
+            'data'    => [
+                'profile'  => $profile,
+                'aliases'  => $profile->aliases()->pluck('anonymous_id'),
+                'timeline' => app(IdentityService::class)->timeline($websiteId, $profile->distinct_id),
+            ],
         ]);
     }
 
