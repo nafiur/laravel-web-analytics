@@ -118,6 +118,27 @@ php artisan lwa:token --revoke=1
 
 Collector jobs are idempotent: each pageview/event carries a `request_uuid`, so a retried queue job cannot create duplicate rows.
 
+### Product analytics foundation (v3.2)
+
+The package now ships a dependency-free browser tracker and a unified event pipeline:
+
+```blade
+{{-- in your public layout; the project key is your website's tracking_id --}}
+@if (config('laravel-web-analytics.sdk.enabled'))
+    <script src="{{ route('lwa_sdk') }}"></script>
+    <script>
+        LwaWebAnalytics.init({ key: '{{ $website->tracking_id }}' });
+        LwaWebAnalytics.track('purchase', { plan: 'pro' }, 1500);
+        LwaWebAnalytics.identify(42, { plan: 'pro' });
+        LwaWebAnalytics.pageview('/pricing');
+    </script>
+@endif
+```
+
+Enable bundle serving with `WEB_ANALYTICS_SDK_ENABLED=true`. The SDK batches events into `POST /web-analytics/api/v1/events/batch` using `sendBeacon` (with `fetch` fallback) and authenticates with the public project key — no secret token is shipped to the browser. Server-to-server callers can still use a `write` bearer token on the same endpoint. Payloads are validated, sanitised and deduplicated on `uuid`, so retries are safe.
+
+`identify` aliases the current anonymous id to a known `u_<id>` profile, merges traits, and keeps pre-sign-in events in the same timeline. Browse the result at `/web-analytics/explorer`, or through the read-scoped REST endpoints `GET /users` and `GET /users/{distinctId}`.
+
 ## 🎨 Design System
 
 | Topic | Choice |
@@ -253,6 +274,9 @@ The package defines routes with the `lwa_` prefix to avoid conflicts with your a
 | `GET /web-analytics/api/v1/summary` | `lwa_api_summary` | JSON summary (bearer token, `read`) |
 | `GET /web-analytics/api/v1/timeseries` | `lwa_api_timeseries` | JSON time series (bearer token, `read`) |
 | `POST /web-analytics/api/v1/events` | `lwa_api_event` | Track a custom event (bearer token, `write`) |
+| `POST /web-analytics/api/v1/events/batch` | `lwa_api_events_batch` | Batch ingest (project key or bearer token, `write`) |
+| `GET /web-analytics/api/v1/users` | `lwa_api_users` | List user profiles (bearer token, `read`) |
+| `GET /web-analytics/api/v1/users/{distinctId}` | `lwa_api_user` | Profile, aliases and timeline (bearer token, `read`) |
 | `GET /web-analytics/api/v1/websites` | `lwa_api_websites` | List websites (bearer token, `admin`) |
 
 Every sidebar section also has its own bookmarkable URL:
@@ -265,7 +289,7 @@ Every sidebar section also has its own bookmarkable URL:
 | `/web-analytics/sources` | `lwa_sources` | `/web-analytics/performance` | `lwa_performance` |
 | `/web-analytics/pages` | `lwa_pages` | `/web-analytics/errors` | `lwa_errors` |
 | `/web-analytics/geography` | `lwa_geography` | `/web-analytics/settings` | `lwa_settings` |
-| `/web-analytics/devices` | `lwa_devices` | | |
+| `/web-analytics/devices` | `lwa_devices` | `/web-analytics/explorer` | `lwa_explorer` |
 
 The legacy `/web-analytics` (`lwa_dashboard`) URL still works and shows the Overview pane. The Events and Conversions URLs render an explicit “not available yet” pane rather than fabricated numbers.
 

@@ -336,6 +336,36 @@
 
         .lwa-btn-ghost:hover { background: var(--lwa-surface-muted); color: var(--lwa-text); }
 
+        .lwa-input,
+        .lwa-select {
+            width: 100%;
+            padding: 6px 9px;
+            border-radius: var(--lwa-radius-sm);
+            border: 1px solid var(--lwa-border);
+            background: var(--lwa-surface);
+            color: var(--lwa-text-body);
+            font-size: 12px;
+            line-height: 1.4;
+            transition: border-color .12s ease, box-shadow .12s ease;
+        }
+
+        .lwa-input:focus,
+        .lwa-select:focus {
+            outline: none;
+            border-color: var(--lwa-primary);
+            box-shadow: 0 0 0 2px var(--lwa-primary-soft);
+        }
+
+        .lwa-field-label {
+            display: block;
+            margin-bottom: 5px;
+            color: var(--lwa-text-muted);
+            font-size: 10px;
+            font-weight: 650;
+            letter-spacing: .06em;
+            text-transform: uppercase;
+        }
+
         /* ---------- Chips & pills ---------- */
         .lwa-pill {
             display: inline-flex;

@@ -9,7 +9,9 @@ use Nafiur\WebAnalytics\Data\EventQuery;
 use Nafiur\WebAnalytics\Data\PruneWindow;
 use Nafiur\WebAnalytics\Data\UnifiedEvent;
 use Nafiur\WebAnalytics\Models\Analytics\AnalyticEvent;
+use Nafiur\WebAnalytics\Models\Analytics\Visitor;
 use Nafiur\WebAnalytics\Services\IdentityService;
+use Nafiur\WebAnalytics\Services\WebsiteScope;
 
 /**
  * Relational EventStore implementation used by the default (self-hosted) setup.
@@ -58,11 +60,36 @@ class EloquentEventStore implements EventStore
             $builder->whereBetween('created_at', [$query->from, $query->to]);
         }
 
-        if ($query->limit !== null) {
-            $builder->limit($query->limit);
+        if ($query->visitorHash !== null && $query->visitorHash !== '') {
+            $visitorIds = Visitor::withoutGlobalScope(WebsiteScope::class)
+                ->where('website_id', $query->websiteId)
+                ->where('visitor_hash', $query->visitorHash)
+                ->pluck('id');
+
+            $builder->whereIn('visitor_id', $visitorIds);
         }
 
-        return $builder->orderBy('created_at')->get();
+        // Property predicates are evaluated after hydration so they work
+        // identically on SQLite / MySQL / PostgreSQL (JSON casting differs).
+        if ($query->propertyKey === null || $query->propertyKey === '') {
+            if ($query->limit !== null) {
+                $builder->limit($query->limit);
+            }
+
+            return $builder->with('visitor')->orderByDesc('created_at')->get();
+        }
+
+        $events = $builder->with('visitor')->orderByDesc('created_at')->get()->filter(function (AnalyticEvent $event) use ($query): bool {
+            $properties = $event->properties ?? [];
+            if (! array_key_exists($query->propertyKey, $properties)) {
+                return false;
+            }
+
+            return $query->propertyValue === null
+                || (string) $properties[$query->propertyKey] === $query->propertyValue;
+        });
+
+        return $query->limit !== null ? $events->take($query->limit)->values() : $events->values();
     }
 
     public function aggregate(Aggregation $aggregation): array

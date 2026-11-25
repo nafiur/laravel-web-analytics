@@ -58,6 +58,11 @@
 
                     <div class="lwa-nav-label">Insights</div>
 
+                    <a href="{{ route('lwa_explorer') }}"
+                       class="sidebar-link {{ $current === 'explorer' ? 'active' : '' }}">
+                        <i data-lucide="scan-search" class="text-sm"></i> <span class="sidebar-label">Event Explorer</span>
+                    </a>
+
                     <a href="{{ route('lwa_events') }}"
                        class="sidebar-link is-disabled {{ $current === 'events' ? 'active' : '' }}"
                        title="Requires custom event tracking">
