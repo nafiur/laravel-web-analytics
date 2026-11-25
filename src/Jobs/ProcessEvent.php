@@ -11,10 +11,11 @@ use Nafiur\WebAnalytics\Contracts\EventStore;
 use Nafiur\WebAnalytics\Data\UnifiedEvent;
 
 /**
- * Ingests a batch of normalized events through the EventStore.
+ * Queued ingestion job for batches of normalized events.
  *
  * Persistence-level idempotency (firstOrCreate on the event uuid) makes
- * retries and redeliveries naturally duplicate-free.
+ * retries and redeliveries naturally duplicate-free, so the job is safe to
+ * requeue without producing duplicate rows.
  *
  * @param array<int, UnifiedEvent|array<string, mixed>> $events
  */
@@ -35,28 +36,35 @@ class ProcessEvent implements ShouldQueue
 
     public function handle(EventStore $store): void
     {
-        foreach ($this->events as $event) {
-            $store->insert([$event]);
-        }
+        $store->insert(array_map(
+            fn (UnifiedEvent|array $event): UnifiedEvent =>
+                $event instanceof UnifiedEvent ? $event : $this->fromPayload($event),
+            $this->events,
+        ));
     }
 
-    /** @param array<string, mixed> $payload */
-    private function toUnified(array $payload): UnifiedEvent
+    /**
+     * @param array<string, mixed> $payload
+     */
+    private function fromPayload(array $payload): UnifiedEvent
     {
         $timestamp = isset($payload['timestamp']) && $payload['timestamp'] !== null
             ? CarbonImmutable::parse((string) $payload['timestamp'])
             : CarbonImmutable::now();
 
-        $visitorHash = isset($payload['distinct_id'])
+        $distinctId = isset($payload['distinct_id']) && $payload['distinct_id'] !== null
             ? (string) $payload['distinct_id']
-            : (isset($payload['anonymous_id']) ? (string) $payload['anonymous_id'] : null);
+            : null;
+        $anonymousId = isset($payload['anonymous_id']) && $payload['anonymous_id'] !== null
+            ? (string) $payload['anonymous_id']
+            : null;
 
         return new UnifiedEvent(
             uuid:         (string) ($payload['uuid'] ?? ''),
             name:         (string) ($payload['name'] ?? ''),
             timestamp:    $timestamp,
-            distinctId:  $visitorHash,
-            anonymousId: $visitorHash,
+            distinctId:  $distinctId,
+            anonymousId: $anonymousId,
             sessionId:    isset($payload['session_id']) ? (string) $payload['session_id'] : null,
             websiteId:   (int) ($payload['website_id'] ?? 0),
             properties:  is_array($payload['properties'] ?? null) ? $payload['properties'] : [],

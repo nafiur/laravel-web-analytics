@@ -40,7 +40,6 @@ final class UnifiedEvent
         return [
             'website_id'   => $this->websiteId,
             'visitor_hash' => $this->distinctId ?? $this->anonymousId ?? 'anonymous',
-            'session_key'  => $this->sessionId,
             'name'         => $this->name,
             'properties'   => $this->properties,
             'value'        => $this->value,

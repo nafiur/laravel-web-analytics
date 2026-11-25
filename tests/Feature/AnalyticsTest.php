@@ -228,6 +228,24 @@ class AnalyticsTest extends TestCase
         }
     }
 
+    public function test_sdk_endpoint_serves_the_tracker_bundle(): void
+    {
+        $this->get('/web-analytics/sdk.js')->assertNotFound();
+
+        config()->set('laravel-web-analytics.sdk.enabled', true);
+
+        $response = $this->get('/web-analytics/sdk.js');
+
+        $response->assertOk();
+        $response->assertHeader('Content-Type', 'application/javascript; charset=utf-8');
+        $response->assertHeader('Cache-Control', 'max-age=3600, public');
+
+        $this->assertStringContainsString(
+            'LwaWebAnalytics',
+            file_get_contents(__DIR__ . '/../../resources/js/sdk.js'),
+        );
+    }
+
     public function test_overview_exposes_honest_engagement_metrics(): void
     {
         $base = now()->subMinutes(10);

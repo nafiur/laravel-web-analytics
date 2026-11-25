@@ -95,11 +95,13 @@ class WebAnalyticsServiceProvider extends ServiceProvider
     protected function registerApiRoutes(): void
     {
         $this->app['router']->aliasMiddleware('lwa.api', \Nafiur\WebAnalytics\Http\Middleware\AuthenticateApiToken::class);
+        $this->app['router']->aliasMiddleware('lwa.ingest', \Nafiur\WebAnalytics\Http\Middleware\AuthenticateIngest::class);
         $this->app['router']->aliasMiddleware('lwa.schema', \Nafiur\WebAnalytics\Http\Middleware\EnsureAnalyticsSchema::class);
 
         RateLimiter::for('lwa.api', function (Request $request) {
             $key = $request->user()?->getAuthIdentifier()
-                ?: ($request->header('Authorization') ?: $request->ip());
+                ?: ($request->header('Authorization')
+                    ?: ($request->header('X-LWA-Project-Key') ?: $request->ip()));
 
             return Limit::perMinute((int) config('laravel-web-analytics.api.rate_limit_per_minute', 60))
                 ->by('lwa_api_' . sha1((string) $key));

@@ -93,7 +93,7 @@ class ApiTest extends TestCase
 
         $payload = [
             'events' => [
-                ['uuid' => 'batch-evt-1', 'name' => 'js_purchase', 'properties' => ['plan' => 'pro'], 'value' => 9.0, 'timestamp' => '2026-11-25T08:15:22Z'],
+                ['uuid' => 'batch-evt-1', 'name' => 'js_purchase', 'distinct_id' => 'u_42', 'session_id' => 'sess-42', 'properties' => ['plan' => 'pro'], 'value' => 9.0, 'timestamp' => '2026-11-25T08:15:22Z'],
                 ['uuid' => 'batch-evt-2', 'name' => 'js_signup', 'properties' => ['plan' => 'free'], 'value' => 0.0, 'timestamp' => '2026-11-25T09:15:22Z'],
             ],
         ];
@@ -104,6 +104,7 @@ class ApiTest extends TestCase
             ->assertJsonPath('success', true);
 
         $this->assertSame(2, AnalyticEvent::where('website_id', $websiteId)->count());
+        $this->assertSame('u_42', AnalyticEvent::where('request_uuid', 'batch-evt-1')->firstOrFail()->visitor->visitor_hash);
 
         // Retry with the same uuids must not create duplicate rows.
         $this->withHeader('Authorization', 'Bearer ' . $writer)
@@ -111,6 +112,32 @@ class ApiTest extends TestCase
             ->assertStatus(202);
 
         $this->assertSame(2, AnalyticEvent::where('website_id', $websiteId)->count());
+    }
+
+    public function test_api_event_batch_accepts_public_project_key(): void
+    {
+        $websiteId = (int) config('laravel-web-analytics.analytics.website_id');
+
+        $this->withHeader('X-LWA-Project-Key', 'trk_api')
+            ->postJson(route('lwa_api_events_batch'), [
+                'key' => 'trk_api',
+                'events' => [['uuid' => 'public-1', 'name' => 'sdk_view']],
+            ])
+            ->assertStatus(202)
+            ->assertJsonPath('inserted', 1);
+
+        $this->assertSame(1, AnalyticEvent::where('website_id', $websiteId)->where('name', 'sdk_view')->count());
+    }
+
+    public function test_api_event_batch_rejects_unknown_project_key(): void
+    {
+        $this->withHeader('X-LWA-Project-Key', 'not-a-project')
+            ->postJson(route('lwa_api_events_batch'), [
+                'events' => [['name' => 'sdk_view']],
+            ])
+            ->assertStatus(401);
+
+        $this->assertSame(0, AnalyticEvent::count());
     }
 
     public function test_api_event_batch_rejects_malformed_events(): void

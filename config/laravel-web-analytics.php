@@ -221,6 +221,27 @@ return [
 
     /*
     |--------------------------------------------------------------------------
+    | JavaScript SDK (v3.2)
+    |--------------------------------------------------------------------------
+    |
+    | Served bundle + browser defaults. The SDK itself is consent aware and
+    | privacy first: no data leaves the browser without an explicit track /
+    | identify / pageview call or an enabled consent state.
+    |
+    */
+    'sdk'                   => [
+        'enabled'         => env('WEB_ANALYTICS_SDK_ENABLED', false),
+        'endpoint'        => env('WEB_ANALYTICS_SDK_ENDPOINT', '/web-analytics/api/v1/events/batch'),
+        'autocapture'     => env('WEB_ANALYTICS_SDK_AUTOCAPTURE', false),
+        'consent'         => [
+            'analytics' => env('WEB_ANALYTICS_SDK_CONSENT_ANALYTICS', true),
+        ],
+        'max_properties'  => 20,
+        'max_batch_bytes' => 65536,
+    ],
+
+    /*
+    |--------------------------------------------------------------------------
     | Settings Page
     |--------------------------------------------------------------------------
     |

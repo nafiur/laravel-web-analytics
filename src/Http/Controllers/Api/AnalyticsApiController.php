@@ -81,12 +81,16 @@ class AnalyticsApiController extends Controller
     public function storeBatch(Request $request): JsonResponse
     {
         $data = $request->validate([
-            'events'          => 'required|array|min:1',
-            'events.*.uuid'   => 'sometimes|string|max:64',
-            'events.*.name'   => 'required|string|max:100',
+            'events'              => 'required|array|min:1|max:500',
+            'events.*.uuid'       => 'sometimes|string|max:64',
+            'events.*.name'       => 'required|string|max:100',
             'events.*.properties' => 'sometimes|array',
-            'events.*.value'  => 'sometimes|numeric|nullable',
-            'events.*.timestamp' => 'sometimes|date',
+            'events.*.value'      => 'sometimes|numeric|nullable',
+            'events.*.timestamp'  => 'sometimes|date',
+            'events.*.distinct_id' => 'sometimes|string|max:100|nullable',
+            'events.*.anonymous_id' => 'sometimes|string|max:100|nullable',
+            'events.*.session_id' => 'sometimes|string|max:100|nullable',
+            'events.*.context'    => 'sometimes|array',
         ]);
 
         $websiteId = $this->websiteId($request) ?? 0;
@@ -211,7 +215,12 @@ class AnalyticsApiController extends Controller
     private function websiteId(Request $request): ?int
     {
         $token = $request->attributes->get('lwa_api_token');
+        if ($token) {
+            return (int) $token->website_id;
+        }
 
-        return $token ? (int) $token->website_id : null;
+        $websiteId = $request->attributes->get('lwa_website_id');
+
+        return $websiteId !== null ? (int) $websiteId : null;
     }
 }

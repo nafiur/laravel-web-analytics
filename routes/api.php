@@ -16,7 +16,7 @@ Route::post('/events', [AnalyticsApiController::class, 'event'])
     ->name('lwa_api_event');
 
 Route::post('/events/batch', [AnalyticsApiController::class, 'storeBatch'])
-    ->middleware('lwa.api:write')
+    ->middleware('lwa.ingest')
     ->name('lwa_api_events_batch');
 
 Route::get('/websites', [AnalyticsApiController::class, 'websites'])
