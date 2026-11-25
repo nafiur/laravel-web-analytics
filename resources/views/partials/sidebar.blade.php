@@ -63,6 +63,11 @@
                         <i data-lucide="filter" class="text-sm"></i> <span class="sidebar-label">Funnels</span>
                     </a>
 
+                    <a href="{{ route('lwa_retention') }}"
+                       class="sidebar-link {{ $current === 'retention' ? 'active' : '' }}">
+                        <i data-lucide="users-round" class="text-sm"></i> <span class="sidebar-label">Retention</span>
+                    </a>
+
                     <a href="{{ route('lwa_trends') }}"
                        class="sidebar-link {{ $current === 'trends' ? 'active' : '' }}">
                         <i data-lucide="chart-no-axes-combined" class="text-sm"></i> <span class="sidebar-label">Trends</span>

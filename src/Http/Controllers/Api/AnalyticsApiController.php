@@ -8,6 +8,7 @@ use Illuminate\Routing\Controller;
 use Nafiur\WebAnalytics\Contracts\EventStore;
 use Nafiur\WebAnalytics\Data\FunnelQuery;
 use Nafiur\WebAnalytics\Data\InsightQuery;
+use Nafiur\WebAnalytics\Data\RetentionQuery;
 use Nafiur\WebAnalytics\Facades\Analytics;
 use Nafiur\WebAnalytics\Models\Analytics\Dashboard;
 use Nafiur\WebAnalytics\Models\Analytics\Insight;
@@ -18,6 +19,7 @@ use Nafiur\WebAnalytics\Services\DashboardWidgets;
 use Nafiur\WebAnalytics\Services\FunnelService;
 use Nafiur\WebAnalytics\Services\IdentityService;
 use Nafiur\WebAnalytics\Services\InsightService;
+use Nafiur\WebAnalytics\Services\RetentionService;
 use Nafiur\WebAnalytics\Services\UnifiedEventMapper;
 
 class AnalyticsApiController extends Controller
@@ -292,6 +294,44 @@ class AnalyticsApiController extends Controller
         ]);
     }
 
+    /**
+     * v3.3 Retention: cohort retention plus lifecycle stages, read through the
+     * same EventStore path as Trends and Funnels.
+     */
+    public function retention(Request $request): JsonResponse
+    {
+        $filters = $request->validate([
+            'event'          => 'sometimes|string|max:100',
+            'granularity'    => 'sometimes|string|in:' . implode(',', RetentionQuery::GRANULARITIES),
+            'periods'        => 'sometimes|integer|min:2|max:12',
+            'range'          => 'sometimes|string|in:' . implode(',', AnalyticsWindow::RANGES),
+            'start_date'     => 'sometimes|date',
+            'end_date'       => 'sometimes|date',
+            'property_key'   => 'sometimes|string|max:100',
+            'property_value' => 'sometimes|string|max:255',
+        ]);
+
+        $filters['range'] = $filters['range'] ?? '30d';
+        [$from, $to] = AnalyticsWindow::resolve($filters);
+
+        $query = RetentionQuery::fromArray([
+            'website_id'     => $this->websiteId($request) ?? 0,
+            'event'          => $filters['event'] ?? null,
+            'granularity'    => $filters['granularity'] ?? 'day',
+            'periods'        => $filters['periods'] ?? 7,
+            'from'           => $from,
+            'to'             => $to,
+            'property_key'   => $filters['property_key'] ?? null,
+            'property_value' => $filters['property_value'] ?? null,
+        ]);
+
+        return response()->json([
+            'success' => true,
+            'data'    => app(RetentionService::class)->retention($query),
+            'filters' => $filters,
+        ]);
+    }
+
     public function insights(Request $request): JsonResponse
     {
         return response()->json([
@@ -370,6 +410,7 @@ class AnalyticsApiController extends Controller
         $allowed = [
             'type', 'event', 'metric', 'breakdown', 'granularity',
             'steps', 'window',
+            'granularity', 'periods',
             'range', 'start_date', 'end_date', 'property_key', 'property_value',
         ];
 

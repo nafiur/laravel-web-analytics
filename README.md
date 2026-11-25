@@ -151,6 +151,12 @@ Open `/web-analytics/funnels` to measure ordered, per-user conversion paths. Ent
 
 The same engine is exposed at `GET /web-analytics/api/v1/insights/funnel` (read token). Saved funnels use the same `lwa_insights` table as saved trends, tagged with `type: funnel` so each page only shows its own reports.
 
+### Retention, cohorts & lifecycle (v3.3)
+
+Open `/web-analytics/retention` for daily or weekly cohorts over 2–12 periods. A cohort is the bucket of a user's first matching event; period N is the Nth full bucket after it, and a user is counted once per period. Only fully elapsed periods have a rate — unelapsed buckets render as `—` rather than a fabricated 0%, and period-1 retention is weighted by cohort size. The lifecycle table classifies each fully elapsed bucket as New, Returning, Resurrecting or Dormant.
+
+Both views come from one bounded `EventStore` read (20,000 events, 12 most recent cohorts), fold aliased anonymous ids into one profile, and ship their definitions with the response. Use `GET /web-analytics/api/v1/insights/retention` (read token) for scripts; saved reports live in `lwa_insights` with `type: retention`.
+
 ## 🎨 Design System
 
 | Topic | Choice |
