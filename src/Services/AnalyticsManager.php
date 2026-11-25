@@ -59,7 +59,39 @@ class AnalyticsManager
             properties:  $properties,
             value:       $value,
             occurredAt:  $options['occurred_at'] ?? now()->toIso8601String(),
+            context:     $this->contextFor($options),
         ));
+    }
+
+    /**
+     * Best-effort tracking context for custom events (path, referrer, user
+     * agent, UTM, ...). Empty values are fine for cookieless/JS-sourced events.
+     *
+     * @param array<string, mixed> $options
+     * @return array<string, mixed>
+     */
+    private function contextFor(array $options): array
+    {
+        $path = $options['path'] ?? null;
+        if ($path === null && function_exists('request')) {
+            $path = '/' . ltrim((string) request()->path(), '/');
+        }
+
+        $userAgent = $options['user_agent'] ?? null;
+        if ($userAgent === null && function_exists('request')) {
+            $userAgent = (string) request()->userAgent();
+        }
+
+        return [
+            'path'         => (string) ($path ?? ''),
+            'method'       => (string) ($options['method'] ?? 'GET'),
+            'status_code' => isset($options['status_code']) ? (int) $options['status_code'] : null,
+            'referrer'    => $options['referrer'] ?? null,
+            'user_agent'  => (string) ($userAgent ?? ''),
+            'utm_source'  => $options['utm_source'] ?? null,
+            'utm_medium'  => $options['utm_medium'] ?? null,
+            'utm_campaign' => $options['utm_campaign'] ?? null,
+        ];
     }
 
     public function track(string $name, array $properties = [], ?float $value = null, array $options = []): void

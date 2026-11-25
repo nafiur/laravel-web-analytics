@@ -14,6 +14,8 @@ final class EventData
         public readonly ?float $value = null,
         public readonly ?string $occurredAt = null,
         public readonly ?string $requestUuid = null,
+        /** Free-form tracking context (path, referrer, user_agent, utm, ...). */
+        public readonly array $context = [],
     ) {
     }
 }

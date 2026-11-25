@@ -13,12 +13,6 @@ use Nafiur\WebAnalytics\Jobs\RecordPageview;
 
 class AnalyticsCollector implements Collector
 {
-    /** @var string[] */
-    private const BANNED_PROPERTY_KEYS = [
-        'password', 'token', 'secret', 'api_key', 'apikey', 'authorization',
-        'email', 'phone', 'card', 'card_number', 'cvv', 'ssn', 'address',
-    ];
-
     public function __construct(private StorageDriver $storage)
     {
     }
@@ -55,46 +49,11 @@ class AnalyticsCollector implements Collector
             return;
         }
 
-        $payload = [
-            'website_id'  => $event->websiteId,
-            'name'         => substr($event->name, 0, 100),
-            'visitor_hash' => $event->visitorHash,
-            'session_key'  => $event->sessionKey,
-            'properties'  => $this->sanitizeProperties($event->properties),
-            'value'       => $event->value,
-            'created_at'   => $event->occurredAt ?? now()->toIso8601String(),
-            'request_uuid' => $event->requestUuid ?: (string) Str::uuid(),
-        ];
+        // v3.2: events flow through the unified envelope before hitting storage.
+        $unified = app(UnifiedEventMapper::class)->map($event, $event->context);
+        $payload = $unified->toStoragePayload();
 
         $this->dispatch(new RecordEvent($payload));
-    }
-
-    /** @param array<string, mixed> $properties */
-    private function sanitizeProperties(array $properties): array
-    {
-        $clean = [];
-        $count = 0;
-        $bytes = 0;
-
-        foreach ($properties as $key => $value) {
-            $key = strtolower((string) $key);
-            if (in_array($key, self::BANNED_PROPERTY_KEYS, true) || $count >= 20) {
-                continue;
-            }
-            if (!is_scalar($value) && $value !== null) {
-                continue;
-            }
-            $encoded = json_encode([$key => $value]);
-            $size = $encoded === false ? 0 : strlen($encoded);
-            if ($bytes + $size > 1024) {
-                continue;
-            }
-            $clean[$key] = is_string($value) ? substr($value, 0, 255) : $value;
-            $bytes += $size;
-            $count++;
-        }
-
-        return $clean;
     }
 
     private function dispatch(object $job): void
