@@ -5,7 +5,7 @@
 
                 <div class="lwa-card overflow-hidden">
                     <div class="p-4 border-b border-slate-100 dark:border-slate-800">
-                        <div class="text-xs font-semibold text-slate-900 dark:text-white">{{ $title ?? 'Recent Events' }}</div>
+                        <div class="lwa-card-title">{{ $title ?? 'Recent Events' }}</div>
                         <p class="lwa-subtitle mt-0.5">Collected via <code class="font-mono">Analytics::event()</code>, <code class="font-mono">Analytics::goal()</code> or the REST API</p>
                     </div>
                     @if(empty($recentEvents))

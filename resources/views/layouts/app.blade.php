@@ -394,7 +394,7 @@
         .lwa-kpi-value {
             font-size: 1.5rem;
             line-height: 1.05;
-            font-weight: 680;
+            font-weight: 700;
             letter-spacing: -.035em;
             color: var(--lwa-text);
         }

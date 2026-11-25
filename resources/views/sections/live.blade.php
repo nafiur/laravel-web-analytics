@@ -2,7 +2,7 @@
                         <div class="flex items-center gap-3">
                             <span class="live-dot"></span>
                             <div>
-                                <div class="text-xs font-semibold text-slate-900 dark:text-white">Real-Time Traffic Feed</div>
+                                <div class="lwa-card-title">Real-Time Traffic Feed</div>
                                 <div class="lwa-subtitle">Streaming live requests via Server-Sent Events (SSE)</div>
                             </div>
                         </div>

@@ -5,7 +5,7 @@
     <div class="relative mx-auto my-6 flex max-h-[88vh] w-[min(1100px,94vw)] flex-col overflow-hidden lwa-card" style="box-shadow: var(--lwa-shadow-pop)">
         <div class="flex items-start justify-between gap-3 border-b lwa-border px-5 py-3">
             <div>
-                <div class="text-sm font-semibold text-slate-900 dark:text-white" data-lwa-modal-title>Breakdown</div>
+                <div class="lwa-card-title" data-lwa-modal-title>Breakdown</div>
                 <div class="lwa-subtitle mt-0.5" data-lwa-modal-subtitle></div>
             </div>
             <button type="button" data-lwa-modal-close

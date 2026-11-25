@@ -52,7 +52,7 @@
                             <section id="settings-general"
                                 class="lwa-card overflow-hidden">
                                 <div class="p-4 border-b border-slate-100 dark:border-slate-800">
-                                    <h2 class="text-sm font-semibold text-slate-900 dark:text-white"
+                                    <h2 class="lwa-card-title"
                                         data-i18n="settings">Settings</h2>
                                     <p class="lwa-subtitle mt-0.5">Analytics preferences for this browser
                                     </p>
@@ -123,7 +123,7 @@
                             <section id="settings-dashboard"
                                 class="lwa-card overflow-hidden">
                                 <div class="p-4 border-b border-slate-100 dark:border-slate-800">
-                                    <h2 class="text-sm font-semibold text-slate-900 dark:text-white"
+                                    <h2 class="lwa-card-title"
                                         data-i18n="dashboard">Dashboard</h2>
                                     <p class="lwa-subtitle mt-0.5">Defaults applied to every visit</p>
                                 </div>
@@ -175,7 +175,7 @@
                             <section id="settings-collection"
                                 class="lwa-card overflow-hidden">
                                 <div class="p-4 border-b border-slate-100 dark:border-slate-800">
-                                    <h2 class="text-sm font-semibold text-slate-900 dark:text-white"
+                                    <h2 class="lwa-card-title"
                                         data-i18n="collection">Collection</h2>
                                     <p class="lwa-subtitle mt-0.5">Defined in config — read-only</p>
                                 </div>
@@ -224,7 +224,7 @@
                             <section id="settings-alerts"
                                 class="lwa-card overflow-hidden">
                                 <div class="p-4 border-b border-slate-100 dark:border-slate-800">
-                                    <h2 class="text-sm font-semibold text-slate-900 dark:text-white">Alerts</h2>
+                                    <h2 class="lwa-card-title">Alerts</h2>
                                     <p class="lwa-subtitle mt-0.5">Webhook alerts for 5xx errors and
                                         error-rate spikes</p>
                                 </div>
@@ -259,7 +259,7 @@
                             <section id="settings-export"
                                 class="lwa-card overflow-hidden">
                                 <div class="p-4 border-b border-slate-100 dark:border-slate-800">
-                                    <h2 class="text-sm font-semibold text-slate-900 dark:text-white">Export defaults
+                                    <h2 class="lwa-card-title">Export defaults
                                     </h2>
                                     <p class="lwa-subtitle mt-0.5">Applied to every CSV export link</p>
                                 </div>
@@ -288,7 +288,7 @@
                             <section id="settings-maintenance"
                                 class="lwa-card overflow-hidden">
                                 <div class="p-4 border-b border-slate-100 dark:border-slate-800">
-                                    <h2 class="text-sm font-semibold text-slate-900 dark:text-white"
+                                    <h2 class="lwa-card-title"
                                         data-i18n="maintenance">Data maintenance</h2>
                                     <p class="lwa-subtitle mt-0.5">{{ $logPath ?? 'Database table' }} —
                                         scoped to {{ $tenantId ? 'tenant ' . $tenantId : 'all tenants' }}</p>
@@ -377,7 +377,7 @@
                             <section id="settings-about"
                                 class="lwa-card overflow-hidden">
                                 <div class="p-4 border-b border-slate-100 dark:border-slate-800">
-                                    <h2 class="text-sm font-semibold text-slate-900 dark:text-white">About</h2>
+                                    <h2 class="lwa-card-title">About</h2>
                                 </div>
                                 <div class="divide-y divide-slate-100 dark:divide-slate-800 text-xs">
                                     @foreach ([

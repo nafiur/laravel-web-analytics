@@ -29,7 +29,7 @@
                              <div class="mx-auto lwa-icon-tile mb-3" style="width:40px;height:40px">
                                  <i data-lucide="layout-dashboard" class="text-lg"></i>
                              </div>
-                             <div class="text-sm font-semibold text-slate-800 dark:text-slate-100">You don't have any dashboards yet</div>
+                             <div class="lwa-card-title">You don't have any dashboards yet</div>
                              <p class="lwa-subtitle mt-1">Pick a template or build your own from scratch.</p>
                              <button type="button" data-lwa-create-dashboard
                                      class="mt-4 lwa-btn-primary">
@@ -76,7 +76,7 @@
                      <div class="absolute inset-0 bg-slate-900/40" data-lwa-create-backdrop></div>
                      <div class="relative mx-auto my-8 w-[min(620px,94vw)] max-h-[85vh] overflow-hidden lwa-card flex flex-col" style="box-shadow: var(--lwa-shadow-pop)">
                          <div class="flex items-center justify-between px-4 py-3 border-b lwa-border">
-                             <div class="text-sm font-semibold text-slate-900 dark:text-white">Create a Dashboard</div>
+                             <div class="lwa-card-title">Create a Dashboard</div>
                              <button type="button" data-lwa-create-close class="lwa-btn-ghost p-1" aria-label="Close">
                                  <i data-lucide="x" class="text-lg"></i>
                              </button>

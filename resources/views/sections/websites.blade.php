@@ -1,6 +1,6 @@
                 <section id="settings-websites" class="lwa-card overflow-hidden">
                     <div class="p-4 border-b border-slate-100 dark:border-slate-800">
-                        <div class="text-xs font-semibold text-slate-900 dark:text-white">Websites</div>
+                        <div class="lwa-card-title">Websites</div>
                         <p class="lwa-subtitle mt-0.5">Register properties and switch the active dashboard scope</p>
                     </div>
                     <div class="divide-y divide-slate-100 dark:divide-slate-800 text-xs">

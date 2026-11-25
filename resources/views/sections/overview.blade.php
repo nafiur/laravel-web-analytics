@@ -4,7 +4,7 @@
                             <div class="mx-auto lwa-icon-tile mb-3" style="width:40px;height:40px">
                                 <i data-lucide="chart-no-axes-combined" class="text-lg"></i>
                             </div>
-                            <div class="text-sm font-semibold text-slate-900 dark:text-white">No analytics data yet</div>
+                            <div class="lwa-card-title">No analytics data yet</div>
                             <p class="lwa-subtitle mt-1 max-w-md mx-auto">
                                 Register the <code class="font-mono">TrackWebTraffic</code> middleware in your web group, then reload this page. Requests will appear here once traffic is captured.
                             </p>

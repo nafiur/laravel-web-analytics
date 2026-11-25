@@ -1783,7 +1783,7 @@
                     const source = document.getElementById('lwa-card-data-' + id);
                     try { data = JSON.parse(source?.textContent || '{}'); } catch (err) { data = {}; }
                     const values = Object.values(data).find(value => Array.isArray(value)) || [];
-                    const heading = card?.querySelector('.text-xs.font-semibold') || card?.querySelector('h2');
+                    const heading = card?.querySelector('.lwa-card-title') || card?.querySelector('h2');
                     open(heading?.textContent?.trim() || 'Breakdown', values);
                     return;
                 }
