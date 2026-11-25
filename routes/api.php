@@ -59,6 +59,10 @@ Route::get('/insights/retention', [AnalyticsApiController::class, 'retention'])
     ->middleware('lwa.api:read')
     ->name('lwa_api_insights_retention');
 
+Route::get('/insights/paths', [AnalyticsApiController::class, 'paths'])
+    ->middleware('lwa.api:read')
+    ->name('lwa_api_insights_paths');
+
 Route::get('/insights', [AnalyticsApiController::class, 'insights'])
     ->middleware('lwa.api:read')
     ->name('lwa_api_insights');

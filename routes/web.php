@@ -4,6 +4,7 @@ use Illuminate\Support\Facades\Route;
 use Nafiur\WebAnalytics\Http\Controllers\DashboardController;
 use Nafiur\WebAnalytics\Http\Controllers\EventExplorerController;
 use Nafiur\WebAnalytics\Http\Controllers\FunnelsController;
+use Nafiur\WebAnalytics\Http\Controllers\PathsController;
 use Nafiur\WebAnalytics\Http\Controllers\RetentionController;
 use Nafiur\WebAnalytics\Http\Controllers\SdkController;
 use Nafiur\WebAnalytics\Http\Controllers\TrendsController;
@@ -25,6 +26,9 @@ Route::post('/funnels/{insight}/delete', [FunnelsController::class, 'destroy'])-
 Route::get('/retention', [RetentionController::class, 'index'])->name('lwa_retention');
 Route::post('/retention/save', [RetentionController::class, 'save'])->name('lwa_retention_save');
 Route::post('/retention/{insight}/delete', [RetentionController::class, 'destroy'])->name('lwa_retention_destroy');
+Route::get('/paths', [PathsController::class, 'index'])->name('lwa_paths');
+Route::post('/paths/save', [PathsController::class, 'save'])->name('lwa_paths_save');
+Route::post('/paths/{insight}/delete', [PathsController::class, 'destroy'])->name('lwa_paths_destroy');
 Route::post('/settings/prune', [WebAnalyticsController::class, 'prune'])->name('lwa_settings_prune');
 Route::post('/settings/empty', [WebAnalyticsController::class, 'emptyTable'])->name('lwa_settings_empty');
 Route::post('/settings/test-alert', [WebAnalyticsController::class, 'testAlert'])->name('lwa_settings_test_alert');

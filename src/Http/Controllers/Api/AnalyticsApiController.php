@@ -8,6 +8,7 @@ use Illuminate\Routing\Controller;
 use Nafiur\WebAnalytics\Contracts\EventStore;
 use Nafiur\WebAnalytics\Data\FunnelQuery;
 use Nafiur\WebAnalytics\Data\InsightQuery;
+use Nafiur\WebAnalytics\Data\PathQuery;
 use Nafiur\WebAnalytics\Data\RetentionQuery;
 use Nafiur\WebAnalytics\Facades\Analytics;
 use Nafiur\WebAnalytics\Models\Analytics\Dashboard;
@@ -19,6 +20,7 @@ use Nafiur\WebAnalytics\Services\DashboardWidgets;
 use Nafiur\WebAnalytics\Services\FunnelService;
 use Nafiur\WebAnalytics\Services\IdentityService;
 use Nafiur\WebAnalytics\Services\InsightService;
+use Nafiur\WebAnalytics\Services\PathService;
 use Nafiur\WebAnalytics\Services\RetentionService;
 use Nafiur\WebAnalytics\Services\UnifiedEventMapper;
 
@@ -332,6 +334,45 @@ class AnalyticsApiController extends Controller
         ]);
     }
 
+    /**
+     * v3.3 User paths: one per-user event sequence, read through the same
+     * EventStore path as Trends, Funnels and Retention.
+     */
+    public function paths(Request $request): JsonResponse
+    {
+        $filters = $request->validate([
+            'start_event'    => 'sometimes|string|max:100',
+            'end_event'      => 'sometimes|string|max:100',
+            'depth'          => 'sometimes|integer|min:2|max:8',
+            'limit'          => 'sometimes|integer|min:5|max:50',
+            'range'          => 'sometimes|string|in:' . implode(',', AnalyticsWindow::RANGES),
+            'start_date'     => 'sometimes|date',
+            'end_date'       => 'sometimes|date',
+            'property_key'   => 'sometimes|string|max:100',
+            'property_value' => 'sometimes|string|max:255',
+        ]);
+
+        [$from, $to] = AnalyticsWindow::resolve($filters);
+
+        $query = PathQuery::fromArray([
+            'website_id'     => $this->websiteId($request) ?? 0,
+            'start_event'    => $filters['start_event'] ?? null,
+            'end_event'      => $filters['end_event'] ?? null,
+            'depth'          => $filters['depth'] ?? 5,
+            'limit'          => $filters['limit'] ?? 20,
+            'from'           => $from,
+            'to'             => $to,
+            'property_key'   => $filters['property_key'] ?? null,
+            'property_value' => $filters['property_value'] ?? null,
+        ]);
+
+        return response()->json([
+            'success' => true,
+            'data'    => app(PathService::class)->paths($query),
+            'filters' => $filters,
+        ]);
+    }
+
     public function insights(Request $request): JsonResponse
     {
         return response()->json([
@@ -411,6 +452,7 @@ class AnalyticsApiController extends Controller
             'type', 'event', 'metric', 'breakdown', 'granularity',
             'steps', 'window',
             'granularity', 'periods',
+            'start_event', 'end_event', 'depth', 'limit',
             'range', 'start_date', 'end_date', 'property_key', 'property_value',
         ];
 

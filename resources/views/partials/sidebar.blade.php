@@ -68,6 +68,11 @@
                         <i data-lucide="users-round" class="text-sm"></i> <span class="sidebar-label">Retention</span>
                     </a>
 
+                    <a href="{{ route('lwa_paths') }}"
+                       class="sidebar-link {{ $current === 'paths' ? 'active' : '' }}">
+                        <i data-lucide="route" class="text-sm"></i> <span class="sidebar-label">User Paths</span>
+                    </a>
+
                     <a href="{{ route('lwa_trends') }}"
                        class="sidebar-link {{ $current === 'trends' ? 'active' : '' }}">
                         <i data-lucide="chart-no-axes-combined" class="text-sm"></i> <span class="sidebar-label">Trends</span>

@@ -157,6 +157,12 @@ Open `/web-analytics/retention` for daily or weekly cohorts over 2–12 periods.
 
 Both views come from one bounded `EventStore` read (20,000 events, 12 most recent cohorts), fold aliased anonymous ids into one profile, and ship their definitions with the response. Use `GET /web-analytics/api/v1/insights/retention` (read token) for scripts; saved reports live in `lwa_insights` with `type: retention`.
 
+### User paths (v3.3)
+
+Open `/web-analytics/paths` to see the most common ordered event sequences. Each user contributes one path — their first qualifying sequence — with consecutive repeats collapsed into one step. Choose a start/end event, depth (2–8) and number of paths (5–50); the page reports users and share per path plus the top events at each position. Users with a single step or who never reach the start event are counted separately, so denominators stay explicit.
+
+Everything is computed from the same bounded `EventStore` read (20,000 events) with canonical identities and documented definitions. Scripts can use `GET /web-analytics/api/v1/insights/paths` (read token); saved reports live in `lwa_insights` with `type: paths`.
+
 ## 🎨 Design System
 
 | Topic | Choice |
@@ -297,6 +303,8 @@ The package defines routes with the `lwa_` prefix to avoid conflicts with your a
 | `GET /web-analytics/api/v1/users/{distinctId}` | `lwa_api_user` | Profile, aliases and timeline (bearer token, `read`) |
 | `GET /web-analytics/api/v1/insights/trend` | `lwa_api_insights_trend` | Trends query with documented definitions (bearer token, `read`) |
 | `GET /web-analytics/api/v1/insights/funnel` | `lwa_api_insights_funnel` | Ordered per-user funnel with documented rates (bearer token, `read`) |
+| `GET /web-analytics/api/v1/insights/retention` | `lwa_api_insights_retention` | Cohort retention and lifecycle with documented rates (bearer token, `read`) |
+| `GET /web-analytics/api/v1/insights/paths` | `lwa_api_insights_paths` | Per-user event paths and step distribution (bearer token, `read`) |
 | `GET /web-analytics/api/v1/insights` | `lwa_api_insights` | List saved reports (bearer token, `read`) |
 | `POST /web-analytics/api/v1/insights` | `lwa_api_insights_store` | Save a report (bearer token, `admin`) |
 | `GET /web-analytics/api/v1/insights/{insight}` | `lwa_api_insights_show` | Show a report (bearer token, `read`) |
