@@ -7,10 +7,14 @@ use Nafiur\WebAnalytics\Http\Controllers\FunnelsController;
 use Nafiur\WebAnalytics\Http\Controllers\PathsController;
 use Nafiur\WebAnalytics\Http\Controllers\ReplayBundleController;
 use Nafiur\WebAnalytics\Http\Controllers\ReplayController;
+use Nafiur\WebAnalytics\Http\Controllers\ReplayPlayerBundleController;
+use Nafiur\WebAnalytics\Http\Controllers\ReplayPlayerController;
 use Nafiur\WebAnalytics\Http\Controllers\RetentionController;
 use Nafiur\WebAnalytics\Http\Controllers\SdkController;
 use Nafiur\WebAnalytics\Http\Controllers\TrendsController;
 use Nafiur\WebAnalytics\Http\Controllers\WebAnalyticsController;
+
+$replayGate = 'can:' . config('laravel-web-analytics.replay.gate', 'viewLwaReplay');
 
 Route::get('/', [WebAnalyticsController::class, 'index'])->name('lwa_dashboard');
 Route::get('/index', [WebAnalyticsController::class, 'index'])->name('lwa_index');
@@ -19,9 +23,21 @@ Route::get('/stream', [WebAnalyticsController::class, 'stream'])->name('lwa_stre
 Route::get('/export', [WebAnalyticsController::class, 'export'])->name('lwa_export');
 Route::get('/sdk.js', [SdkController::class, '__invoke'])->name('lwa_sdk');
 Route::get('/replay.js', [ReplayBundleController::class, '__invoke'])->name('lwa_replay_bundle');
+Route::get('/replay-player.js', [ReplayPlayerBundleController::class, '__invoke'])
+    ->middleware($replayGate)
+    ->name('lwa_replay_player_bundle');
 Route::get('/replay', [ReplayController::class, 'index'])
-    ->middleware('can:' . config('laravel-web-analytics.replay.gate', 'viewLwaReplay'))
+    ->middleware($replayGate)
     ->name('lwa_replay');
+Route::get('/replay/{replaySession}/manifest', [ReplayPlayerController::class, 'manifest'])
+    ->middleware($replayGate)
+    ->name('lwa_replay_manifest');
+Route::get('/replay/{replaySession}/chunk/{sequence}', [ReplayPlayerController::class, 'chunk'])
+    ->middleware($replayGate)
+    ->name('lwa_replay_chunk');
+Route::get('/replay/{replaySession}', [ReplayPlayerController::class, 'show'])
+    ->middleware($replayGate)
+    ->name('lwa_replay_show');
 Route::get('/explorer', [EventExplorerController::class, 'index'])->name('lwa_explorer');
 Route::get('/trends', [TrendsController::class, 'index'])->name('lwa_trends');
 Route::post('/trends/save', [TrendsController::class, 'save'])->name('lwa_trends_save');

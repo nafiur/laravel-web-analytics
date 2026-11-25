@@ -26,6 +26,7 @@ class ReplayTest extends TestCase
         parent::setUp();
 
         Storage::fake('replay');
+        Gate::define('viewLwaReplay', fn ($user = null) => true);
         config()->set('laravel-web-analytics.replay.enabled', true);
         config()->set('laravel-web-analytics.replay.disk', 'replay');
         config()->set('laravel-web-analytics.replay.consent.replay', true);
@@ -219,5 +220,58 @@ class ReplayTest extends TestCase
 
         config()->set('laravel-web-analytics.replay.enabled', false);
         $this->get(route('lwa_replay'))->assertNotFound();
+    }
+
+    public function test_player_bundle_is_served_only_for_authorized_viewers(): void
+    {
+        $this->get(route('lwa_replay_player_bundle'))
+            ->assertOk()
+            ->assertHeader('Content-Type', 'application/javascript; charset=utf-8')
+            ->assertSee('LWA_REPLAY_PLAYER_READY', false);
+
+        Gate::define('viewLwaReplay', fn ($user = null) => false);
+        $this->get(route('lwa_replay_player_bundle'))->assertStatus(403);
+    }
+
+    public function test_manifest_and_chunk_views_are_scoped_and_gated(): void
+    {
+        $response = $this->postJson(route('lwa_api_replay_chunks'), $this->chunkPayload($this->token()));
+        $response->assertStatus(202);
+        $session = ReplaySession::firstOrFail();
+
+        $this->get(route('lwa_replay_show', $session->id))
+            ->assertOk()
+            ->assertSee('Replay ' . $this->sessionKey)
+            ->assertSee(route('lwa_replay_manifest', $session->id), false);
+
+        $this->getJson(route('lwa_replay_manifest', $session->id))
+            ->assertOk()
+            ->assertJsonPath('session.session_key', $this->sessionKey)
+            ->assertJsonPath('chunks.0.sequence', 1)
+            ->assertJsonPath('markers.0.type', 'click')
+            ->assertHeader('Cache-Control', 'no-store, private');
+
+        $this->get(route('lwa_replay_chunk', [$session->id, 1]))
+            ->assertOk()
+            ->assertHeader('Content-Type', 'application/json')
+            ->assertHeader('Cache-Control', 'no-store, private')
+            ->assertSee('{"events":[]}', false);
+
+        $other = Website::create([
+            'name'        => 'Other',
+            'domain'      => 'other.test',
+            'tracking_id' => 'trk_other',
+        ]);
+        config()->set('laravel-web-analytics.analytics.website_id', $other->id);
+
+        $this->get(route('lwa_replay_show', $session->id))->assertNotFound();
+        $this->getJson(route('lwa_replay_manifest', $session->id))->assertNotFound();
+        $this->get(route('lwa_replay_chunk', [$session->id, 1]))->assertNotFound();
+
+        Gate::define('viewLwaReplay', fn ($user = null) => false);
+        config()->set('laravel-web-analytics.analytics.website_id', $this->websiteId);
+        $this->get(route('lwa_replay_show', $session->id))->assertStatus(403);
+        $this->getJson(route('lwa_replay_manifest', $session->id))->assertStatus(403);
+        $this->get(route('lwa_replay_chunk', [$session->id, 1]))->assertStatus(403);
     }
 }

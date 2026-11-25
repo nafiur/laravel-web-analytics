@@ -42,7 +42,10 @@
                     <tbody>
                         @foreach($sessions as $session)
                             <tr>
-                                <td class="font-mono">{{ $session->session_key }}</td>
+                                <td class="font-mono">
+                                    <a href="{{ route('lwa_replay_show', $session->id) }}" style="color: var(--lwa-accent)" class="hover:underline">Play</a>
+                                    <span class="ml-2">{{ $session->session_key }}</span>
+                                </td>
                                 <td class="font-mono">{{ $session->user_id ?? '—' }}</td>
                                 <td>{{ $session->started_at?->format('Y-m-d H:i:s') ?? '—' }}</td>
                                 <td>{{ number_format($session->duration_ms / 1000, 1) }}s</td>
@@ -54,7 +57,7 @@
                     </tbody>
                 </table>
             </div>
-            <p class="lwa-subtitle mt-3">Playback is the next replay increment; this foundation stores and indexes chunks only.</p>
+            <p class="lwa-subtitle mt-3">Playback shows stored snapshots and bounded markers; it is not a full-fidelity DOM replay.</p>
         @endif
     </div>
 @endsection

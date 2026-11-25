@@ -181,7 +181,9 @@ Session replay is disabled by default and must be explicitly consented to. Enabl
 
 The directive emits a signed, expiring config object plus a deferred, build-free recorder bundle served from `/web-analytics/replay.js`. The recorder starts only when replay consent is granted (`WEB_ANALYTICS_REPLAY_CONSENT=true`, or set `laravel-web-analytics.replay.consent.replay` at runtime after your consent UI), the visitor is eligible (guests are excluded unless `WEB_ANALYTICS_REPLAY_RECORD_GUESTS=true`), and the page path is not excluded. Before upload, the recorder removes every input value, empties `[data-lwa-mask]` nodes, strips framework state attributes such as `wire:snapshot`, and records only structural target metadata — never input text.
 
-Chunks are uploaded to `POST /web-analytics/api/v1/replay/chunks` with the signed token; no session cookie, CSRF token or secret bearer token is required. The server stores chunks verbatim on the configured Laravel disk and indexes them in `lwa_replay_sessions`, `lwa_replay_chunks`, `lwa_replay_markers` and `lwa_replay_assets`. Website and tenant scope come from the signed token, never client input. Run `php artisan lwa:replay:prune` daily to enforce the 30-day default retention. `/web-analytics/replay` lists indexed sessions behind the configurable gate; playback is the next replay increment.
+Chunks are uploaded to `POST /web-analytics/api/v1/replay/chunks` with the signed token; no session cookie, CSRF token or secret bearer token is required. The server stores chunks verbatim on the configured Laravel disk and indexes them in `lwa_replay_sessions`, `lwa_replay_chunks`, `lwa_replay_markers` and `lwa_replay_assets`. Website and tenant scope come from the signed token, never client input. Run `php artisan lwa:replay:prune` daily to enforce the 30-day default retention.
+
+`/web-analytics/replay` lists indexed sessions behind the configurable gate. **Play** opens `/web-analytics/replay/{session}`, whose deferred player fetches a gated manifest and chunk routes, decompresses chunks in the browser and renders sanitized snapshots in a script-disabled sandbox with a timeline and marker list. Every playback and asset request re-checks the gate and the session's website/tenant scope. This is minimal playback, not full-fidelity DOM patching; heatmaps and rage/dead-click analytics remain open.
 
 ## 🎨 Design System
 
@@ -321,6 +323,10 @@ The package defines routes with the `lwa_` prefix to avoid conflicts with your a
 | `GET /web-analytics/sdk.js` | `lwa_sdk` | Browser tracker bundle (when enabled) |
 | `GET /web-analytics/replay.js` | `lwa_replay_bundle` | Replay recorder bundle (when enabled) |
 | `GET /web-analytics/replay` | `lwa_replay` | Gated replay session index (foundation) |
+| `GET /web-analytics/replay/{id}` | `lwa_replay_show` | Gated minimal replay player |
+| `GET /web-analytics/replay/{id}/manifest` | `lwa_replay_manifest` | Gated chunk/marker manifest |
+| `GET /web-analytics/replay/{id}/chunk/{sequence}` | `lwa_replay_chunk` | Gated verbatim chunk download |
+| `GET /web-analytics/replay-player.js` | `lwa_replay_player_bundle` | Deferred player bundle (gated) |
 | `GET /web-analytics/api/v1/summary` | `lwa_api_summary` | JSON summary (bearer token, `read`) |
 | `GET /web-analytics/api/v1/timeseries` | `lwa_api_timeseries` | JSON time series (bearer token, `read`) |
 | `POST /web-analytics/api/v1/events` | `lwa_api_event` | Track a custom event (bearer token, `write`) |
