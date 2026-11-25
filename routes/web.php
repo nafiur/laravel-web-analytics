@@ -5,6 +5,8 @@ use Nafiur\WebAnalytics\Http\Controllers\DashboardController;
 use Nafiur\WebAnalytics\Http\Controllers\EventExplorerController;
 use Nafiur\WebAnalytics\Http\Controllers\FunnelsController;
 use Nafiur\WebAnalytics\Http\Controllers\PathsController;
+use Nafiur\WebAnalytics\Http\Controllers\ReplayBundleController;
+use Nafiur\WebAnalytics\Http\Controllers\ReplayController;
 use Nafiur\WebAnalytics\Http\Controllers\RetentionController;
 use Nafiur\WebAnalytics\Http\Controllers\SdkController;
 use Nafiur\WebAnalytics\Http\Controllers\TrendsController;
@@ -16,6 +18,10 @@ Route::get('/data', [WebAnalyticsController::class, 'data'])->name('lwa_data');
 Route::get('/stream', [WebAnalyticsController::class, 'stream'])->name('lwa_stream');
 Route::get('/export', [WebAnalyticsController::class, 'export'])->name('lwa_export');
 Route::get('/sdk.js', [SdkController::class, '__invoke'])->name('lwa_sdk');
+Route::get('/replay.js', [ReplayBundleController::class, '__invoke'])->name('lwa_replay_bundle');
+Route::get('/replay', [ReplayController::class, 'index'])
+    ->middleware('can:' . config('laravel-web-analytics.replay.gate', 'viewLwaReplay'))
+    ->name('lwa_replay');
 Route::get('/explorer', [EventExplorerController::class, 'index'])->name('lwa_explorer');
 Route::get('/trends', [TrendsController::class, 'index'])->name('lwa_trends');
 Route::post('/trends/save', [TrendsController::class, 'save'])->name('lwa_trends_save');

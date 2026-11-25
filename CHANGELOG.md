@@ -4,6 +4,10 @@ All notable changes to this project are documented here. The format is based on 
 
 ## [Unreleased]
 
+### Added
+
+- **Session replay foundation (v3.4, opt-in)** — new `@lwaReplay` Blade directive, build-free `/web-analytics/replay.js` recorder and `lwa:replay:prune` retention command. Recorder consent is separate from analytics consent, guests are not recorded by default, every input value and `[data-lwa-mask]` node is removed before upload, framework state attributes are stripped, and path selectors can exclude sensitive pages. Uploads use an expiring HMAC-signed config token, are stored verbatim on a Laravel disk, and are indexed in website/tenant-scoped `lwa_replay_sessions` / `chunks` / `markers` / `assets` tables. The `/web-analytics/replay` list is gated by a configurable `viewLwaReplay` gate; playback is not yet part of this increment.
+
 ## [3.3.0] - 2026-11-25
 
 ### Added

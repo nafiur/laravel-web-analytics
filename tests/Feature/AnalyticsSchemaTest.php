@@ -17,6 +17,7 @@ class AnalyticsSchemaTest extends TestCase
         foreach ([
             'lwa_websites', 'lwa_visitors', 'lwa_sessions', 'lwa_pageviews',
             'lwa_events', 'lwa_hourly_stats', 'lwa_daily_stats', 'lwa_upgrade_checkpoints',
+            'lwa_replay_sessions', 'lwa_replay_chunks', 'lwa_replay_markers', 'lwa_replay_assets',
         ] as $table) {
             $this->assertTrue(Schema::hasTable($table), "Missing table {$table}");
         }

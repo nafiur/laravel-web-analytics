@@ -13,7 +13,7 @@ A modern, fast, and self-hosted Web Traffic & Visitor Analytics Dashboard for La
 ## ⚡ Highlights & Key Features
 
 - 🚀 **Real-Time Live Stream (SSE)**: Live active visitor count and instant real-time traffic feed without WebSockets, Node.js, or Pusher. Each stream response is short-lived and paced by EventSource, so no PHP worker is held open while waiting for new traffic.
-- 🧭 **Sidebar Navigation**: 20 sidebar links — Overview, Real-time, Logs, Dashboards, Visitors, Traffic Sources, Pages & Screens, Geography, Devices & Browsers, Campaigns, Funnels, Retention, User Paths, Trends, Event Explorer, Events & Goals, Conversions, Performance, Error Monitoring and Settings. Each has its own bookmarkable route and Blade page; the Settings screen has no analytics tab bar.
+- 🧭 **Sidebar Navigation**: 20 sidebar links — Overview, Real-time, Logs, Dashboards, Visitors, Traffic Sources, Pages & Screens, Geography, Devices & Browsers, Campaigns, Funnels, Retention, User Paths, Trends, Event Explorer, Events & Goals, Conversions, Performance, Error Monitoring and Settings. An optional 21st Session Replay link appears only when replay is enabled and the configured gate allows it. Each has its own bookmarkable route and Blade page; the Settings screen has no analytics tab bar.
 - 🎨 **Tailwind CSS UI with Dark Mode**: Modern, responsive dashboard powered by Tailwind CSS Play CDN (zero build step / zero npm dependencies). Uses CSS design tokens (`--lwa-*`, `[data-theme="dark"]`), Lucide outline icons, visible focus states, skeleton loaders, explicit empty/error states, and a 1-click persistent Dark/Light/System preference.
 - 📊 **Comprehensive Metrics**: Total Requests, Unique Visitors, Bandwidth (Data Transferred in GB/MB), Avg Response Time, Error Rate.
 - 🧪 **Built-In Live Traffic Simulator**: Easily generate realistic live traffic every second with `php artisan lwa:live` to demo and test live streaming.
@@ -169,6 +169,20 @@ Open a dashboard in edit mode to see a **Saved insights** section next to the st
 
 This is separate from the **Add to dashboard** card-menu action, which pins browser-local report shortcuts into Overview via `localStorage`. Only reports placed through the dashboard editor are saved in `lwa_dashboards` and shared across browsers.
 
+### Session replay foundation (v3.4, opt-in)
+
+Session replay is disabled by default and must be explicitly consented to. Enable the recorder with `WEB_ANALYTICS_REPLAY_ENABLED=true`, define the `viewLwaReplay` gate in your app, and place the directive in the layouts where recording is allowed:
+
+```blade
+@if (config('laravel-web-analytics.replay.enabled'))
+    @lwaReplay
+@endif
+```
+
+The directive emits a signed, expiring config object plus a deferred, build-free recorder bundle served from `/web-analytics/replay.js`. The recorder starts only when replay consent is granted (`WEB_ANALYTICS_REPLAY_CONSENT=true`, or set `laravel-web-analytics.replay.consent.replay` at runtime after your consent UI), the visitor is eligible (guests are excluded unless `WEB_ANALYTICS_REPLAY_RECORD_GUESTS=true`), and the page path is not excluded. Before upload, the recorder removes every input value, empties `[data-lwa-mask]` nodes, strips framework state attributes such as `wire:snapshot`, and records only structural target metadata — never input text.
+
+Chunks are uploaded to `POST /web-analytics/api/v1/replay/chunks` with the signed token; no session cookie, CSRF token or secret bearer token is required. The server stores chunks verbatim on the configured Laravel disk and indexes them in `lwa_replay_sessions`, `lwa_replay_chunks`, `lwa_replay_markers` and `lwa_replay_assets`. Website and tenant scope come from the signed token, never client input. Run `php artisan lwa:replay:prune` daily to enforce the 30-day default retention. `/web-analytics/replay` lists indexed sessions behind the configurable gate; playback is the next replay increment.
+
 ## 🎨 Design System
 
 | Topic | Choice |
@@ -304,10 +318,14 @@ The package defines routes with the `lwa_` prefix to avoid conflicts with your a
 | `GET /web-analytics/dashboards` | `lwa_dashboards` | Custom dashboard list and create modal |
 | `GET /web-analytics/dashboards/{id}` | `lwa_dashboard_view` | Read-only custom dashboard |
 | `GET /web-analytics/dashboards/{id}/edit` | `lwa_dashboard_edit` | Custom dashboard editor |
+| `GET /web-analytics/sdk.js` | `lwa_sdk` | Browser tracker bundle (when enabled) |
+| `GET /web-analytics/replay.js` | `lwa_replay_bundle` | Replay recorder bundle (when enabled) |
+| `GET /web-analytics/replay` | `lwa_replay` | Gated replay session index (foundation) |
 | `GET /web-analytics/api/v1/summary` | `lwa_api_summary` | JSON summary (bearer token, `read`) |
 | `GET /web-analytics/api/v1/timeseries` | `lwa_api_timeseries` | JSON time series (bearer token, `read`) |
 | `POST /web-analytics/api/v1/events` | `lwa_api_event` | Track a custom event (bearer token, `write`) |
 | `POST /web-analytics/api/v1/events/batch` | `lwa_api_events_batch` | Batch ingest (project key or bearer token, `write`) |
+| `POST /web-analytics/api/v1/replay/chunks` | `lwa_api_replay_chunks` | Replay chunk ingest (HMAC-signed config token) |
 | `GET /web-analytics/api/v1/users` | `lwa_api_users` | List user profiles (bearer token, `read`) |
 | `GET /web-analytics/api/v1/users/{distinctId}` | `lwa_api_user` | Profile, aliases and timeline (bearer token, `read`) |
 | `GET /web-analytics/api/v1/insights/trend` | `lwa_api_insights_trend` | Trends query with documented definitions (bearer token, `read`) |
@@ -655,6 +673,26 @@ return [
         ],
         'max_properties'  => 20,
         'max_batch_bytes' => 65536,
+    ],
+
+    /*
+     * Session replay (v3.4 foundation). Opt-in, masked, consent-gated.
+     */
+    'replay' => [
+        'enabled'           => env('WEB_ANALYTICS_REPLAY_ENABLED', false),
+        'gate'              => env('WEB_ANALYTICS_REPLAY_GATE', 'viewLwaReplay'),
+        'sample_rate'       => (float) env('WEB_ANALYTICS_REPLAY_SAMPLE_RATE', 0),
+        'record_guests'     => env('WEB_ANALYTICS_REPLAY_RECORD_GUESTS', false),
+        'consent'           => ['replay' => env('WEB_ANALYTICS_REPLAY_CONSENT', false)],
+        'mask_all_inputs'   => env('WEB_ANALYTICS_REPLAY_MASK_INPUTS', true),
+        'masked_selectors'  => ['[data-lwa-mask]', 'input[type="password"]', 'input[type="email"]'],
+        'excluded_paths'    => ['web-analytics/*', 'admin/*', 'livewire/*', 'broadcasting/auth'],
+        'retention_days'    => (int) env('WEB_ANALYTICS_REPLAY_RETENTION_DAYS', 30),
+        'max_chunk_bytes'   => (int) env('WEB_ANALYTICS_REPLAY_MAX_CHUNK_BYTES', 1000000),
+        'flush_interval_ms' => (int) env('WEB_ANALYTICS_REPLAY_FLUSH_MS', 5000),
+        'signature_ttl_minutes' => (int) env('WEB_ANALYTICS_REPLAY_SIGNATURE_TTL', 15),
+        'disk'              => env('WEB_ANALYTICS_REPLAY_DISK'),
+        'endpoint'          => env('WEB_ANALYTICS_REPLAY_ENDPOINT', '/web-analytics/api/v1/replay/chunks'),
     ],
 
     'settings' => [

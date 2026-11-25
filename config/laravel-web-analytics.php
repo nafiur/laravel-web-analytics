@@ -243,6 +243,48 @@ return [
 
     /*
     |--------------------------------------------------------------------------
+    | Session Replay (v3.4 foundation)
+    |--------------------------------------------------------------------------
+    |
+    | Replay is opt-in and privacy-first: disabled by default, guests are not
+    | recorded by default, every input is masked, and recording only starts
+    | when the host page grants the separate replay consent. Chunks are stored
+    | verbatim on a Laravel disk; the server never parses replay event payloads.
+    |
+    */
+    'replay'                => [
+        'enabled'         => env('WEB_ANALYTICS_REPLAY_ENABLED', false),
+        'gate'            => env('WEB_ANALYTICS_REPLAY_GATE', 'viewLwaReplay'),
+        'sample_rate'     => (float) env('WEB_ANALYTICS_REPLAY_SAMPLE_RATE', 0),
+        'record_guests'   => env('WEB_ANALYTICS_REPLAY_RECORD_GUESTS', false),
+        'consent'         => [
+            'replay' => env('WEB_ANALYTICS_REPLAY_CONSENT', false),
+        ],
+        'mask_all_inputs' => env('WEB_ANALYTICS_REPLAY_MASK_INPUTS', true),
+        'masked_selectors' => [
+            '[data-lwa-mask]',
+            'input[type="password"]',
+            'input[type="email"]',
+            '[autocomplete="cc-number"]',
+            '[autocomplete="cc-csc"]',
+        ],
+        'excluded_paths'  => [
+            'web-analytics/*',
+            'admin/*',
+            'livewire/*',
+            'broadcasting/auth',
+        ],
+        'retention_days'  => (int) env('WEB_ANALYTICS_REPLAY_RETENTION_DAYS', 30),
+        'max_chunk_bytes' => (int) env('WEB_ANALYTICS_REPLAY_MAX_CHUNK_BYTES', 1000000),
+        'max_markers'     => 25,
+        'flush_interval_ms' => (int) env('WEB_ANALYTICS_REPLAY_FLUSH_MS', 5000),
+        'signature_ttl_minutes' => (int) env('WEB_ANALYTICS_REPLAY_SIGNATURE_TTL', 15),
+        'disk'            => env('WEB_ANALYTICS_REPLAY_DISK'),
+        'endpoint'        => env('WEB_ANALYTICS_REPLAY_ENDPOINT', '/web-analytics/api/v1/replay/chunks'),
+    ],
+
+    /*
+    |--------------------------------------------------------------------------
     | Settings Page
     |--------------------------------------------------------------------------
     |

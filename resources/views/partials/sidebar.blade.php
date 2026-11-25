@@ -83,6 +83,13 @@
                         <i data-lucide="scan-search" class="text-sm"></i> <span class="sidebar-label">Event Explorer</span>
                     </a>
 
+                    @if(config('laravel-web-analytics.replay.enabled') && app(\Illuminate\Contracts\Auth\Access\Gate::class)->allows(config('laravel-web-analytics.replay.gate')))
+                        <a href="{{ route('lwa_replay') }}"
+                           class="sidebar-link {{ $current === 'replay' ? 'active' : '' }}">
+                            <i data-lucide="circle-dot" class="text-sm"></i> <span class="sidebar-label">Session Replay</span>
+                        </a>
+                    @endif
+
                     <a href="{{ route('lwa_events') }}"
                        class="sidebar-link is-disabled {{ $current === 'events' ? 'active' : '' }}"
                        title="Requires custom event tracking">

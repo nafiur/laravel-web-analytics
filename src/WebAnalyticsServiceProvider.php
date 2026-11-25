@@ -4,6 +4,7 @@ namespace Nafiur\WebAnalytics;
 
 use Illuminate\Cache\RateLimiting\Limit;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Blade;
 use Illuminate\Support\Facades\RateLimiter;
 use Illuminate\Support\ServiceProvider;
 use Illuminate\Support\Facades\Route;
@@ -13,6 +14,8 @@ use Nafiur\WebAnalytics\Contracts\StorageDriver;
 use Nafiur\WebAnalytics\Services\AnalyticsCollector;
 use Nafiur\WebAnalytics\Services\EloquentEventStore;
 use Nafiur\WebAnalytics\Services\EloquentStorageDriver;
+use Nafiur\WebAnalytics\Services\ReplayEmbed;
+use Nafiur\WebAnalytics\Services\ReplaySigner;
 
 class WebAnalyticsServiceProvider extends ServiceProvider
 {
@@ -29,6 +32,8 @@ class WebAnalyticsServiceProvider extends ServiceProvider
         $this->app->bind(Collector::class, AnalyticsCollector::class);
         $this->app->bind(EventStore::class, EloquentEventStore::class);
         $this->app->singleton('lwa.analytics', \Nafiur\WebAnalytics\Services\AnalyticsManager::class);
+        $this->app->singleton(ReplaySigner::class);
+        $this->app->singleton(ReplayEmbed::class);
     }
 
     /**
@@ -49,6 +54,7 @@ class WebAnalyticsServiceProvider extends ServiceProvider
             \Nafiur\WebAnalytics\Commands\DoctorCommand::class,
             \Nafiur\WebAnalytics\Commands\GeoIpSetupCommand::class,
             \Nafiur\WebAnalytics\Commands\ApiTokenCommand::class,
+            \Nafiur\WebAnalytics\Commands\ReplayPruneCommand::class,
         ]);
 
         // Publish Configuration
@@ -70,6 +76,12 @@ class WebAnalyticsServiceProvider extends ServiceProvider
         // Load Views (support both 'web-analytics' and 'laravel-web-analytics' namespaces)
         $this->loadViewsFrom(__DIR__ . '/../resources/views', 'web-analytics');
         $this->loadViewsFrom(__DIR__ . '/../resources/views', 'laravel-web-analytics');
+
+        // Host layouts opt into replay with @lwaReplay. No recorder markup is
+        // emitted until config, APP_KEY and consent checks pass.
+        Blade::directive('lwaReplay', function () {
+            return '<?php echo app(\\Nafiur\\WebAnalytics\\Services\\ReplayEmbed::class)->render(); ?>';
+        });
 
         // Register Routes
         $this->registerRoutes();
@@ -96,6 +108,7 @@ class WebAnalyticsServiceProvider extends ServiceProvider
     {
         $this->app['router']->aliasMiddleware('lwa.api', \Nafiur\WebAnalytics\Http\Middleware\AuthenticateApiToken::class);
         $this->app['router']->aliasMiddleware('lwa.ingest', \Nafiur\WebAnalytics\Http\Middleware\AuthenticateIngest::class);
+        $this->app['router']->aliasMiddleware('lwa.replay.ingest', \Nafiur\WebAnalytics\Http\Middleware\AuthenticateReplayIngest::class);
         $this->app['router']->aliasMiddleware('lwa.schema', \Nafiur\WebAnalytics\Http\Middleware\EnsureAnalyticsSchema::class);
 
         RateLimiter::for('lwa.api', function (Request $request) {
