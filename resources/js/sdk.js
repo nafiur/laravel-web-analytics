@@ -17,6 +17,7 @@
         key: '',
         consent: { analytics: true },
         autocapture: false,
+        web_vitals: false,
         max_properties: 20,
         max_batch_bytes: 65536,
         masked_selectors: ['input[type=password]', '[data-lwa-mask]']
@@ -197,6 +198,46 @@
                 target = target.parentNode;
             }
         });
+
+        global.document.addEventListener('submit', function (event) {
+            var form = event.target;
+            if (form && form.getAttribute && form.getAttribute('data-lwa-track')) {
+                track(form.getAttribute('data-lwa-track'), {
+                    path: global.location ? global.location.pathname : '/'
+                }, null);
+            }
+        });
+    }
+
+    /**
+     * Web Vitals are opt-in: they emit numeric values only, never form data.
+     * Uses the browser PerformanceObserver API when available.
+     */
+    function bindWebVitals() {
+        if (!config.web_vitals || !global.PerformanceObserver) { return; }
+
+        var report = function (name, value) {
+            if (typeof value === 'number' && isFinite(value)) {
+                track('web_vital', { metric: name, value: Math.round(value * 1000) / 1000 }, null);
+            }
+        };
+
+        try {
+            var lcp = new global.PerformanceObserver(function (list) {
+                var entries = list.getEntries();
+                report('lcp', entries[entries.length - 1].startTime);
+            });
+            lcp.observe({ type: 'largest-contentful-paint', buffered: true });
+
+            var cls = new global.PerformanceObserver(function (list) {
+                var total = 0;
+                list.getEntries().forEach(function (entry) {
+                    if (!entry.hadRecentInput) { total += entry.value; }
+                });
+                report('cls', total);
+            });
+            cls.observe({ type: 'layout-shift', buffered: true });
+        } catch (e) { /* browser without support — metrics stay disabled */ }
     }
 
     var api = {
@@ -204,6 +245,7 @@
             config = Object.assign({}, DEFAULTS, options || {});
             queue = [];
             bindAutocapture();
+            bindWebVitals();
             return api;
         },
         track: track,

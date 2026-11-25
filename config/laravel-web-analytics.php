@@ -233,6 +233,7 @@ return [
         'enabled'         => env('WEB_ANALYTICS_SDK_ENABLED', false),
         'endpoint'        => env('WEB_ANALYTICS_SDK_ENDPOINT', '/web-analytics/api/v1/events/batch'),
         'autocapture'     => env('WEB_ANALYTICS_SDK_AUTOCAPTURE', false),
+        'web_vitals'      => env('WEB_ANALYTICS_SDK_WEB_VITALS', false),
         'consent'         => [
             'analytics' => env('WEB_ANALYTICS_SDK_CONSENT_ANALYTICS', true),
         ],

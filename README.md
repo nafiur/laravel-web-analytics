@@ -127,7 +127,7 @@ The package now ships a dependency-free browser tracker and a unified event pipe
 @if (config('laravel-web-analytics.sdk.enabled'))
     <script src="{{ route('lwa_sdk') }}"></script>
     <script>
-        LwaWebAnalytics.init({ key: '{{ $website->tracking_id }}' });
+        LwaWebAnalytics.init({ key: '{{ $website->tracking_id }}', web_vitals: true });
         LwaWebAnalytics.track('purchase', { plan: 'pro' }, 1500);
         LwaWebAnalytics.identify(42, { plan: 'pro' });
         LwaWebAnalytics.pageview('/pricing');
