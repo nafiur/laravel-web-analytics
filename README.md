@@ -135,7 +135,7 @@ The package now ships a dependency-free browser tracker and a unified event pipe
 @endif
 ```
 
-Enable bundle serving with `WEB_ANALYTICS_SDK_ENABLED=true`. The SDK batches events into `POST /web-analytics/api/v1/events/batch` using `sendBeacon` (with `fetch` fallback) and authenticates with the public project key — no secret token is shipped to the browser. Server-to-server callers can still use a `write` bearer token on the same endpoint. Payloads are validated, sanitised and deduplicated on `uuid`, so retries are safe.
+Enable bundle serving with `WEB_ANALYTICS_SDK_ENABLED=true`. Config defaults (`sdk.autocapture`, `sdk.web_vitals`, `sdk.consent`, `sdk.endpoint`, `sdk.max_*`) are injected into the served bundle; values passed to `LwaWebAnalytics.init({...})` override them per page. The SDK batches events into `POST /web-analytics/api/v1/events/batch` using `sendBeacon` (with `fetch` fallback) and authenticates with the public project key — no secret token is shipped to the browser. Server-to-server callers can still use a `write` bearer token on the same endpoint. Payloads are validated, sanitised and deduplicated on `uuid`, so retries are safe.
 
 `identify` aliases the current anonymous id to a known `u_<id>` profile, merges traits, and keeps pre-sign-in events in the same timeline. Browse the result at `/web-analytics/explorer`, or through the read-scoped REST endpoints `GET /users` and `GET /users/{distinctId}`.
 
@@ -588,6 +588,22 @@ return [
         'website_id'                  => env('WEB_ANALYTICS_WEBSITE_ID', null),
         'session_timeout_minutes'     => env('WEB_ANALYTICS_SESSION_TIMEOUT', 30),
         'bounce_max_duration_seconds' => env('WEB_ANALYTICS_BOUNCE_MAX_SECONDS', 0),
+    ],
+
+    /*
+     * Browser SDK (served from /web-analytics/sdk.js when enabled).
+     * These are injected as defaults into the bundle; init(options) wins.
+     */
+    'sdk' => [
+        'enabled'         => env('WEB_ANALYTICS_SDK_ENABLED', false),
+        'endpoint'        => env('WEB_ANALYTICS_SDK_ENDPOINT', '/web-analytics/api/v1/events/batch'),
+        'autocapture'     => env('WEB_ANALYTICS_SDK_AUTOCAPTURE', false),
+        'web_vitals'      => env('WEB_ANALYTICS_SDK_WEB_VITALS', false),
+        'consent'         => [
+            'analytics' => env('WEB_ANALYTICS_SDK_CONSENT_ANALYTICS', true),
+        ],
+        'max_properties'  => 20,
+        'max_batch_bytes' => 65536,
     ],
 
     'settings' => [

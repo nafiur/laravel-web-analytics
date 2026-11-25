@@ -242,7 +242,7 @@
 
     var api = {
         init: function (options) {
-            config = Object.assign({}, DEFAULTS, options || {});
+            config = Object.assign({}, DEFAULTS, global.LWA_SDK_DEFAULTS || {}, options || {});
             queue = [];
             bindAutocapture();
             bindWebVitals();

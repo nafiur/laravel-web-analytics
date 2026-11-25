@@ -240,11 +240,17 @@ class AnalyticsTest extends TestCase
         $response->assertOk();
         $response->assertHeader('Content-Type', 'application/javascript; charset=utf-8');
         $response->assertHeader('Cache-Control', 'max-age=3600, public');
+        $response->assertSee('window.LWA_SDK_DEFAULTS', false);
+        $response->assertSee('"web_vitals":false', false);
+        $response->assertSee('LwaWebAnalytics', false);
 
-        $this->assertStringContainsString(
-            'LwaWebAnalytics',
-            file_get_contents(__DIR__ . '/../../resources/js/sdk.js'),
-        );
+        config()->set('laravel-web-analytics.sdk.web_vitals', true);
+        config()->set('laravel-web-analytics.sdk.autocapture', true);
+
+        $this->get('/web-analytics/sdk.js')
+            ->assertOk()
+            ->assertSee('"web_vitals":true', false)
+            ->assertSee('"autocapture":true', false);
     }
 
     public function test_overview_exposes_honest_engagement_metrics(): void
