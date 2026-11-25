@@ -8,8 +8,10 @@ use Illuminate\Support\Facades\RateLimiter;
 use Illuminate\Support\ServiceProvider;
 use Illuminate\Support\Facades\Route;
 use Nafiur\WebAnalytics\Contracts\Collector;
+use Nafiur\WebAnalytics\Contracts\EventStore;
 use Nafiur\WebAnalytics\Contracts\StorageDriver;
 use Nafiur\WebAnalytics\Services\AnalyticsCollector;
+use Nafiur\WebAnalytics\Services\EloquentEventStore;
 use Nafiur\WebAnalytics\Services\EloquentStorageDriver;
 
 class WebAnalyticsServiceProvider extends ServiceProvider
@@ -25,6 +27,7 @@ class WebAnalyticsServiceProvider extends ServiceProvider
 
         $this->app->bind(StorageDriver::class, EloquentStorageDriver::class);
         $this->app->bind(Collector::class, AnalyticsCollector::class);
+        $this->app->bind(EventStore::class, EloquentEventStore::class);
         $this->app->singleton('lwa.analytics', \Nafiur\WebAnalytics\Services\AnalyticsManager::class);
     }
 

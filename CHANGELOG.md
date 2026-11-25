@@ -7,6 +7,7 @@ All notable changes to this project are documented here. The format is based on 
 ### Added
 
 - **Unified event schema (v3.2 foundation)** — new `UnifiedEvent` value object and `UnifiedEventMapper` translate tracker events (PHP facade, JS SDK, REST, importer) onto a single envelope (`uuid`, `name`, `timestamp`, `distinct_id`, `anonymous_id`, `session_id`, `website_id`, `properties`, `context`, `value`, `created_at`). The collector now flows events through the mapper before persisting; property sanitisation and the 100-char event-name cap moved into the mapper. Tracker context (path, referrer, user agent, UTM) is carried on `EventData`. No breaking changes — legacy storage payloads keep working as the compatibility layer.
+- **EventStore abstraction (v3.2)** — `EventStore` contract plus a relational `EloquentEventStore` implementation (writes via the existing collector storage driver, queries/aggregates/prunes through the `lwa_events` model). Binding registered in the service provider; container now resolves `Nafiur\WebAnalytics\Contracts\EventStore`.
 - **Custom dashboards** — DB-backed `lwa_dashboards` table (website/tenant scoped) plus a Dashboards page with a create modal (blank or preset templates) and an editor that picks widgets from the existing catalog (KPIs, charts, breakdowns, visitors map, recent logs). Widgets can be added, removed, reordered and resized. Full CRUD is also exposed through the token-authenticated REST API with `read` / `admin` abilities.
 
 ### Changed
