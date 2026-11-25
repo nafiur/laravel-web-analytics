@@ -8,9 +8,9 @@
     $cardPinnable = $cardPinnable ?? true;
     $exportData = $exportData ?? $cardItems;
 @endphp
-<div class="lwa-surface border lwa-border rounded-lg p-4 shadow-sm lwa-breakdown-card" data-lwa-card data-card-id="{{ $cardId }}" data-mode="proportion">
-    <div class="flex items-start justify-between gap-2 mb-3">
-        <div class="text-xs font-semibold text-slate-800 dark:text-slate-200">{{ $cardTitle }}</div>
+<div class="lwa-card p-4 lwa-breakdown-card" data-lwa-card data-card-id="{{ $cardId }}" data-mode="proportion">
+    <div class="flex items-start justify-between gap-2 mb-2">
+        <div class="lwa-card-title">{{ $cardTitle }}</div>
         @include('web-analytics::partials.card-menu', [
             'cardId'          => $cardId,
             'exportData'      => $exportData,

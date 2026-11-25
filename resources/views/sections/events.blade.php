@@ -1,21 +1,26 @@
-                <div class="lwa-surface border lwa-border rounded-lg shadow-sm overflow-hidden">
+                <div>
+                    <h1 class="lwa-page-title">Events &amp; Goals</h1>
+                    <p class="lwa-subtitle mt-1">Custom events and goals collected from your application.</p>
+                </div>
+
+                <div class="lwa-card overflow-hidden">
                     <div class="p-4 border-b border-slate-100 dark:border-slate-800">
                         <div class="text-xs font-semibold text-slate-900 dark:text-white">{{ $title ?? 'Recent Events' }}</div>
-                        <p class="text-[11px] text-slate-400 mt-0.5">Collected via <code class="font-mono">Analytics::event()</code>, <code class="font-mono">Analytics::goal()</code> or the REST API</p>
+                        <p class="lwa-subtitle mt-0.5">Collected via <code class="font-mono">Analytics::event()</code>, <code class="font-mono">Analytics::goal()</code> or the REST API</p>
                     </div>
                     @if(empty($recentEvents))
                         <div class="px-4 py-10 text-center">
                             <div class="mx-auto w-10 h-10 rounded-full bg-slate-100 dark:bg-slate-800 flex items-center justify-center mb-3">
                                 <i data-lucide="target" class="text-lg text-amber-500"></i>
                             </div>
-                            <div class="text-xs font-semibold text-slate-800 dark:text-slate-200">No events recorded yet</div>
-                            <p class="text-[11px] text-slate-400 mt-1">Track one from your application:</p>
+                            <div class="lwa-card-title">No events recorded yet</div>
+                            <p class="lwa-subtitle mt-1">Track one from your application:</p>
                             <code class="inline-block mt-2 text-[11px] px-2 py-1 rounded bg-slate-50 dark:bg-slate-800 text-slate-600 dark:text-slate-300">Analytics::event('purchase', ['plan' =&gt; 'pro'], 1500);</code>
                         </div>
                     @else
                         <div class="overflow-x-auto">
-                            <table class="w-full text-xs text-left">
-                                <thead class="bg-slate-50 dark:bg-slate-800/60 text-slate-500 border-b lwa-border">
+                            <table class="w-full text-xs text-left lwa-table">
+                                <thead>
                                     <tr>
                                         <th class="py-2.5 px-4 font-semibold">Event</th>
                                         <th class="py-2.5 px-4 font-semibold">Properties</th>

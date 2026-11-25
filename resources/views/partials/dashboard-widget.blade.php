@@ -6,10 +6,10 @@
     $widgetWidth = max(3, min(12, (int) ($widget['w'] ?? 6)));
     $widgetSuffix = $widget['suffix'] ?? '';
 @endphp
-<div class="lwa-surface border lwa-border rounded-lg p-4 shadow-sm lwa-dashboard-widget @if($widgetType === 'kpi') lwa-kpi @endif"
+<div class="lwa-card p-4 lwa-dashboard-widget @if($widgetType === 'kpi') lwa-kpi @endif"
      data-dashboard-widget data-widget-id="{{ $widgetId }}" style="grid-column: span {{ $widgetWidth }}">
     <div class="flex items-start justify-between gap-2 mb-3">
-        <div class="text-xs font-semibold text-slate-800 dark:text-slate-200">{{ $widgetTitle }}</div>
+        <div class="lwa-card-title">{{ $widgetTitle }}</div>
         @if(!empty($editing))
             <div class="flex items-center gap-1 shrink-0">
                 <button type="button" data-widget-move="{{ $widgetId }}" data-direction="-1" class="p-1 rounded text-slate-400 hover:text-slate-700" aria-label="Move left"><i data-lucide="arrow-left" class="text-xs"></i></button>
@@ -21,10 +21,10 @@
     </div>
 
     @if($widgetType === 'kpi')
-        <div class="text-xl font-semibold text-slate-900 dark:text-white">
+        <div class="lwa-kpi-value">
             {{ $analytics['summary'][$widgetKey] ?? 0 }}{{ $widgetSuffix }}
         </div>
-        <div class="text-[11px] text-slate-400 mt-1">{{ str_replace('_', ' ', $widgetKey) }}</div>
+        <div class="lwa-subtitle mt-1">{{ str_replace('_', ' ', $widgetKey) }}</div>
 
     @elseif($widgetType === 'chart')
         @php
@@ -79,6 +79,7 @@
             'mapId'    => 'lwaWidgetMap-' . $widgetId,
             'title'    => '',
             'subtitle' => 'Approximate visitor locations',
+            'bare'     => true,
         ])
 
     @else

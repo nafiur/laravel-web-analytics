@@ -16,8 +16,8 @@
 
                   <div class="grid grid-cols-1 lg:grid-cols-[210px_minmax(0,1fr)] gap-4 items-start">
                       <!-- Field groups (filter picker) -->
-                      <aside class="lwa-surface border lwa-border rounded-lg shadow-sm overflow-hidden">
-                          <div class="px-3 py-2 border-b lwa-border text-[11px] font-semibold text-slate-500 dark:text-slate-400">Search fields...</div>
+                      <aside class="lwa-card overflow-hidden">
+                          <div class="px-3 py-2 border-b lwa-border lwa-section-label">Search fields</div>
                           @foreach($logFieldGroups as $groupLabel => $groupFields)
                               <details class="border-b lwa-border last:border-0">
                                   <summary class="px-3 py-2 text-xs font-medium text-slate-700 dark:text-slate-200 cursor-pointer hover:bg-slate-50 dark:hover:bg-slate-800/60 flex items-center justify-between">
@@ -39,15 +39,15 @@
                   <div class="space-y-4">
                      <div>
                          <h2 class="lwa-page-title">Logs</h2>
-                         <p class="text-[11px] text-slate-400 mt-0.5">Recorded HTTP requests — filter, inspect and export the raw rows in the selected range.</p>
+                         <p class="lwa-subtitle mt-0.5">Recorded HTTP requests — filter, inspect and export the raw rows in the selected range.</p>
                      </div>
 
                      <!-- Request outcomes over time -->
-                     <div class="lwa-surface border lwa-border rounded-lg p-4 shadow-sm">
+                     <div class="lwa-card p-4">
                          <div class="flex items-start justify-between gap-3">
                              <div>
-                                 <div class="text-xs font-semibold text-slate-800 dark:text-slate-200">Request outcomes over time</div>
-                                 <p class="text-[11px] text-slate-400 mt-0.5">Cache delivery breakdown for the selected period</p>
+                                 <div class="lwa-card-title">Request outcomes over time</div>
+                                 <p class="lwa-subtitle mt-0.5">Cache delivery breakdown for the selected period</p>
                              </div>
                              @include('web-analytics::partials.group-by-select', ['chartId' => 'chartLogOutcomes'])
                          </div>
@@ -62,7 +62,7 @@
                      </div>
 
                      <!-- Filters -->
-                     <form method="GET" action="{{ route('lwa_logs') }}" class="lwa-surface border lwa-border rounded-lg p-3 shadow-sm">
+                     <form method="GET" action="{{ route('lwa_logs') }}" class="lwa-card p-3">
                          @foreach(['range' => $timeRange ?? '24h', 'start_date' => $customStart ?? null, 'end_date' => $customEnd ?? null, 'source' => $source ?? 'database', 'tenant_id' => $tenantId ?? null] as $hiddenKey => $hiddenValue)
                              @if($hiddenValue !== null)
                                  <input type="hidden" name="{{ $hiddenKey }}" value="{{ $hiddenValue }}">
@@ -71,13 +71,13 @@
                          <div id="lwaLogFilterChips" class="flex flex-wrap gap-2 mb-2"></div>
                          <div class="flex flex-wrap items-center gap-2">
                              <input type="search" name="q" value="{{ $logFilters['q'] ?? '' }}" placeholder="Search path, URL, IP or user agent..."
-                                    class="flex-1 min-w-[240px] text-xs px-2.5 py-1.5 border border-slate-200 dark:border-slate-700 rounded-md bg-white dark:bg-slate-800 text-slate-700 dark:text-slate-200">
+                                    class="lwa-control flex-1 min-w-[240px]">
                              @foreach([
                                  'method' => ['Method', ['GET', 'POST', 'PUT', 'PATCH', 'DELETE']],
                                  'status' => ['Status', ['2xx', '3xx', '4xx', '5xx', '200', '301', '302', '404', '500']],
                                  'cache_status' => ['Cache', ['HIT', 'MISS', 'BYPASS', 'EXPIRED', 'Dynamic']],
                              ] as $field => [$label, $options])
-                                 <select name="{{ $field }}" class="text-xs px-2 py-1.5 border border-slate-200 dark:border-slate-700 rounded-md bg-white dark:bg-slate-800 text-slate-700 dark:text-slate-200">
+                                 <select name="{{ $field }}" class="lwa-control">
                                      <option value="">{{ $label }}: all</option>
                                      @foreach($options as $option)
                                          <option value="{{ $option }}" {{ ($logFilters[$field] ?? '') === $option ? 'selected' : '' }}>{{ $option }}</option>
@@ -85,23 +85,23 @@
                                  </select>
                              @endforeach
                              <input type="text" name="host" value="{{ $logFilters['host'] ?? '' }}" placeholder="Host"
-                                    class="w-32 text-xs px-2 py-1.5 border border-slate-200 dark:border-slate-700 rounded-md bg-white dark:bg-slate-800 text-slate-700 dark:text-slate-200">
+                                    class="lwa-control w-32">
                              <input type="text" name="path" value="{{ $logFilters['path'] ?? '' }}" placeholder="Path contains"
-                                    class="w-36 text-xs px-2 py-1.5 border border-slate-200 dark:border-slate-700 rounded-md bg-white dark:bg-slate-800 text-slate-700 dark:text-slate-200">
+                                    class="lwa-control w-36">
                              <input type="text" name="ip_address" value="{{ $logFilters['ip_address'] ?? '' }}" placeholder="Source IP"
-                                    class="w-32 text-xs px-2 py-1.5 border border-slate-200 dark:border-slate-700 rounded-md bg-white dark:bg-slate-800 text-slate-700 dark:text-slate-200">
+                                    class="lwa-control w-32">
                              <button type="submit"
-                                     class="px-3 py-1.5 text-xs font-semibold text-white bg-[#0051c3] hover:bg-[#003d94] lwa-btn-primary rounded-md">Apply</button>
+                                     class="lwa-btn-primary">Apply</button>
                              <button type="button" data-lwa-export-logs
-                                     class="px-3 py-1.5 text-xs font-medium text-slate-700 dark:text-slate-200 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-md">Export CSV</button>
+                                     class="lwa-btn">Export CSV</button>
                          </div>
                      </form>
 
                      <!-- Raw request table -->
-                     <div class="lwa-surface border lwa-border rounded-lg shadow-sm overflow-hidden">
+                     <div class="lwa-card overflow-hidden">
                          <div class="overflow-x-auto">
                              <table class="w-full text-xs lwa-table">
-                                 <thead class="bg-slate-50 dark:bg-slate-800/60 text-[11px] uppercase tracking-wide text-slate-400">
+                                 <thead>
                                      <tr>
                                          <th class="w-10"></th>
                                          @foreach($logColumns as $column)
@@ -121,7 +121,7 @@
                                              <td class="px-3 py-2"><span class="px-2 py-0.5 rounded font-mono font-bold bg-sky-50 text-sky-700 dark:bg-sky-950/40 dark:text-sky-300">{{ $row->method }}</span></td>
                                              <td class="px-3 py-2 font-mono text-slate-600 dark:text-slate-300 truncate max-w-[180px]" title="{{ $row->host }}">{{ $row->host ?: '-' }}</td>
                                              <td class="px-3 py-2 font-mono text-slate-700 dark:text-slate-200 truncate max-w-[300px]" title="{{ $row->path }}">{{ $row->path }}</td>
-                                             <td class="px-3 py-2"><span class="px-2 py-0.5 rounded font-mono {{ $row->status_code >= 400 ? 'bg-rose-50 text-rose-700 dark:bg-rose-950/40 dark:text-rose-300' : 'bg-emerald-50 text-emerald-700 dark:bg-emerald-950/40 dark:text-emerald-300' }}">{{ $row->status_code }}</span></td>
+                                             <td class="px-3 py-2"><span class="px-2 py-0.5 rounded font-mono {{ $row->status_code >= 500 ? 'bg-rose-50 text-rose-700 dark:bg-rose-950/40 dark:text-rose-300' : ($row->status_code >= 400 ? 'bg-amber-50 text-amber-700 dark:bg-amber-950/40 dark:text-amber-300' : ($row->status_code >= 300 ? 'bg-sky-50 text-sky-700 dark:bg-sky-950/40 dark:text-sky-300' : 'bg-emerald-50 text-emerald-700 dark:bg-emerald-950/40 dark:text-emerald-300')) }}">{{ $row->status_code }}</span></td>
                                              <td class="px-3 py-2 whitespace-nowrap text-slate-500 dark:text-slate-400">{{ $row->cache_status ?: '-' }}</td>
                                              <td class="px-3 py-2 font-mono text-slate-500 dark:text-slate-400">{{ $row->ip_address }}</td>
                                          </tr>
@@ -150,7 +150,7 @@
                          @endif
                          
                          @if(($source ?? 'database') === 'file')
-                             <div class="px-4 py-3 text-[11px] text-slate-400 border-t lwa-border">
+                             <div class="px-4 py-3 lwa-subtitle border-t lwa-border">
                                  Raw log rows are only available with the Database source. Switch the source selector to Database.
                              </div>
                          @endif

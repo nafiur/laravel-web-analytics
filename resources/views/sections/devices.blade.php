@@ -6,10 +6,10 @@
                          $deviceTotals[$deviceItem['name']] = array_sum($deviceItem['data'] ?? []);
                      }
                      $deviceColors = [
-                         'Desktop' => '#0051c3',
-                         'Mobile'  => '#f59e0b',
-                         'Tablet'  => '#8b5cf6',
-                         'Bot'     => '#94a3b8',
+                         'Desktop' => '#5b5bd6',
+                         'Mobile'  => '#e8a33d',
+                         'Tablet'  => '#8b6cf0',
+                         'Bot'     => '#9aa0aa',
                      ];
                      $breakdownTrends = $analytics['breakdown_trends'] ?? [];
                      $technologyExport = [
@@ -23,25 +23,25 @@
 
                  <div class="space-y-4">
                      <div>
-                         <h2 class="lwa-page-title">Technology</h2>
-                         <p class="text-[11px] text-slate-400 mt-0.5">Device, operating system and browser breakdowns for the selected period — {{ $timeRange ?? '24h' }}</p>
+                         <h2 class="lwa-page-title">Devices &amp; Browsers</h2>
+                         <p class="lwa-subtitle mt-0.5">Device, operating system and browser breakdowns for the selected period — {{ $timeRange ?? '24h' }}</p>
                      </div>
 
                      <div class="grid grid-cols-1 lg:grid-cols-2 gap-4">
                          <!-- Device types over time -->
-                         <div class="lwa-surface border lwa-border rounded-lg p-4 shadow-sm" data-lwa-card data-card-id="device-types-over-time">
+                         <div class="lwa-card p-4" data-lwa-card data-card-id="device-types-over-time">
                              <div class="flex items-start justify-between gap-3">
                                  <div class="min-w-0">
-                                     <div class="text-xs font-semibold text-slate-800 dark:text-slate-200">Device types over time</div>
+                                     <div class="lwa-card-title">Device types over time</div>
                                      <div class="flex flex-wrap gap-x-4 gap-y-1 mt-2">
                                          @forelse($deviceSeries as $deviceItem)
-                                             <div class="flex items-center gap-1.5 text-[11px] text-slate-500 dark:text-slate-400">
-                                                 <span class="w-2 h-2 rounded-full shrink-0" style="background: {{ $deviceColors[$deviceItem['name']] ?? '#0051c3' }}"></span>
+                                             <div class="flex items-center gap-1.5 lwa-subtitle">
+                                                 <span class="w-2 h-2 rounded-full shrink-0" style="background: {{ $deviceColors[$deviceItem['name']] ?? '#5b5bd6' }}"></span>
                                                  <span>{{ $deviceItem['name'] }}</span>
                                                  <span class="font-semibold text-slate-700 dark:text-slate-200">{{ number_format($deviceTotals[$deviceItem['name']] ?? 0) }}</span>
                                              </div>
                                          @empty
-                                             <span class="text-[11px] text-slate-400">No device data for this period</span>
+                                             <span class="lwa-subtitle">No device data for this period</span>
                                          @endforelse
                                      </div>
                                  </div>

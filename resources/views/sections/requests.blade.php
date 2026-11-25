@@ -2,12 +2,12 @@
                     <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-3.5">
                         <!-- Total requests -->
                         <div
-                            class="lwa-surface border lwa-border rounded-lg p-3.5 shadow-sm flex flex-col justify-between">
+                            class="lwa-card p-3.5 flex flex-col justify-between">
                             <div>
                                 <div class="text-[11px] font-medium text-slate-500 dark:text-slate-400"
                                     data-i18n="totalRequests">Total requests</div>
                                 <div class="flex items-baseline gap-2 mt-1">
-                                    <span class="text-2xl font-bold text-slate-900 dark:text-white"
+                                    <span class="lwa-kpi-value"
                                         id="kpiRequests">{{ $analytics['summary']['total_requests_fmt'] ?? '0' }}</span>
                                 </div>
                             </div>
@@ -16,12 +16,12 @@
 
                         <!-- Total data transfer -->
                         <div
-                            class="lwa-surface border lwa-border rounded-lg p-3.5 shadow-sm flex flex-col justify-between">
+                            class="lwa-card p-3.5 flex flex-col justify-between">
                             <div>
                                 <div class="text-[11px] font-medium text-slate-500 dark:text-slate-400"
                                     data-i18n="dataTransfer">Total data transfer</div>
                                 <div class="flex items-baseline gap-2 mt-1">
-                                    <span class="text-2xl font-bold text-slate-900 dark:text-white"
+                                    <span class="lwa-kpi-value"
                                         id="kpiBytes">{{ $analytics['summary']['total_bytes_fmt'] ?? '0 B' }}</span>
                                 </div>
                             </div>
@@ -30,12 +30,12 @@
 
                         <!-- Total visits -->
                         <div
-                            class="lwa-surface border lwa-border rounded-lg p-3.5 shadow-sm flex flex-col justify-between">
+                            class="lwa-card p-3.5 flex flex-col justify-between">
                             <div>
                                 <div class="text-[11px] font-medium text-slate-500 dark:text-slate-400"
                                     data-i18n="visits">Total visits</div>
                                 <div class="flex items-baseline gap-2 mt-1">
-                                    <span class="text-2xl font-bold text-slate-900 dark:text-white"
+                                    <span class="lwa-kpi-value"
                                         id="kpiVisits">{{ $analytics['summary']['unique_visitors_fmt'] ?? '0' }}</span>
                                 </div>
                             </div>
@@ -44,12 +44,12 @@
 
                         <!-- Cache hit / Success rate -->
                         <div
-                            class="lwa-surface border lwa-border rounded-lg p-3.5 shadow-sm flex flex-col justify-between">
+                            class="lwa-card p-3.5 flex flex-col justify-between">
                             <div>
                                 <div class="text-[11px] font-medium text-slate-500 dark:text-slate-400"
                                     data-i18n="successRate">Success rate (2xx)</div>
                                 <div class="flex items-baseline gap-2 mt-1">
-                                    <span class="text-2xl font-bold text-slate-900 dark:text-white"
+                                    <span class="lwa-kpi-value"
                                         id="kpiSuccessRate">{{ $analytics['summary']['success_rate'] ?? '100' }}%</span>
                                 </div>
                             </div>
@@ -60,12 +60,12 @@
 
                         <!-- 5xx error rate -->
                         <div
-                            class="lwa-surface border lwa-border rounded-lg p-3.5 shadow-sm flex flex-col justify-between">
+                            class="lwa-card p-3.5 flex flex-col justify-between">
                             <div>
                                 <div class="text-[11px] font-medium text-slate-500 dark:text-slate-400"
                                     data-i18n="errorRate">5xx error rate</div>
                                 <div class="flex items-baseline gap-2 mt-1">
-                                    <span class="text-2xl font-bold text-slate-900 dark:text-white" id="kpi5xxRate">
+                                    <span class="lwa-kpi-value" id="kpi5xxRate">
                                         {{ number_format(($analytics['summary']['total_requests'] ?? 0) > 0 ? (($analytics['summary']['status_counts']['5xx'] ?? 0) / $analytics['summary']['total_requests']) * 100 : 0, 2) }}%
                                     </span>
                                 </div>
@@ -79,14 +79,14 @@
                     <!-- Charts Grid Row 1 (Requests over time & Data transfer) -->
                     <div class="grid grid-cols-1 lg:grid-cols-2 gap-4">
                         <!-- Requests over time -->
-                        <div class="lwa-surface border lwa-border rounded-lg p-4 shadow-sm">
+                        <div class="lwa-card p-4">
                             <div class="flex items-center justify-between mb-3">
-                                <div class="text-xs font-semibold text-slate-800 dark:text-slate-200">Requests over time
+                                <div class="lwa-card-title">Requests over time
                                 </div>
                                 @include('web-analytics::partials.group-by-select', ['chartId' => 'chartRequestsOverTime'])
                             </div>
                             <div class="flex items-center gap-1.5 text-[11px] text-slate-500 mb-2">
-                                <span class="w-2 h-2 rounded-full bg-[#0051c3]"></span> Requests: <strong
+                                <span class="w-2 h-2 rounded-full bg-[var(--lwa-solid)]"></span> Requests: <strong
                                     class="text-slate-800 dark:text-slate-200">{{ $analytics['summary']['total_requests_fmt'] ?? 0 }}</strong>
                             </div>
                             <div class="relative">
@@ -96,9 +96,9 @@
                         </div>
 
                         <!-- Data transfer over time -->
-                        <div class="lwa-surface border lwa-border rounded-lg p-4 shadow-sm">
+                        <div class="lwa-card p-4">
                             <div class="flex items-center justify-between mb-3">
-                                <div class="text-xs font-semibold text-slate-800 dark:text-slate-200">Data transfer
+                                <div class="lwa-card-title">Data transfer
                                 </div>
                                 <div class="flex items-center gap-2 text-[11px]">
                                     <span class="text-slate-400">Group by:</span>
@@ -109,7 +109,7 @@
                                 </div>
                             </div>
                             <div class="flex items-center gap-1.5 text-[11px] text-slate-500 mb-2">
-                                <span class="w-2 h-2 rounded-full bg-[#0051c3]"></span> Data transfer: <strong
+                                <span class="w-2 h-2 rounded-full bg-[var(--lwa-solid)]"></span> Data transfer: <strong
                                     class="text-slate-800 dark:text-slate-200">{{ $analytics['summary']['total_bytes_fmt'] ?? '0 B' }}</strong>
                             </div>
                             <div class="relative">
@@ -122,11 +122,11 @@
                     <!-- Charts Grid Row 2 (Requests by status code & Requests by method) -->
                     <div class="grid grid-cols-1 lg:grid-cols-2 gap-4">
                         <!-- Requests by status code -->
-                        <div class="lwa-surface border lwa-border rounded-lg p-4 shadow-sm">
+                        <div class="lwa-card p-4">
                             <div class="flex items-center justify-between mb-3">
-                                <div class="text-xs font-semibold text-slate-800 dark:text-slate-200">Requests by status
+                                <div class="lwa-card-title">Requests by status
                                     code</div>
-                                <div class="flex items-center gap-2 text-[11px] text-slate-400">
+                                <div class="flex items-center gap-2 lwa-subtitle">
                                     <span class="flex items-center gap-1"><span
                                             class="w-2 h-2 rounded-full bg-emerald-500"></span> 2xx:
                                         {{ $analytics['summary']['status_counts']['2xx'] ?? 0 }}</span>
@@ -148,11 +148,11 @@
                         </div>
 
                         <!-- Requests by method -->
-                        <div class="lwa-surface border lwa-border rounded-lg p-4 shadow-sm">
+                        <div class="lwa-card p-4">
                             <div class="flex items-center justify-between mb-3">
-                                <div class="text-xs font-semibold text-slate-800 dark:text-slate-200">Requests by HTTP
+                                <div class="lwa-card-title">Requests by HTTP
                                     method</div>
-                                <div class="text-[11px] text-slate-400">GET, POST, PUT, DELETE breakdown</div>
+                                <div class="lwa-subtitle">GET, POST, PUT, DELETE breakdown</div>
                             </div>
                             <div class="relative">
                             <div id="chartMethodBars" class="h-64 w-full"></div>
@@ -164,16 +164,16 @@
                     <!-- Breakdown Lists Grid (2 Columns, Progress Bar Style) -->
                     <div class="grid grid-cols-1 lg:grid-cols-2 gap-4">
                         <!-- Top paths -->
-                        <div id="section-top-pages" class="lwa-surface border lwa-border rounded-lg p-4 shadow-sm scroll-mt-32">
-                            <div class="text-xs font-semibold text-slate-800 dark:text-slate-200 mb-3">Top paths</div>
+                        <div id="section-top-pages" class="lwa-card p-4 scroll-mt-32">
+                            <div class="lwa-card-title mb-3">Top paths</div>
                             @include('web-analytics::partials.breakdown-list', [
                                 'items' => $analytics['breakdowns']['top_paths'] ?? [],
                             ])
                         </div>
 
                         <!-- Top countries -->
-                        <div class="lwa-surface border lwa-border rounded-lg p-4 shadow-sm">
-                            <div class="text-xs font-semibold text-slate-800 dark:text-slate-200 mb-3">Top countries
+                        <div class="lwa-card p-4">
+                            <div class="lwa-card-title mb-3">Top countries
                             </div>
                             @include('web-analytics::partials.breakdown-list', [
                                 'items' => $analytics['breakdowns']['top_countries'] ?? [],
@@ -181,8 +181,8 @@
                         </div>
 
                         <!-- Top client IPs -->
-                        <div class="lwa-surface border lwa-border rounded-lg p-4 shadow-sm">
-                            <div class="text-xs font-semibold text-slate-800 dark:text-slate-200 mb-3">Top client IPs
+                        <div class="lwa-card p-4">
+                            <div class="lwa-card-title mb-3">Top client IPs
                             </div>
                             @include('web-analytics::partials.breakdown-list', [
                                 'items' => $analytics['breakdowns']['top_ips'] ?? [],
@@ -190,8 +190,8 @@
                         </div>
 
                         <!-- Top operating systems -->
-                        <div class="lwa-surface border lwa-border rounded-lg p-4 shadow-sm">
-                            <div class="text-xs font-semibold text-slate-800 dark:text-slate-200 mb-3">Top operating
+                        <div class="lwa-card p-4">
+                            <div class="lwa-card-title mb-3">Top operating
                                 systems</div>
                             @include('web-analytics::partials.breakdown-list', [
                                 'items' => $analytics['breakdowns']['top_os'] ?? [],
@@ -199,8 +199,8 @@
                         </div>
 
                         <!-- Top browsers -->
-                        <div class="lwa-surface border lwa-border rounded-lg p-4 shadow-sm">
-                            <div class="text-xs font-semibold text-slate-800 dark:text-slate-200 mb-3">Top browsers
+                        <div class="lwa-card p-4">
+                            <div class="lwa-card-title mb-3">Top browsers
                             </div>
                             @include('web-analytics::partials.breakdown-list', [
                                 'items' => $analytics['breakdowns']['top_browsers'] ?? [],
@@ -208,8 +208,8 @@
                         </div>
 
                         <!-- Top referrers -->
-                        <div id="section-traffic-sources" class="lwa-surface border lwa-border rounded-lg p-4 shadow-sm scroll-mt-32">
-                            <div class="text-xs font-semibold text-slate-800 dark:text-slate-200 mb-3">Top referrers
+                        <div id="section-traffic-sources" class="lwa-card p-4 scroll-mt-32">
+                            <div class="lwa-card-title mb-3">Top referrers
                             </div>
                             @include('web-analytics::partials.breakdown-list', [
                                 'items' => $analytics['breakdowns']['top_referrers'] ?? [],

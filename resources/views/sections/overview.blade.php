@@ -1,42 +1,54 @@
+                    <div class="space-y-4">
                     @if(($analytics['summary']['total_requests'] ?? 0) === 0)
-                        <div class="lwa-surface border lwa-border rounded-lg p-8 text-center">
-                            <div class="mx-auto w-10 h-10 rounded-full bg-slate-100 dark:bg-slate-800 flex items-center justify-center mb-3">
-                                <i data-lucide="chart-no-axes-combined" class="text-lg text-slate-400"></i>
+                        <div class="lwa-card p-10 text-center">
+                            <div class="mx-auto lwa-icon-tile mb-3" style="width:40px;height:40px">
+                                <i data-lucide="chart-no-axes-combined" class="text-lg"></i>
                             </div>
                             <div class="text-sm font-semibold text-slate-900 dark:text-white">No analytics data yet</div>
-                            <p class="text-xs text-slate-500 dark:text-slate-400 mt-1 max-w-md mx-auto">
+                            <p class="lwa-subtitle mt-1 max-w-md mx-auto">
                                 Register the <code class="font-mono">TrackWebTraffic</code> middleware in your web group, then reload this page. Requests will appear here once traffic is captured.
                             </p>
                         </div>
                     @endif
 
+                    <div class="flex flex-wrap items-end justify-between gap-3">
+                        <div>
+                            <h1 class="lwa-page-title">Overview</h1>
+                            <p class="lwa-subtitle mt-1">Traffic, engagement and audience for the selected period — {{ $timeRange ?? '24h' }}</p>
+                        </div>
+                    </div>
+
                     <!-- KPI cards -->
-                    <div class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-7 gap-3">
+                    <div class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 2xl:grid-cols-7 gap-3">
                         @php
                             $kpis = [
-                                ['Total Visitors', 'total_visitors_fmt', 'Distinct IP addresses in the selected range'],
-                                ['Unique Visitors', 'unique_visitors_fmt', 'Distinct visitor sessions (session ID or IP fallback)'],
-                                ['Pageviews', 'pageviews_fmt', 'GET requests to non-API paths'],
-                                ['Sessions', 'sessions_fmt', 'Distinct visitor session identifiers'],
-                                ['Bounce Rate', 'bounce_rate', 'Sessions with only one recorded request'],
-                                ['Avg Engagement', 'avg_engagement_fmt', 'Average time between first and last request per session'],
-                                ['Live Now', 'live_visitors_fmt', 'Active visitors in the configured live window'],
+                                ['Total Visitors', 'total_visitors_fmt', 'Distinct IP addresses in the selected range', 'users-round'],
+                                ['Unique Visitors', 'unique_visitors_fmt', 'Distinct visitor sessions (session ID or IP fallback)', 'user-check'],
+                                ['Pageviews', 'pageviews_fmt', 'GET requests to non-API paths', 'eye'],
+                                ['Sessions', 'sessions_fmt', 'Distinct visitor session identifiers', 'layers'],
+                                ['Bounce Rate', 'bounce_rate', 'Sessions with only one recorded request', 'corner-down-right'],
+                                ['Avg Engagement', 'avg_engagement_fmt', 'Average time between first and last request per session', 'timer'],
+                                ['Live Now', 'live_visitors_fmt', 'Active visitors in the configured live window', 'radio'],
                             ];
                         @endphp
-                        @foreach($kpis as [$label, $key, $definition])
-                            <div class="lwa-surface border lwa-border rounded-lg p-3 shadow-sm lwa-kpi" title="{{ $definition }}">
-                                <div class="text-[11px] font-medium text-slate-500 dark:text-slate-400">{{ $label }}</div>
-                                <div class="text-lg font-semibold text-slate-900 dark:text-white mt-0.5">
+                        @foreach($kpis as [$label, $key, $definition, $icon])
+                            <div class="lwa-card lwa-kpi" title="{{ $definition }}">
+                                <div class="lwa-kpi-top">
+                                    <span class="lwa-kpi-label">{{ $label }}</span>
+                                    <span class="lwa-icon-tile">
+                                        <i data-lucide="{{ $icon }}" class="text-[13px]"></i>
+                                    </span>
+                                </div>
+                                <div class="lwa-kpi-value">
                                     {{ $analytics['summary'][$key] ?? 0 }}@if(in_array($key, ['bounce_rate'], true))%@endif
                                 </div>
-                                <div class="text-[10px] text-slate-400 mt-1 truncate">{{ $definition }}</div>
                             </div>
                         @endforeach
                     </div>
 
                     <!-- Reports pinned from card menus (stored in localStorage) -->
-                    <div id="lwaPinnedReports" class="space-y-4 hidden">
-                        <div class="text-xs font-semibold text-slate-800 dark:text-slate-200">Pinned reports</div>
+                    <div id="lwaPinnedReports" class="space-y-3 hidden">
+                        <div class="lwa-section-label">Pinned reports</div>
                         <div class="grid grid-cols-1 lg:grid-cols-2 gap-4">
                             @php
                                 $pinnedReports = [
@@ -69,11 +81,11 @@
 
                     <!-- Traffic overview + top pages -->
                     <div class="grid grid-cols-1 lg:grid-cols-2 gap-4">
-                        <div class="lwa-surface border lwa-border rounded-lg p-4 shadow-sm">
+                        <div class="lwa-card p-4">
                             <div class="flex items-start justify-between gap-3">
                                 <div>
-                                    <div class="text-xs font-semibold text-slate-800 dark:text-slate-200">Traffic Overview</div>
-                                    <p class="text-[11px] text-slate-400 mt-0.5">Requests over the selected period — {{ $timeRange ?? '24h' }}</p>
+                                    <div class="lwa-card-title">Traffic Overview</div>
+                                    <p class="lwa-subtitle mt-0.5">Requests over the selected period — {{ $timeRange ?? '24h' }}</p>
                                 </div>
                                 @include('web-analytics::partials.group-by-select', ['chartId' => 'chartOverviewTraffic'])
                             </div>
@@ -82,24 +94,25 @@
                                 <div id="chartOverviewTrafficSkel" class="lwa-skeleton absolute inset-0 h-64 w-full"></div>
                             </div>
                         </div>
-                        <div class="lwa-surface border lwa-border rounded-lg p-4 shadow-sm">
-                            <div class="text-xs font-semibold text-slate-800 dark:text-slate-200 mb-3">Top Pages</div>
+                        <div class="lwa-card p-4">
+                            <div class="lwa-card-title mb-2">Top Pages</div>
                             @include('web-analytics::partials.breakdown-list', ['items' => $analytics['breakdowns']['top_paths'] ?? [], 'key' => 'top_paths'])
                         </div>
                     </div>
 
                     <!-- Supporting reports -->
                     <div class="grid grid-cols-1 lg:grid-cols-3 gap-4">
-                        <div class="lwa-surface border lwa-border rounded-lg p-4 shadow-sm">
-                            <div class="text-xs font-semibold text-slate-800 dark:text-slate-200 mb-3">Traffic Sources</div>
+                        <div class="lwa-card p-4">
+                            <div class="lwa-card-title mb-2">Traffic Sources</div>
                             @include('web-analytics::partials.breakdown-list', ['items' => $analytics['breakdowns']['top_referrers'] ?? [], 'key' => 'top_referrers'])
                         </div>
-                        <div class="lwa-surface border lwa-border rounded-lg p-4 shadow-sm">
-                            <div class="text-xs font-semibold text-slate-800 dark:text-slate-200 mb-3">Countries</div>
+                        <div class="lwa-card p-4">
+                            <div class="lwa-card-title mb-2">Countries</div>
                             @include('web-analytics::partials.breakdown-list', ['items' => $analytics['breakdowns']['top_countries'] ?? [], 'key' => 'top_countries'])
                         </div>
-                        <div class="lwa-surface border lwa-border rounded-lg p-4 shadow-sm">
-                            <div class="text-xs font-semibold text-slate-800 dark:text-slate-200 mb-3">Device Breakdown</div>
+                        <div class="lwa-card p-4">
+                            <div class="lwa-card-title mb-2">Device Breakdown</div>
                             @include('web-analytics::partials.breakdown-list', ['items' => $analytics['breakdowns']['top_devices'] ?? [], 'key' => 'top_devices'])
                         </div>
+                    </div>
                     </div>

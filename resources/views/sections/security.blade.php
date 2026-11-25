@@ -1,31 +1,36 @@
+                    <div>
+                        <h1 class="lwa-page-title">Error Monitoring</h1>
+                        <p class="lwa-subtitle mt-1">Server errors and failed requests in the selected range.</p>
+                    </div>
+
                     <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
-                        <div class="lwa-surface border lwa-border rounded-lg p-4 shadow-sm">
-                            <div class="text-xs font-medium text-slate-500 dark:text-slate-400">Total Error Requests</div>
-                            <div class="text-2xl font-bold text-rose-600 dark:text-rose-400 mt-1">{{ $analytics['summary']['error_count_fmt'] ?? 0 }}</div>
-                            <div class="text-[11px] text-slate-400 mt-1">Error rate: {{ $analytics['summary']['error_rate'] ?? 0 }}%</div>
+                        <div class="lwa-card p-4">
+                            <div class="lwa-kpi-label">Total Error Requests</div>
+                            <div class="lwa-kpi-value mt-1" style="color: var(--lwa-danger)">{{ $analytics['summary']['error_count_fmt'] ?? 0 }}</div>
+                            <div class="lwa-subtitle mt-1">Error rate: {{ $analytics['summary']['error_rate'] ?? 0 }}%</div>
                         </div>
 
-                        <div class="lwa-surface border lwa-border rounded-lg p-4 shadow-sm">
-                            <div class="text-xs font-medium text-slate-500 dark:text-slate-400">4xx Client Errors</div>
-                            <div class="text-2xl font-bold text-amber-600 dark:text-amber-400 mt-1">{{ number_format($analytics['summary']['status_counts']['4xx'] ?? 0) }}</div>
-                            <div class="text-[11px] text-slate-400 mt-1">404 Not Found, 401 Unauthorized, etc.</div>
+                        <div class="lwa-card p-4">
+                            <div class="lwa-kpi-label">4xx Client Errors</div>
+                            <div class="lwa-kpi-value mt-1" style="color: var(--lwa-warning)">{{ number_format($analytics['summary']['status_counts']['4xx'] ?? 0) }}</div>
+                            <div class="lwa-subtitle mt-1">404 Not Found, 401 Unauthorized, etc.</div>
                         </div>
 
-                        <div class="lwa-surface border lwa-border rounded-lg p-4 shadow-sm">
-                            <div class="text-xs font-medium text-slate-500 dark:text-slate-400">5xx Server Errors</div>
-                            <div class="text-2xl font-bold text-purple-600 dark:text-purple-400 mt-1">{{ number_format($analytics['summary']['status_counts']['5xx'] ?? 0) }}</div>
-                            <div class="text-[11px] text-slate-400 mt-1">500 Internal Error, 502 Bad Gateway</div>
+                        <div class="lwa-card p-4">
+                            <div class="lwa-kpi-label">5xx Server Errors</div>
+                            <div class="lwa-kpi-value mt-1">{{ number_format($analytics['summary']['status_counts']['5xx'] ?? 0) }}</div>
+                            <div class="lwa-subtitle mt-1">500 Internal Error, 502 Bad Gateway</div>
                         </div>
                     </div>
 
-                    <div class="lwa-surface border lwa-border rounded-lg shadow-sm overflow-hidden">
+                    <div class="lwa-card overflow-hidden">
                         <div class="p-3.5 border-b border-slate-100 dark:border-slate-800 flex items-center justify-between">
-                            <div class="text-xs font-semibold text-slate-800 dark:text-slate-200">Top Error URLs (4xx / 5xx)</div>
-                            <span class="text-[11px] text-slate-400">Sorted by failure count</span>
+                            <div class="lwa-card-title">Top Error URLs (4xx / 5xx)</div>
+                            <span class="lwa-subtitle">Sorted by failure count</span>
                         </div>
                         <div class="overflow-x-auto">
-                            <table class="w-full text-xs text-left">
-                                <thead class="bg-slate-50 dark:bg-slate-800/60 text-slate-500 border-b border-slate-200 dark:border-slate-700/60">
+                            <table class="w-full text-xs text-left lwa-table">
+                                <thead>
                                     <tr>
                                         <th class="py-2.5 px-4 font-semibold">Status</th>
                                         <th class="py-2.5 px-4 font-semibold">Method</th>
@@ -38,7 +43,7 @@
                                     @forelse($analytics['top_error_paths'] ?? [] as $err)
                                         <tr class="hover:bg-slate-50/60 dark:hover:bg-slate-800/40">
                                             <td class="py-2.5 px-4">
-                                                <span class="px-2 py-0.5 rounded font-mono font-bold {{ $err['status_code'] >= 500 ? 'bg-purple-50 text-purple-700 dark:bg-purple-950/50 dark:text-purple-400' : 'bg-rose-50 text-rose-700 dark:bg-rose-950/50 dark:text-rose-400' }}">
+                                                <span class="px-2 py-0.5 rounded font-mono font-bold {{ $err['status_code'] >= 500 ? 'bg-rose-50 text-rose-700 dark:bg-rose-950/50 dark:text-rose-400' : 'bg-amber-50 text-amber-700 dark:bg-amber-950/50 dark:text-amber-400' }}">
                                                     {{ $err['status_code'] }}
                                                 </span>
                                             </td>

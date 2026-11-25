@@ -1,4 +1,4 @@
-                <div class="lwa-surface border lwa-border rounded-lg p-8 text-center">
+                <div class="lwa-card p-8 text-center">
                     <div class="mx-auto w-10 h-10 rounded-full bg-slate-100 dark:bg-slate-800 flex items-center justify-center mb-3">
                         <i data-lucide="construction" class="text-lg text-amber-500"></i>
                     </div>

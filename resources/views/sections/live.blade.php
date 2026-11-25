@@ -1,9 +1,9 @@
-                    <div class="lwa-surface border lwa-border rounded-lg p-3.5 shadow-sm flex items-center justify-between">
+                    <div class="lwa-card p-3.5 flex items-center justify-between">
                         <div class="flex items-center gap-3">
                             <span class="live-dot"></span>
                             <div>
                                 <div class="text-xs font-semibold text-slate-900 dark:text-white">Real-Time Traffic Feed</div>
-                                <div class="text-[11px] text-slate-400">Streaming live requests via Server-Sent Events (SSE)</div>
+                                <div class="lwa-subtitle">Streaming live requests via Server-Sent Events (SSE)</div>
                             </div>
                         </div>
                         <div class="flex flex-col items-end gap-1">
@@ -14,7 +14,7 @@
                             <button type="button" id="lwaReconnectBtn"
                                 class="hidden text-[11px] text-blue-600 dark:text-blue-400 hover:underline"
                                 onclick="window.lwaStartSSE && window.lwaStartSSE()">Retry connection</button>
-                            <div class="text-right text-[11px] text-slate-400" id="lastUpdatedClock">Listening for requests...</div>
+                            <div class="text-right lwa-subtitle" id="lastUpdatedClock">Listening for requests...</div>
                         </div>
                     </div>
 
@@ -24,10 +24,10 @@
                         'title' => 'Live Visitors Map',
                     ])
 
-                    <div class="lwa-surface border lwa-border rounded-lg shadow-sm overflow-hidden">
+                    <div class="lwa-card overflow-hidden">
                         <div class="overflow-x-auto">
-                            <table class="w-full text-xs text-left">
-                                <thead class="bg-slate-50 dark:bg-slate-800/60 text-slate-500 border-b border-slate-200 dark:border-slate-700/60">
+                            <table class="w-full text-xs text-left lwa-table">
+                                <thead>
                                     <tr>
                                         <th class="py-2.5 px-4 font-semibold">Status</th>
                                         <th class="py-2.5 px-4 font-semibold">Method</th>
@@ -45,7 +45,7 @@
                                     @forelse($analytics['recent_logs'] ?? [] as $log)
                                         <tr class="hover:bg-slate-50/60 dark:hover:bg-slate-800/40" id="log-row-{{ $log['id'] }}">
                                             <td class="py-2 px-4">
-                                                <span class="px-2 py-0.5 rounded font-mono font-bold {{ $log['status_code'] >= 500 ? 'bg-purple-50 text-purple-700 dark:bg-purple-950/50 dark:text-purple-400' : ($log['status_code'] >= 400 ? 'bg-rose-50 text-rose-700 dark:bg-rose-950/50 dark:text-rose-400' : ($log['status_code'] >= 300 ? 'bg-cyan-50 text-cyan-700 dark:bg-cyan-950/50 dark:text-cyan-400' : 'bg-emerald-50 text-emerald-700 dark:bg-emerald-950/50 dark:text-emerald-400')) }}">
+                                                <span class="px-2 py-0.5 rounded font-mono font-bold {{ $log['status_code'] >= 500 ? 'bg-rose-50 text-rose-700 dark:bg-rose-950/50 dark:text-rose-400' : ($log['status_code'] >= 400 ? 'bg-amber-50 text-amber-700 dark:bg-amber-950/50 dark:text-amber-400' : ($log['status_code'] >= 300 ? 'bg-sky-50 text-sky-700 dark:bg-sky-950/50 dark:text-sky-400' : 'bg-emerald-50 text-emerald-700 dark:bg-emerald-950/50 dark:text-emerald-400')) }}">
                                                     {{ $log['status_code'] }}
                                                 </span>
                                             </td>

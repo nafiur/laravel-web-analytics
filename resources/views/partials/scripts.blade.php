@@ -15,9 +15,25 @@
         function lwaChart(selector, options) {
             const el = document.querySelector(selector);
             if (!el || !window.ApexCharts) return null;
+            lwaThinAxis(options);
             const chart = new ApexCharts(el, options);
             chart.render();
             return chart;
+        }
+
+        // Dense category axes (30-min buckets over 24h, etc.) otherwise print
+        // every tick on top of each other. Keep them all while they fit and
+        // thin to a handful of evenly spaced ticks afterwards.
+        function lwaThinAxis(options) {
+            const x = options && options.xaxis;
+            if (!x || !Array.isArray(x.categories) || x.categories.length <= 8) return options;
+            if (x.tickAmount != null) return options;
+            x.tickAmount = Math.min(8, Math.max(3, Math.ceil(x.categories.length / 4)));
+            if (x.labels && typeof x.labels === 'object') {
+                x.labels.rotate = 0;
+                x.labels.hideOverlappingLabels = true;
+            }
+            return options;
         }
 
         function lwaEscapeHtml(value) {
@@ -35,10 +51,10 @@
                 intersect: false,
                 custom: function(context) {
                     const dark = isDarkMode();
-                    const bg = dark ? '#111827' : '#ffffff';
-                    const border = dark ? '#374151' : '#e2e8f0';
-                    const text = dark ? '#f3f4f6' : '#0f172a';
-                    const muted = '#94a3b8';
+                    const bg = lwaCssVar('--lwa-surface', dark ? '#16171a' : '#ffffff');
+                    const border = lwaCssVar('--lwa-border', dark ? '#26282d' : '#e6e6ea');
+                    const text = lwaCssVar('--lwa-text', dark ? '#eef0f3' : '#18191d');
+                    const muted = lwaCssVar('--lwa-text-muted', '#989da7');
                     const labels = context.w.globals.labels || [];
                     const label = labels[context.dataPointIndex] || '';
                     const names = context.w.globals.seriesNames || [];
@@ -46,13 +62,13 @@
                     const rows = (context.series || []).map(function(series, index) {
                         const value = Number(series[context.dataPointIndex] || 0).toLocaleString();
                         return '<div style="display:flex;align-items:center;gap:8px;margin-top:4px">' +
-                            '<span style="width:8px;height:8px;border-radius:9999px;flex:none;background:' + (colors[index] || '#0051c3') + '"></span>' +
+                            '<span style="width:8px;height:8px;border-radius:9999px;flex:none;background:' + (colors[index] || lwaCssVar('--lwa-primary', '#5b5bd6')) + '"></span>' +
                             '<span style="font-size:11px;color:' + muted + ';max-width:150px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">' + lwaEscapeHtml(names[index]) + '</span>' +
                             '<strong style="margin-left:auto;font-size:12px;color:' + text + '">' + value + lwaEscapeHtml(unit) + '</strong>' +
                             '</div>';
                     }).join('');
                     return '<div style="min-width:160px;background:' + bg + ';border:1px solid ' + border +
-                        ';border-radius:8px;box-shadow:0 8px 24px rgba(15,23,42,.12);padding:8px 10px;font-family:Plus Jakarta Sans,sans-serif">' +
+                        ';border-radius:7px;box-shadow:0 16px 40px rgba(20,22,30,.13);padding:8px 10px;font-family:Inter,sans-serif">' +
                         '<div style="font-size:10px;color:' + muted + '">' + lwaEscapeHtml(label) + '</div>' + rows + '</div>';
                 }
             };
@@ -217,16 +233,24 @@
         const status4xx = {!! json_encode($analytics['time_series']['status_4xx'] ?? [0]) !!};
         const status5xx = {!! json_encode($analytics['time_series']['status_5xx'] ?? [0]) !!};
 
+        const isDarkMode = () => document.documentElement.classList.contains('dark');
+        const lwaCssVar = (name, fallback) => {
+            const value = getComputedStyle(document.documentElement).getPropertyValue(name).trim();
+            return value || fallback;
+        };
+        const lwaChartColors = () => [
+            lwaCssVar('--lwa-primary', '#5b5bd6'), '#14b8a6', '#e8a33d', '#8b6cf0', '#e46b8a', '#38bdf8'
+        ];
+        const lwaGridColor = () => lwaCssVar('--lwa-chart-grid', isDarkMode() ? '#26282d' : '#ededf1');
+        const lwaGrid = () => ({ borderColor: lwaGridColor(), strokeDashArray: 0 });
+
         const methodBreakdown = {!! json_encode($analytics['breakdowns']['top_methods'] ?? []) !!};
         const deviceOverTime = {!! json_encode($analytics['time_series']['device_over_time'] ?? ['labels' => [], 'series' => []]) !!};
-        const deviceColors = { Desktop: '#0051c3', Mobile: '#f59e0b', Tablet: '#8b5cf6', Bot: '#94a3b8' };
+        const deviceColors = { Desktop: lwaCssVar('--lwa-primary', '#5b5bd6'), Mobile: '#e8a33d', Tablet: '#8b6cf0', Bot: '#9aa0aa' };
 
-        const isDarkMode = () => document.documentElement.classList.contains('dark');
-        const lwaGridColor = () => isDarkMode() ? '#2a2e37' : '#eceef3';
-        const lwaGrid = () => ({ borderColor: lwaGridColor(), strokeDashArray: 0 });
         const getChartTheme = () => ({
             mode: isDarkMode() ? 'dark' : 'light',
-            fontFamily: 'Plus Jakarta Sans, sans-serif'
+            fontFamily: 'Inter, sans-serif'
         });
 
         // 1. Requests Over Time (Area Chart matching )
@@ -245,7 +269,7 @@
                     enabled: false
                 }
             },
-            colors: ['#0051c3'],
+            colors: [lwaCssVar('--lwa-primary', '#5b5bd6')],
             fill: { type: 'solid', opacity: 0.07 },
             dataLabels: {
                 enabled: false
@@ -257,7 +281,7 @@
                 labels: {
                     style: {
                         fontSize: '10px',
-                        colors: '#94a3b8'
+                        colors: lwaCssVar('--lwa-chart-label', '#969aa3')
                     }
                 },
                 axisBorder: {
@@ -271,7 +295,7 @@
                 labels: {
                     style: {
                         fontSize: '10px',
-                        colors: '#94a3b8'
+                        colors: lwaCssVar('--lwa-chart-label', '#969aa3')
                     }
                 }
             },
@@ -284,18 +308,18 @@
         let chartOverviewTraffic = null;
         const overviewChartEl = document.querySelector("#chartOverviewTraffic");
         if (overviewChartEl && window.ApexCharts) {
-            chartOverviewTraffic = new ApexCharts(overviewChartEl, {
+            chartOverviewTraffic = new ApexCharts(overviewChartEl, lwaThinAxis({
                 series: [{ name: 'Requests', data: requestsData }],
                 chart: { type: 'area', height: 250, toolbar: { show: false }, zoom: { enabled: false } },
-                colors: ['#4f46e5'],
+                colors: [lwaCssVar('--lwa-primary', '#5b5bd6')],
                 fill: { type: 'solid', opacity: 0.07 },
                 dataLabels: { enabled: false },
                 stroke: { curve: 'straight', width: 2 },
-                xaxis: { categories: timeLabels, labels: { style: { fontSize: '10px', colors: '#94a3b8' } }, axisBorder: { show: false }, axisTicks: { show: false } },
-                yaxis: { labels: { style: { fontSize: '10px', colors: '#94a3b8' } } },
+                xaxis: { categories: timeLabels, labels: { style: { fontSize: '10px', colors: lwaCssVar('--lwa-chart-label', '#969aa3') } }, axisBorder: { show: false }, axisTicks: { show: false } },
+                yaxis: { labels: { style: { fontSize: '10px', colors: lwaCssVar('--lwa-chart-label', '#969aa3') } } },
                 grid: lwaGrid(),
                 tooltip: lwaChartTooltip(' requests')
-            });
+            }));
             chartOverviewTraffic.render();
         }
 
@@ -315,7 +339,7 @@
                     enabled: false
                 }
             },
-            colors: ['#0051c3'],
+            colors: [lwaCssVar('--lwa-primary', '#5b5bd6')],
             fill: { type: 'solid', opacity: 0.07 },
             dataLabels: {
                 enabled: false
@@ -327,7 +351,7 @@
                 labels: {
                     style: {
                         fontSize: '10px',
-                        colors: '#94a3b8'
+                        colors: lwaCssVar('--lwa-chart-label', '#969aa3')
                     }
                 },
                 axisBorder: {
@@ -341,7 +365,7 @@
                 labels: {
                     style: {
                         fontSize: '10px',
-                        colors: '#94a3b8'
+                        colors: lwaCssVar('--lwa-chart-label', '#969aa3')
                     },
                     formatter: (val) => val + ' MB'
                 }
@@ -378,7 +402,7 @@
                     show: false
                 }
             },
-            colors: ['#10b981', '#06b6d4', '#f43f5e', '#a855f7'],
+            colors: ['#2f9e6e', lwaCssVar('--lwa-primary', '#5b5bd6'), '#e8a33d', '#e05260'],
             plotOptions: {
                 bar: {
                     columnWidth: '45%',
@@ -393,7 +417,7 @@
                 labels: {
                     style: {
                         fontSize: '10px',
-                        colors: '#94a3b8'
+                        colors: lwaCssVar('--lwa-chart-label', '#969aa3')
                     }
                 },
                 axisBorder: {
@@ -404,7 +428,7 @@
                 labels: {
                     style: {
                         fontSize: '10px',
-                        colors: '#94a3b8'
+                        colors: lwaCssVar('--lwa-chart-label', '#969aa3')
                     }
                 }
             },
@@ -426,23 +450,23 @@
                 name: s.name,
                 data: s.data || []
             }));
-            chartDeviceTypes = new ApexCharts(deviceChartEl, {
+            chartDeviceTypes = new ApexCharts(deviceChartEl, lwaThinAxis({
                 series: deviceSeries,
                 chart: { type: 'bar', height: 250, stacked: true, toolbar: { show: false }, zoom: { enabled: false } },
-                colors: deviceSeries.map(s => deviceColors[s.name] || '#0051c3'),
+                colors: deviceSeries.map(s => deviceColors[s.name] || lwaCssVar('--lwa-primary', '#5b5bd6')),
                 plotOptions: { bar: { columnWidth: '45%', borderRadius: 2 } },
                 dataLabels: { enabled: false },
                 xaxis: {
                     categories: deviceOverTime.labels || timeLabels,
-                    labels: { style: { fontSize: '10px', colors: '#94a3b8' } },
+                    labels: { style: { fontSize: '10px', colors: lwaCssVar('--lwa-chart-label', '#969aa3') } },
                     axisBorder: { show: false },
                     axisTicks: { show: false }
                 },
-                yaxis: { labels: { style: { fontSize: '10px', colors: '#94a3b8' } } },
+                yaxis: { labels: { style: { fontSize: '10px', colors: lwaCssVar('--lwa-chart-label', '#969aa3') } } },
                 legend: { show: false },
                 grid: lwaGrid(),
                 tooltip: { theme: isDarkMode() ? 'dark' : 'light', y: { formatter: val => Number(val).toLocaleString() } }
-            });
+            }));
             chartDeviceTypes.render();
         }
 
@@ -459,7 +483,7 @@
                     show: false
                 }
             },
-            colors: ['#3b82f6'],
+            colors: [lwaCssVar('--lwa-primary', '#5b5bd6')],
             plotOptions: {
                 bar: {
                     borderRadius: 4,
@@ -475,7 +499,7 @@
                 labels: {
                     style: {
                         fontSize: '10px',
-                        colors: '#94a3b8'
+                        colors: lwaCssVar('--lwa-chart-label', '#969aa3')
                     }
                 }
             },
@@ -483,7 +507,7 @@
                 labels: {
                     style: {
                         fontSize: '11px',
-                        colors: '#94a3b8'
+                        colors: lwaCssVar('--lwa-chart-label', '#969aa3')
                     }
                 }
             },
@@ -498,7 +522,7 @@
         let chartLatency = null;
         let chartLatencyEl = document.querySelector("#chartLatency");
         if (chartLatencyEl && window.ApexCharts) {
-            chartLatency = new ApexCharts(chartLatencyEl, {
+            chartLatency = new ApexCharts(chartLatencyEl, lwaThinAxis({
                 series: [{
                     name: 'Latency (ms)',
                     data: latencyData
@@ -510,7 +534,7 @@
                         show: false
                     }
                 },
-                colors: ['#f59e0b'],
+                colors: ['#e8a33d'],
                 stroke: {
                     curve: 'smooth',
                     width: 2
@@ -520,7 +544,7 @@
                     labels: {
                         style: {
                             fontSize: '10px',
-                            colors: '#94a3b8'
+                            colors: lwaCssVar('--lwa-chart-label', '#969aa3')
                         }
                     }
                 },
@@ -529,13 +553,13 @@
                         formatter: (val) => val + ' ms',
                         style: {
                             fontSize: '10px',
-                            colors: '#94a3b8'
+                            colors: lwaCssVar('--lwa-chart-label', '#969aa3')
                         }
                     }
                 },
                 grid: lwaGrid(),
                 tooltip: lwaChartTooltip(' ms')
-            });
+            }));
             chartLatency.render();
         }
 
@@ -570,9 +594,9 @@
             }).render();
         }
 
-        renderSparkline('#sparklineRequests', requestsData, '#0051c3');
-        renderSparkline('#sparklineBytes', bandwidthData, '#0051c3');
-        renderSparkline('#sparklineVisits', visitorsData, '#0051c3');
+        renderSparkline('#sparklineRequests', requestsData, lwaCssVar('--lwa-primary', '#5b5bd6'));
+        renderSparkline('#sparklineBytes', bandwidthData, lwaCssVar('--lwa-primary', '#5b5bd6'));
+        renderSparkline('#sparklineVisits', visitorsData, lwaCssVar('--lwa-primary', '#5b5bd6'));
 
         // Charts whose x-axis is the shared time series (used by timezone settings)
         window.lwaTimeCharts = [chartOverviewTraffic, chartRequests, chartBandwidth, chartStatus, chartDeviceTypes, chartLatency].filter(Boolean);
@@ -610,11 +634,11 @@
                             zoomButtons: true,
                             selectedRegions: highlighted,
                             regionStyle: {
-                                initial: { fill: '#cbd5e1', stroke: '#ffffff', strokeWidth: 0.5 },
-                                hover: { fill: '#94a3b8' },
-                                selected: { fill: '#f6821f' }
+                                initial: { fill: isDarkMode() ? '#2a2c33' : '#e4e5ea', stroke: isDarkMode() ? '#16171a' : '#ffffff', strokeWidth: 0.5 },
+                                hover: { fill: lwaCssVar('--lwa-chart-label', '#969aa3') },
+                                selected: { fill: isDarkMode() ? '#5c5cc0' : '#b7b7ee' }
                             },
-                            markerStyle: { initial: { fill: '#4f46e5', stroke: '#ffffff', strokeWidth: 1, r: 5 } },
+                            markerStyle: { initial: { fill: lwaCssVar('--lwa-primary', '#5b5bd6'), stroke: '#ffffff', strokeWidth: 1, r: 5 } },
                             markers: []
                         });
                         counts[id] = 0;
@@ -821,9 +845,9 @@
                 if (document.getElementById(rowId)) return;
 
                 let st = parseInt(log.status_code || 200);
-                let stBadge = st >= 500 ? 'bg-purple-50 text-purple-700 dark:bg-purple-950/50 dark:text-purple-400' :
-                    (st >= 400 ? 'bg-rose-50 text-rose-700 dark:bg-rose-950/50 dark:text-rose-400' :
-                        (st >= 300 ? 'bg-cyan-50 text-cyan-700 dark:bg-cyan-950/50 dark:text-cyan-400' :
+                let stBadge = st >= 500 ? 'bg-rose-50 text-rose-700 dark:bg-rose-950/50 dark:text-rose-400' :
+                    (st >= 400 ? 'bg-amber-50 text-amber-700 dark:bg-amber-950/50 dark:text-amber-400' :
+                        (st >= 300 ? 'bg-sky-50 text-sky-700 dark:bg-sky-950/50 dark:text-sky-400' :
                             'bg-emerald-50 text-emerald-700 dark:bg-emerald-950/50 dark:text-emerald-400'));
 
                 let cleanMethod = escapeHtml(log.method || 'GET');
@@ -1709,13 +1733,13 @@
                     return '<tr class="hover:bg-slate-50/60 dark:hover:bg-slate-800/40">' +
                         '<td class="px-4 py-2"><input type="checkbox" class="lwa-row-check" aria-label="Select ' + name + '"></td>' +
                         '<td class="px-4 py-2"><span class="flex items-center gap-2 min-w-0 truncate" title="' + name + '">' + icon + '<span class="truncate">' + name + '</span></span></td>' +
-                        '<td class="px-4 py-2"><div class="flex items-center gap-2"><div class="flex-1 bg-slate-100 dark:bg-slate-800 h-1.5 rounded-full overflow-hidden"><div class="bg-[#0051c3] dark:bg-[#38bdf8] h-full rounded-full" style="width:' + pct + '%"></div></div><span class="w-10 text-right text-slate-400">' + pct.toFixed(1) + '%</span></div></td>' +
+                        '<td class="px-4 py-2"><div class="flex items-center gap-2"><div class="lwa-progress flex-1"><span style="width:' + pct + '%"></span></div><span class="w-10 text-right text-slate-400">' + pct.toFixed(1) + '%</span></div></td>' +
                         '<td class="px-4 py-2 text-right font-mono text-slate-600 dark:text-slate-300">' + escapeHtml(item.count_fmt ?? item.count ?? 0) + '</td>' +
                         '<td class="px-2 py-2 text-right relative">' +
                             '<button type="button" data-row-menu="' + index + '" class="p-1 rounded text-slate-400 hover:text-slate-700 hover:bg-slate-100 dark:hover:bg-slate-800" aria-label="Row options">...</button>' +
-                            '<div data-row-menu-panel="' + index + '" class="hidden absolute right-2 top-full z-10 w-44 rounded-md border lwa-border bg-white dark:bg-slate-800 shadow-lg py-1 text-left">' +
-                                '<a href="' + observabilityUrl + (observabilityUrl.includes('?') ? '&' : '?') + 'filter=' + encodeURIComponent(item.name) + '" class="block px-3 py-1.5 text-xs text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-slate-700">View in Observability</a>' +
-                                '<button type="button" data-row-copy="' + escapeHtml(item.name) + '" class="block w-full text-left px-3 py-1.5 text-xs text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-slate-700">Copy name</button>' +
+                            '<div data-row-menu-panel="' + index + '" class="hidden absolute right-2 top-full z-10 w-44 lwa-card p-1 text-left">' +
+                                '<a href="' + observabilityUrl + (observabilityUrl.includes('?') ? '&' : '?') + 'filter=' + encodeURIComponent(item.name) + '" class="block px-2.5 py-1.5 rounded text-xs text-slate-700 dark:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-700">View in Observability</a>' +
+                                '<button type="button" data-row-copy="' + escapeHtml(item.name) + '" class="block w-full text-left px-2.5 py-1.5 rounded text-xs text-slate-700 dark:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-700">Copy name</button>' +
                             '</div>' +
                         '</td></tr>';
                 }).join('');
@@ -1801,7 +1825,7 @@
         // 9d. Group by on time-series charts
         (function() {
             const trends = window.lwaBreakdownTrends || {};
-            const palette = ['#0051c3', '#f59e0b', '#8b5cf6', '#10b981', '#ef4444', '#06b6d4'];
+            const palette = lwaChartColors();
             const defaults = {
                 chartOverviewTraffic: [{ name: 'Requests', data: requestsData }],
                 chartRequestsOverTime: [{ name: 'Requests', data: requestsData }],
@@ -1816,7 +1840,7 @@
                     const key = select.value;
                     if (!key) {
                         chart.updateSeries(defaults[chartId] || [{ name: 'Requests', data: requestsData }]);
-                        chart.updateOptions({ colors: ['#0051c3'], legend: { show: false } });
+                        chart.updateOptions({ colors: [lwaCssVar('--lwa-primary', '#5b5bd6')], legend: { show: false } });
                         return;
                     }
 
@@ -1848,12 +1872,12 @@
             function proportionRow(item) {
                 const pct = Math.min(100, Math.max(2, Number(item.percentage) || 0));
                 const mark = item.icon || (item.flag ? '<span aria-hidden="true">' + esc(item.flag) + '</span>' : '');
-                return '<div class="flex items-center justify-between text-xs py-1 border-b border-slate-100 dark:border-slate-800/80 last:border-0 px-1 rounded">' +
-                    '<span class="flex items-center gap-1.5 min-w-0 truncate max-w-[180px] sm:max-w-[280px] font-mono text-slate-700 dark:text-slate-300" title="' + esc(item.name) + '">' +
+                return '<div class="lwa-list-row">' +
+                    '<span class="lwa-list-name truncate max-w-[150px] sm:max-w-[260px]" title="' + esc(item.name) + '">' +
                         mark + '<span class="truncate">' + esc(item.name) + '</span></span>' +
-                    '<div class="flex items-center gap-3 w-36 sm:w-48 shrink-0">' +
-                        '<div class="flex-1 bg-slate-100 dark:bg-slate-800 h-1.5 rounded-full overflow-hidden"><div class="bg-[#0051c3] dark:bg-[#38bdf8] h-full rounded-full" style="width:' + pct + '%"></div></div>' +
-                        '<span class="text-right w-14 font-mono text-slate-600 dark:text-slate-400">' + esc(item.count_fmt ?? item.count ?? 0) + '</span>' +
+                    '<div class="lwa-list-metric">' +
+                        '<div class="lwa-progress"><span style="width:' + pct + '%"></span></div>' +
+                        '<span class="lwa-list-count">' + esc(item.count_fmt ?? item.count ?? 0) + '</span>' +
                     '</div></div>';
             }
 
@@ -1863,11 +1887,11 @@
                 const points = data.map((value, index) =>
                     (data.length > 1 ? (index / (data.length - 1)) * 100 : 0).toFixed(2) + ',' +
                     (22 - (Number(value) / max) * 18).toFixed(2)).join(' ');
-                return '<div class="flex items-center justify-between text-xs py-1 border-b border-slate-100 dark:border-slate-800/80 last:border-0 px-1 rounded">' +
-                    '<span class="flex items-center gap-1.5 min-w-0 truncate max-w-[180px] sm:max-w-[280px] font-mono text-slate-700 dark:text-slate-300" title="' + esc(item.name) + '"><span class="truncate">' + esc(item.name) + '</span></span>' +
-                    '<div class="flex items-center gap-3 w-36 sm:w-48 shrink-0">' +
-                        '<svg viewBox="0 0 100 24" preserveAspectRatio="none" class="h-5 flex-1 text-[#0051c3] dark:text-[#38bdf8]" aria-hidden="true"><polyline points="' + points + '" fill="none" stroke="currentColor" stroke-width="1.6" vector-effect="non-scaling-stroke"/></svg>' +
-                        '<span class="text-right w-14 font-mono text-slate-600 dark:text-slate-400">' + data.reduce((a, b) => a + Number(b), 0).toLocaleString() + '</span>' +
+                return '<div class="lwa-list-row">' +
+                    '<span class="lwa-list-name truncate max-w-[150px] sm:max-w-[260px]" title="' + esc(item.name) + '"><span class="truncate">' + esc(item.name) + '</span></span>' +
+                    '<div class="lwa-list-metric">' +
+                        '<svg viewBox="0 0 100 24" preserveAspectRatio="none" class="h-5 flex-1" style="color: var(--lwa-primary)" aria-hidden="true"><polyline points="' + points + '" fill="none" stroke="currentColor" stroke-width="1.6" vector-effect="non-scaling-stroke"/></svg>' +
+                        '<span class="lwa-list-count">' + data.reduce((a, b) => a + Number(b), 0).toLocaleString() + '</span>' +
                     '</div></div>';
             }
 
@@ -1917,13 +1941,13 @@
                 if (registry.chartDeviceTypes && device) {
                     const series = (device.series || []).map(s => ({ name: s.name, data: s.data || [] }));
                     registry.chartDeviceTypes.updateSeries(series.length ? series : [{ name: 'No data', data: [] }]);
-                    const colors = { Desktop: '#0051c3', Mobile: '#f59e0b', Tablet: '#8b5cf6', Bot: '#94a3b8' };
+                    const colors = { Desktop: lwaCssVar('--lwa-primary', '#5b5bd6'), Mobile: '#e8a33d', Tablet: '#8b6cf0', Bot: '#9aa0aa' };
                     const legend = document.querySelector('[data-card-id="device-types-over-time"] .flex.flex-wrap');
                     if (legend) {
                         legend.innerHTML = series.map(s => {
                             const total = (s.data || []).reduce((a, b) => a + Number(b), 0).toLocaleString();
                             return '<div class="flex items-center gap-1.5 text-[11px] text-slate-500 dark:text-slate-400">' +
-                                '<span class="w-2 h-2 rounded-full" style="background:' + (colors[s.name] || '#0051c3') + '"></span>' +
+                                '<span class="w-2 h-2 rounded-full" style="background:' + (colors[s.name] || lwaCssVar('--lwa-primary', '#5b5bd6')) + '"></span>' +
                                 '<span>' + esc(s.name) + '</span><span class="font-semibold text-slate-700 dark:text-slate-200">' + total + '</span></div>';
                         }).join('');
                     }
@@ -2020,19 +2044,19 @@
             if (el && window.ApexCharts) {
                 const series = [{ name: 'Requests', data: requestsData || [] }];
                 const labels = timeLabels || [];
-                const chart = new ApexCharts(el, {
+                const chart = new ApexCharts(el, lwaThinAxis({
                     series: series.length ? series : [{ name: 'No data', data: [] }],
                     chart: { type: 'area', height: 224, stacked: false, toolbar: { show: false }, zoom: { enabled: false } },
-                    colors: ['#0051c3', '#f59e0b', '#8b5cf6', '#10b981', '#ef4444', '#06b6d4'],
+                    colors: lwaChartColors(),
                     dataLabels: { enabled: false },
                     stroke: lwaSmoothArea,
                     fill: { type: 'solid', opacity: 0.07 },
-                    xaxis: { categories: labels, labels: { style: { fontSize: '10px', colors: '#94a3b8' } }, axisBorder: { show: false } },
-                    yaxis: { labels: { style: { fontSize: '10px', colors: '#94a3b8' } } },
+                    xaxis: { categories: labels, labels: { style: { fontSize: '10px', colors: lwaCssVar('--lwa-chart-label', '#969aa3') } }, axisBorder: { show: false } },
+                    yaxis: { labels: { style: { fontSize: '10px', colors: lwaCssVar('--lwa-chart-label', '#969aa3') } } },
                     grid: lwaGrid(),
                     legend: { show: series.length > 1, position: 'top' },
                     tooltip: lwaChartTooltip('')
-                });
+                }));
                 chart.render();
                 if (!window.lwaChartRegistry) window.lwaChartRegistry = {};
                 window.lwaChartRegistry.chartLogOutcomes = chart;
@@ -2208,24 +2232,24 @@
             });
 
             // --- Widget charts ---
-            const palette = ['#0051c3', '#f59e0b', '#8b5cf6', '#10b981', '#ef4444', '#06b6d4'];
+            const palette = lwaChartColors();
             document.querySelectorAll('[data-widget-chart]').forEach(function(el) {
                 if (!window.ApexCharts) return;
                 const data = json('lwaWidgetChartData-' + el.dataset.widgetChart);
                 const series = (data.series || []).length ? data.series : [{ name: 'No data', data: [] }];
-                new ApexCharts(el, {
+                new ApexCharts(el, lwaThinAxis({
                     series: series,
                     chart: { type: data.stacked ? 'bar' : 'area', height: 192, stacked: !!data.stacked, toolbar: { show: false }, zoom: { enabled: false } },
                     colors: series.map((_, i) => palette[i % palette.length]),
                     stroke: data.stacked ? { width: 0 } : lwaSmoothArea,
                     fill: data.stacked ? { opacity: 1 } : { type: 'solid', opacity: 0.07 },
                     dataLabels: { enabled: false },
-                    xaxis: { categories: data.labels || [], labels: { style: { fontSize: '10px', colors: '#94a3b8' } }, axisBorder: { show: false } },
-                    yaxis: { labels: { style: { fontSize: '10px', colors: '#94a3b8' } } },
+                    xaxis: { categories: data.labels || [], labels: { style: { fontSize: '10px', colors: lwaCssVar('--lwa-chart-label', '#969aa3') } }, axisBorder: { show: false } },
+                    yaxis: { labels: { style: { fontSize: '10px', colors: lwaCssVar('--lwa-chart-label', '#969aa3') } } },
                     grid: lwaGrid(),
                     legend: { show: series.length > 1, position: 'bottom' },
                     tooltip: lwaChartTooltip(''),
-                }).render();
+                })).render();
             });
 
             // --- Editor state ---

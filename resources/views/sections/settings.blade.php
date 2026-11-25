@@ -50,11 +50,11 @@
 
                             <!-- General -->
                             <section id="settings-general"
-                                class="lwa-surface border lwa-border rounded-lg shadow-sm overflow-hidden">
+                                class="lwa-card overflow-hidden">
                                 <div class="p-4 border-b border-slate-100 dark:border-slate-800">
                                     <h2 class="text-sm font-semibold text-slate-900 dark:text-white"
                                         data-i18n="settings">Settings</h2>
-                                    <p class="text-[11px] text-slate-400 mt-0.5">Analytics preferences for this browser
+                                    <p class="lwa-subtitle mt-0.5">Analytics preferences for this browser
                                     </p>
                                 </div>
                                 <div class="divide-y divide-slate-100 dark:divide-slate-800 text-xs">
@@ -121,11 +121,11 @@
 
                             <!-- Dashboard preferences -->
                             <section id="settings-dashboard"
-                                class="lwa-surface border lwa-border rounded-lg shadow-sm overflow-hidden">
+                                class="lwa-card overflow-hidden">
                                 <div class="p-4 border-b border-slate-100 dark:border-slate-800">
                                     <h2 class="text-sm font-semibold text-slate-900 dark:text-white"
                                         data-i18n="dashboard">Dashboard</h2>
-                                    <p class="text-[11px] text-slate-400 mt-0.5">Defaults applied to every visit</p>
+                                    <p class="lwa-subtitle mt-0.5">Defaults applied to every visit</p>
                                 </div>
                                 <div class="divide-y divide-slate-100 dark:divide-slate-800 text-xs">
                                     <div class="flex items-center justify-between gap-4 px-4 py-3">
@@ -173,11 +173,11 @@
 
                             <!-- Collection (read-only) -->
                             <section id="settings-collection"
-                                class="lwa-surface border lwa-border rounded-lg shadow-sm overflow-hidden">
+                                class="lwa-card overflow-hidden">
                                 <div class="p-4 border-b border-slate-100 dark:border-slate-800">
                                     <h2 class="text-sm font-semibold text-slate-900 dark:text-white"
                                         data-i18n="collection">Collection</h2>
-                                    <p class="text-[11px] text-slate-400 mt-0.5">Defined in config — read-only</p>
+                                    <p class="lwa-subtitle mt-0.5">Defined in config — read-only</p>
                                 </div>
                                 <div class="divide-y divide-slate-100 dark:divide-slate-800 text-xs">
                                     @php
@@ -222,10 +222,10 @@
 
                             <!-- Alerts -->
                             <section id="settings-alerts"
-                                class="lwa-surface border lwa-border rounded-lg shadow-sm overflow-hidden">
+                                class="lwa-card overflow-hidden">
                                 <div class="p-4 border-b border-slate-100 dark:border-slate-800">
                                     <h2 class="text-sm font-semibold text-slate-900 dark:text-white">Alerts</h2>
-                                    <p class="text-[11px] text-slate-400 mt-0.5">Webhook alerts for 5xx errors and
+                                    <p class="lwa-subtitle mt-0.5">Webhook alerts for 5xx errors and
                                         error-rate spikes</p>
                                 </div>
                                 <div class="divide-y divide-slate-100 dark:divide-slate-800 text-xs">
@@ -257,11 +257,11 @@
 
                             <!-- Export defaults -->
                             <section id="settings-export"
-                                class="lwa-surface border lwa-border rounded-lg shadow-sm overflow-hidden">
+                                class="lwa-card overflow-hidden">
                                 <div class="p-4 border-b border-slate-100 dark:border-slate-800">
                                     <h2 class="text-sm font-semibold text-slate-900 dark:text-white">Export defaults
                                     </h2>
-                                    <p class="text-[11px] text-slate-400 mt-0.5">Applied to every CSV export link</p>
+                                    <p class="lwa-subtitle mt-0.5">Applied to every CSV export link</p>
                                 </div>
                                 <div class="divide-y divide-slate-100 dark:divide-slate-800 text-xs">
                                     <div class="flex items-center justify-between gap-4 px-4 py-3">
@@ -286,11 +286,11 @@
 
                             <!-- Data maintenance -->
                             <section id="settings-maintenance"
-                                class="lwa-surface border lwa-border rounded-lg shadow-sm overflow-hidden">
+                                class="lwa-card overflow-hidden">
                                 <div class="p-4 border-b border-slate-100 dark:border-slate-800">
                                     <h2 class="text-sm font-semibold text-slate-900 dark:text-white"
                                         data-i18n="maintenance">Data maintenance</h2>
-                                    <p class="text-[11px] text-slate-400 mt-0.5">{{ $logPath ?? 'Database table' }} —
+                                    <p class="lwa-subtitle mt-0.5">{{ $logPath ?? 'Database table' }} —
                                         scoped to {{ $tenantId ? 'tenant ' . $tenantId : 'all tenants' }}</p>
                                 </div>
 
@@ -324,9 +324,9 @@
                                             class="flex flex-wrap items-center justify-between gap-3 px-4 py-3">
                                             @csrf
                                             <div>
-                                                <div class="text-xs font-semibold text-slate-800 dark:text-slate-200">
+                                                <div class="lwa-card-title">
                                                     Prune old records</div>
-                                                <div class="text-[11px] text-slate-400 mt-0.5">Deletes telemetry older
+                                                <div class="lwa-subtitle mt-0.5">Deletes telemetry older
                                                     than the chosen number of days.</div>
                                             </div>
                                             <div class="flex items-center gap-2">
@@ -345,7 +345,7 @@
                                             <div>
                                                 <div class="text-xs font-semibold text-rose-600 dark:text-rose-400">
                                                     Empty table</div>
-                                                <div class="text-[11px] text-slate-400 mt-0.5">Permanently removes all
+                                                <div class="lwa-subtitle mt-0.5">Permanently removes all
                                                     telemetry rows.</div>
                                             </div>
                                             <div class="flex items-center gap-2">
@@ -367,15 +367,15 @@
 
                             @include('web-analytics::sections.websites')
 
-                            <section id="settings-countries" class="lwa-surface border lwa-border rounded-lg p-4 shadow-sm">
-                                <div class="text-xs font-semibold text-slate-800 dark:text-slate-200 mb-3">Top Countries</div>
+                            <section id="settings-countries" class="lwa-card p-4">
+                                <div class="lwa-card-title mb-3">Top Countries</div>
                                 @include('web-analytics::partials.breakdown-list', ['items' => $analytics['breakdowns']['top_countries'] ?? [], 'key' => 'top_countries'])
-                                <p class="text-[11px] text-slate-400 mt-3">GeoIP location is approximate and respects IP anonymization settings.</p>
+                                <p class="lwa-subtitle mt-3">GeoIP location is approximate and respects IP anonymization settings.</p>
                             </section>
 
                             <!-- About -->
                             <section id="settings-about"
-                                class="lwa-surface border lwa-border rounded-lg shadow-sm overflow-hidden">
+                                class="lwa-card overflow-hidden">
                                 <div class="p-4 border-b border-slate-100 dark:border-slate-800">
                                     <h2 class="text-sm font-semibold text-slate-900 dark:text-white">About</h2>
                                 </div>
@@ -406,7 +406,7 @@
                 <div id="shortcutsHelp"
                     class="hidden fixed inset-0 z-50 items-center justify-center bg-slate-900/50 p-4">
                     <div
-                        class="w-full max-w-sm lwa-surface border border-slate-200 dark:border-slate-700 rounded-lg shadow-xl p-5 text-xs">
+                        class="w-full max-w-sm lwa-card p-5 text-xs" style="box-shadow: var(--lwa-shadow-pop)">
                         <div class="flex items-center justify-between mb-3">
                             <span class="font-semibold text-slate-900 dark:text-white">Keyboard shortcuts</span>
                             <button type="button"

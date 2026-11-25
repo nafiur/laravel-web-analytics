@@ -7,28 +7,28 @@
                      <div class="flex flex-wrap items-start justify-between gap-3">
                          <div>
                              <div class="flex items-center gap-2">
-                                 <h2 class="text-sm font-semibold text-slate-900 dark:text-white">{{ $dashboard->name }}</h2>
+                                 <h2 class="lwa-page-title">{{ $dashboard->name }}</h2>
                                  @if($dashboard->template)
-                                     <span class="text-[10px] px-1.5 py-0.5 rounded border lwa-border text-slate-400">{{ $dashboard->template }}</span>
+                                     <span class="lwa-chip">{{ $dashboard->template }}</span>
                                  @endif
                              </div>
-                             <p class="text-[11px] text-slate-400 mt-0.5">{{ count($widgets) }} widgets · {{ $editing ? 'Editing layout' : 'Read only' }}</p>
+                             <p class="lwa-subtitle mt-1">{{ count($widgets) }} widgets · {{ $editing ? 'Editing layout' : 'Read only' }}</p>
                          </div>
                          <div class="flex items-center gap-2">
-                             <a href="{{ route('lwa_dashboards') }}" class="px-3 py-1.5 text-xs text-slate-600 dark:text-slate-300 border lwa-border rounded-md">All dashboards</a>
+                             <a href="{{ route('lwa_dashboards') }}" class="lwa-btn">All dashboards</a>
                              <a href="{{ $editing ? route('lwa_dashboard_view', $dashboard->id) : route('lwa_dashboard_edit', $dashboard->id) }}"
-                                class="px-3 py-1.5 text-xs font-medium text-white bg-[#0051c3] rounded-md">
+                                class="lwa-btn-primary">
                                  {{ $editing ? 'Done editing' : 'Edit dashboard' }}
                              </a>
                              @if($editing)
-                                 <button type="button" data-dashboard-save class="px-3 py-1.5 text-xs font-semibold text-white bg-emerald-600 hover:bg-emerald-700 rounded-md">Save</button>
+                                 <button type="button" data-dashboard-save class="lwa-btn-primary">Save</button>
                              @endif
                          </div>
                      </div>
 
                      <div class="{{ $editing ? 'grid grid-cols-1 lg:grid-cols-[200px_minmax(0,1fr)] gap-4 items-start' : '' }}">
                          @if($editing)
-                             <aside class="lwa-surface border lwa-border rounded-lg overflow-hidden">
+                             <aside class="lwa-card overflow-hidden">
                                  <div class="px-3 py-2 border-b lwa-border text-[11px] font-semibold text-slate-500 dark:text-slate-400">Add widgets</div>
                                  @foreach($catalogGroups as $group => $items)
                                      <details class="border-b lwa-border last:border-0" open>
@@ -55,7 +55,7 @@
                                      'editing'  => $editing,
                                  ])
                              @empty
-                                 <div class="col-span-12 lwa-surface border lwa-border rounded-lg p-8 text-center text-xs text-slate-400">
+                                 <div class="col-span-12 lwa-card p-8 text-center text-xs text-slate-400">
                                      No widgets yet. {{ $editing ? 'Add one from the catalog.' : 'Switch to edit mode to add widgets.' }}
                                  </div>
                              @endforelse

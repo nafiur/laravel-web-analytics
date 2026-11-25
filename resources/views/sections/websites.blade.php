@@ -1,7 +1,7 @@
-                <section id="settings-websites" class="lwa-surface border lwa-border rounded-lg shadow-sm overflow-hidden">
+                <section id="settings-websites" class="lwa-card overflow-hidden">
                     <div class="p-4 border-b border-slate-100 dark:border-slate-800">
                         <div class="text-xs font-semibold text-slate-900 dark:text-white">Websites</div>
-                        <p class="text-[11px] text-slate-400 mt-0.5">Register properties and switch the active dashboard scope</p>
+                        <p class="lwa-subtitle mt-0.5">Register properties and switch the active dashboard scope</p>
                     </div>
                     <div class="divide-y divide-slate-100 dark:divide-slate-800 text-xs">
                         @forelse($websites as $website)
@@ -34,7 +34,7 @@
                                 </div>
                             </div>
                         @empty
-                            <div class="px-4 py-4 text-[11px] text-slate-400">No websites registered yet.</div>
+                            <div class="px-4 py-4 lwa-subtitle">No websites registered yet.</div>
                         @endforelse
 
                         <form method="POST" action="{{ route('lwa_websites_store') }}" class="px-4 py-3 flex flex-wrap items-end gap-2 bg-slate-50/60 dark:bg-slate-800/30">
@@ -49,7 +49,7 @@
                                 <input type="text" name="domain" required maxlength="190" placeholder="example.com"
                                     class="w-full text-xs px-2 py-1.5 border border-slate-200 dark:border-slate-700 rounded bg-white dark:bg-slate-800 text-slate-700 dark:text-slate-200">
                             </div>
-                            <button type="submit" class="px-3 py-1.5 text-[11px] font-medium text-white bg-[#4f46e5] hover:bg-[#4338ca] rounded-md">Add website</button>
+                            <button type="submit" class="lwa-btn-primary">Add website</button>
                         </form>
                     </div>
                 </section>
