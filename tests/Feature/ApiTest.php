@@ -86,6 +86,45 @@ class ApiTest extends TestCase
         $this->assertSame(1, AnalyticEvent::where('name', 'allowed')->count());
     }
 
+    public function test_api_event_batch_ingests_and_dedupes(): void
+    {
+        $websiteId = (int) config('laravel-web-analytics.analytics.website_id');
+        [, $writer] = ApiToken::issue($websiteId, 'batch-writer', ['write']);
+
+        $payload = [
+            'events' => [
+                ['uuid' => 'batch-evt-1', 'name' => 'js_purchase', 'properties' => ['plan' => 'pro'], 'value' => 9.0, 'timestamp' => '2026-11-25T08:15:22Z'],
+                ['uuid' => 'batch-evt-2', 'name' => 'js_signup', 'properties' => ['plan' => 'free'], 'value' => 0.0, 'timestamp' => '2026-11-25T09:15:22Z'],
+            ],
+        ];
+
+        $this->withHeader('Authorization', 'Bearer ' . $writer)
+            ->postJson(route('lwa_api_events_batch'), $payload)
+            ->assertStatus(202)
+            ->assertJsonPath('success', true);
+
+        $this->assertSame(2, AnalyticEvent::where('website_id', $websiteId)->count());
+
+        // Retry with the same uuids must not create duplicate rows.
+        $this->withHeader('Authorization', 'Bearer ' . $writer)
+            ->postJson(route('lwa_api_events_batch'), $payload)
+            ->assertStatus(202);
+
+        $this->assertSame(2, AnalyticEvent::where('website_id', $websiteId)->count());
+    }
+
+    public function test_api_event_batch_rejects_malformed_events(): void
+    {
+        $websiteId = (int) config('laravel-web-analytics.analytics.website_id');
+        [, $writer] = ApiToken::issue($websiteId, 'batch-writer', ['write']);
+
+        $this->withHeader('Authorization', 'Bearer ' . $writer)
+            ->postJson(route('lwa_api_events_batch'), ['events' => [['properties' => ['plan' => 'pro']]]])
+            ->assertStatus(422);
+
+        $this->assertSame(0, AnalyticEvent::count());
+    }
+
     public function test_api_dashboard_crud_respects_token_abilities(): void
     {
         $websiteId = (int) config('laravel-web-analytics.analytics.website_id');

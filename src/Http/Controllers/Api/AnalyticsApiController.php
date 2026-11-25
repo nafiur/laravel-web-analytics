@@ -2,9 +2,13 @@
 
 namespace Nafiur\WebAnalytics\Http\Controllers\Api;
 
+use Carbon\CarbonImmutable;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Routing\Controller;
+use Illuminate\Support\Str;
+use Nafiur\WebAnalytics\Contracts\EventStore;
+use Nafiur\WebAnalytics\Data\UnifiedEvent;
 use Nafiur\WebAnalytics\Facades\Analytics;
 use Nafiur\WebAnalytics\Models\Analytics\Dashboard;
 use Nafiur\WebAnalytics\Models\Analytics\Website;
@@ -66,6 +70,51 @@ class AnalyticsApiController extends Controller
         );
 
         return response()->json(['success' => true, 'message' => 'Event accepted'], 202);
+    }
+
+    /**
+     * Batch ingestion endpoint (v3.2): accept up to N normalized events in a
+     * single request, validate, dedupe on uuid and persist through the
+     * EventStore. Malformed payloads are rejected with 422 before anything is
+     * written.
+     */
+    public function storeBatch(Request $request): JsonResponse
+    {
+        $data = $request->validate([
+            'events'          => 'required|array|min:1',
+            'events.*.uuid'   => 'sometimes|string|max:64',
+            'events.*.name'   => 'required|string|max:100',
+            'events.*.properties' => 'sometimes|array',
+            'events.*.value'  => 'sometimes|numeric|nullable',
+            'events.*.timestamp' => 'sometimes|date',
+        ]);
+
+        $websiteId = $this->websiteId($request) ?? 0;
+        $events = [];
+
+        foreach ($data['events'] as $raw) {
+            $timestamp = isset($raw['timestamp']) && $raw['timestamp'] !== null
+                ? CarbonImmutable::parse((string) $raw['timestamp'])
+                : CarbonImmutable::now();
+
+            $events[] = new UnifiedEvent(
+                uuid:         (string) ($raw['uuid'] ?? Str::uuid()),
+                name:         (string) $raw['name'],
+                timestamp:    $timestamp,
+                distinctId:  isset($raw['distinct_id']) ? (string) $raw['distinct_id'] : (isset($raw['anonymous_id']) ? (string) $raw['anonymous_id'] : null),
+                anonymousId: isset($raw['anonymous_id']) ? (string) $raw['anonymous_id'] : null,
+                sessionId:    isset($raw['session_id']) ? (string) $raw['session_id'] : null,
+                websiteId:   $websiteId,
+                properties:  is_array($raw['properties'] ?? null) ? $raw['properties'] : [],
+                context:      is_array($raw['context'] ?? null) ? $raw['context'] : [],
+                value:        isset($raw['value']) ? (float) $raw['value'] : null,
+                createdAt:    $timestamp,
+            );
+        }
+
+        app(EventStore::class)->insert($events);
+
+        return response()->json(['success' => true, 'inserted' => count($events)], 202);
     }
 
     public function websites(): JsonResponse

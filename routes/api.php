@@ -15,6 +15,10 @@ Route::post('/events', [AnalyticsApiController::class, 'event'])
     ->middleware('lwa.api:write')
     ->name('lwa_api_event');
 
+Route::post('/events/batch', [AnalyticsApiController::class, 'storeBatch'])
+    ->middleware('lwa.api:write')
+    ->name('lwa_api_events_batch');
+
 Route::get('/websites', [AnalyticsApiController::class, 'websites'])
     ->middleware('lwa.api:admin')
     ->name('lwa_api_websites');
