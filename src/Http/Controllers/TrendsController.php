@@ -43,7 +43,8 @@ class TrendsController extends Controller
             ? AnalyticEvent::query()->distinct()->orderBy('name')->pluck('name')->all()
             : [];
         $saved = Schema::hasTable('lwa_insights')
-            ? Insight::query()->forWebsite((int) $websiteId)->latest()->limit(50)->get()
+            ? Insight::query()->forWebsite((int) $websiteId)->latest()->limit(100)->get()
+                ->filter(fn (Insight $report): bool => ($report->config['type'] ?? 'trends') === 'trends')
             : collect();
 
         $trend = $ready
@@ -127,7 +128,8 @@ class TrendsController extends Controller
     private function normalizeConfig(array $config): array
     {
         $allowed = [
-            'event', 'metric', 'breakdown', 'granularity',
+            'type', 'event', 'metric', 'breakdown', 'granularity',
+            'steps', 'window',
             'range', 'start_date', 'end_date', 'property_key', 'property_value',
         ];
 

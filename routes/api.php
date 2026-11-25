@@ -51,6 +51,10 @@ Route::get('/insights/trend', [AnalyticsApiController::class, 'trend'])
     ->middleware('lwa.api:read')
     ->name('lwa_api_insights_trend');
 
+Route::get('/insights/funnel', [AnalyticsApiController::class, 'funnel'])
+    ->middleware('lwa.api:read')
+    ->name('lwa_api_insights_funnel');
+
 Route::get('/insights', [AnalyticsApiController::class, 'insights'])
     ->middleware('lwa.api:read')
     ->name('lwa_api_insights');

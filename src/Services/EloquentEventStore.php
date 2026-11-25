@@ -52,7 +52,10 @@ class EloquentEventStore implements EventStore
         $builder = AnalyticEvent::query()
             ->where('website_id', $query->websiteId);
 
-        if ($query->name !== null && $query->name !== '') {
+        $names = array_values(array_filter($query->names ?? [], fn ($value): bool => is_string($value) && $value !== ''));
+        if ($names !== []) {
+            $builder->whereIn('name', $names);
+        } elseif ($query->name !== null && $query->name !== '') {
             $builder->where('name', $query->name);
         }
 

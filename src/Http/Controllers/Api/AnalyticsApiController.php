@@ -6,6 +6,7 @@ use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Routing\Controller;
 use Nafiur\WebAnalytics\Contracts\EventStore;
+use Nafiur\WebAnalytics\Data\FunnelQuery;
 use Nafiur\WebAnalytics\Data\InsightQuery;
 use Nafiur\WebAnalytics\Facades\Analytics;
 use Nafiur\WebAnalytics\Models\Analytics\Dashboard;
@@ -14,6 +15,7 @@ use Nafiur\WebAnalytics\Models\Analytics\UserProfile;
 use Nafiur\WebAnalytics\Models\Analytics\Website;
 use Nafiur\WebAnalytics\Services\AnalyticsWindow;
 use Nafiur\WebAnalytics\Services\DashboardWidgets;
+use Nafiur\WebAnalytics\Services\FunnelService;
 use Nafiur\WebAnalytics\Services\IdentityService;
 use Nafiur\WebAnalytics\Services\InsightService;
 use Nafiur\WebAnalytics\Services\UnifiedEventMapper;
@@ -255,6 +257,41 @@ class AnalyticsApiController extends Controller
         ]);
     }
 
+    /**
+     * v3.3 Funnels: ordered per-user steps with a documented conversion
+     * window. Uses the same EventStore read path as Trends.
+     */
+    public function funnel(Request $request): JsonResponse
+    {
+        $filters = $request->validate([
+            'steps'          => 'required|array|min:2|max:10',
+            'steps.*'        => 'required|string|max:100',
+            'window'         => 'sometimes|string|in:' . implode(',', FunnelQuery::WINDOWS),
+            'range'          => 'sometimes|string|in:' . implode(',', AnalyticsWindow::RANGES),
+            'start_date'     => 'sometimes|date',
+            'end_date'       => 'sometimes|date',
+            'property_key'   => 'sometimes|string|max:100',
+            'property_value' => 'sometimes|string|max:255',
+        ]);
+        [$from, $to] = AnalyticsWindow::resolve($filters);
+
+        $query = FunnelQuery::fromArray([
+            'website_id'     => $this->websiteId($request) ?? 0,
+            'steps'          => $filters['steps'],
+            'window'         => $filters['window'] ?? '7d',
+            'from'           => $from,
+            'to'             => $to,
+            'property_key'   => $filters['property_key'] ?? null,
+            'property_value' => $filters['property_value'] ?? null,
+        ]);
+
+        return response()->json([
+            'success' => true,
+            'data'    => app(FunnelService::class)->funnel($query),
+            'filters' => $filters,
+        ]);
+    }
+
     public function insights(Request $request): JsonResponse
     {
         return response()->json([
@@ -331,7 +368,8 @@ class AnalyticsApiController extends Controller
     private function normalizeInsightConfig(array $config): array
     {
         $allowed = [
-            'event', 'metric', 'breakdown', 'granularity',
+            'type', 'event', 'metric', 'breakdown', 'granularity',
+            'steps', 'window',
             'range', 'start_date', 'end_date', 'property_key', 'property_value',
         ];
 

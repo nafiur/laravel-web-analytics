@@ -13,7 +13,7 @@ A modern, fast, and self-hosted Web Traffic & Visitor Analytics Dashboard for La
 ## ⚡ Highlights & Key Features
 
 - 🚀 **Real-Time Live Stream (SSE)**: Live active visitor count and instant real-time traffic feed without WebSockets, Node.js, or Pusher. Each stream response is short-lived and paced by EventSource, so no PHP worker is held open while waiting for new traffic.
-- 🧭 **Sidebar Navigation**: 15 sidebar sections — Overview, Real-time, Logs, Dashboards, Visitors, Traffic Sources, Pages & Screens, Geography, Devices & Browsers, Campaigns, Events & Goals, Conversions, Performance, Error Monitoring and Settings. Each has its own bookmarkable route and Blade page; the Settings screen has no analytics tab bar.
+- 🧭 **Sidebar Navigation**: 18 sidebar links — Overview, Real-time, Logs, Dashboards, Visitors, Traffic Sources, Pages & Screens, Geography, Devices & Browsers, Campaigns, Trends, Funnels, Event Explorer, Events & Goals, Conversions, Performance, Error Monitoring and Settings. Each has its own bookmarkable route and Blade page; the Settings screen has no analytics tab bar.
 - 🎨 **Tailwind CSS UI with Dark Mode**: Modern, responsive dashboard powered by Tailwind CSS Play CDN (zero build step / zero npm dependencies). Uses CSS design tokens (`--lwa-*`, `[data-theme="dark"]`), Lucide outline icons, visible focus states, skeleton loaders, explicit empty/error states, and a 1-click persistent Dark/Light/System preference.
 - 📊 **Comprehensive Metrics**: Total Requests, Unique Visitors, Bandwidth (Data Transferred in GB/MB), Avg Response Time, Error Rate.
 - 🧪 **Built-In Live Traffic Simulator**: Easily generate realistic live traffic every second with `php artisan lwa:live` to demo and test live streaming.
@@ -144,6 +144,12 @@ Enable bundle serving with `WEB_ANALYTICS_SDK_ENABLED=true`. Config defaults (`s
 Open `/web-analytics/trends` to chart **events**, **unique users** or summed **value** over hourly/daily/weekly/monthly buckets. Filter by event name, property key/value and time window; add a breakdown property to split the chart into up to six series. Every chart response includes its definitions, the number of events scanned and a note when the 20,000-event sample cap is reached. Anonymous visitor ids aliased by `identify` count as one profile in the users metric.
 
 The same engine is available to scripts via `GET /web-analytics/api/v1/insights/trend` (read token). Save a query from the page or manage reports through `/web-analytics/api/v1/insights` (read/admin tokens); reports live in the DB-backed `lwa_insights` table and are scoped to the active website.
+
+### Funnels (v3.3)
+
+Open `/web-analytics/funnels` to measure ordered, per-user conversion paths. Enter 2–10 event names, choose a conversion window (1 hour to no limit), and optionally filter by an event property. The page reports users at each step, step/overall conversion, drop-off and median completion time; every number is computed from `lwa_events`, counts each user once per step, and ships with its definition. Anonymous ids aliased by `identify` are folded into the same profile.
+
+The same engine is exposed at `GET /web-analytics/api/v1/insights/funnel` (read token). Saved funnels use the same `lwa_insights` table as saved trends, tagged with `type: funnel` so each page only shows its own reports.
 
 ## 🎨 Design System
 
@@ -284,6 +290,7 @@ The package defines routes with the `lwa_` prefix to avoid conflicts with your a
 | `GET /web-analytics/api/v1/users` | `lwa_api_users` | List user profiles (bearer token, `read`) |
 | `GET /web-analytics/api/v1/users/{distinctId}` | `lwa_api_user` | Profile, aliases and timeline (bearer token, `read`) |
 | `GET /web-analytics/api/v1/insights/trend` | `lwa_api_insights_trend` | Trends query with documented definitions (bearer token, `read`) |
+| `GET /web-analytics/api/v1/insights/funnel` | `lwa_api_insights_funnel` | Ordered per-user funnel with documented rates (bearer token, `read`) |
 | `GET /web-analytics/api/v1/insights` | `lwa_api_insights` | List saved reports (bearer token, `read`) |
 | `POST /web-analytics/api/v1/insights` | `lwa_api_insights_store` | Save a report (bearer token, `admin`) |
 | `GET /web-analytics/api/v1/insights/{insight}` | `lwa_api_insights_show` | Show a report (bearer token, `read`) |
@@ -303,6 +310,7 @@ Every sidebar section also has its own bookmarkable URL:
 | `/web-analytics/geography` | `lwa_geography` | `/web-analytics/settings` | `lwa_settings` |
 | `/web-analytics/devices` | `lwa_devices` | `/web-analytics/explorer` | `lwa_explorer` |
 | `/web-analytics/trends` | `lwa_trends` | | |
+| `/web-analytics/funnels` | `lwa_funnels` | | |
 
 The legacy `/web-analytics` (`lwa_dashboard`) URL still works and shows the Overview pane. The Events and Conversions URLs render an explicit “not available yet” pane rather than fabricated numbers.
 
@@ -378,7 +386,7 @@ The sidebar exposes 15 sections, each rendered by its own route and Blade page:
 | **Devices & Browsers** | Device / OS / browser breakdowns |
 | **Campaigns** | UTM source / medium / campaign breakdowns |
 | **Events & Goals** | Recent custom events captured through the facade/API (name, properties, value) |
-| **Conversions** | Recorded goal/purchase events — conversion reporting is intentionally simple, no funnel guesses |
+| **Conversions** | Recorded goal/purchase events — arrange them into a documented, ordered funnel; no inferred conversions |
 | **Performance** | Latency, response times, bandwidth by path |
 | **Error Monitoring** | 4xx/5xx errors, slow/error paths |
 | **Settings** | Preferences, maintenance, alerts, about |
