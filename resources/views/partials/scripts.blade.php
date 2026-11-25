@@ -2262,9 +2262,33 @@
                 const response = await request(state.url, 'PUT', { widgets: state.widgets });
                 if (response.ok && reload) location.reload();
             }
+            const widgetCatalog = json('lwaDashboardCatalog');
+            const insightReports = json('lwaDashboardInsights');
             document.querySelectorAll('[data-widget-add]').forEach(button => {
                 button.addEventListener('click', function() {
-                    state.widgets.push({ widget: button.dataset.widgetAdd, w: 6, h: 1, title: '' });
+                    const id = button.dataset.widgetAdd || '';
+                    const definition = widgetCatalog[id] || {};
+                    const next = { widget: id, w: 6, h: 1, title: '' };
+                    ['type', 'key', 'suffix'].forEach(key => {
+                        if (definition[key] !== undefined) next[key] = definition[key];
+                    });
+                    state.widgets.push(next);
+                    persist(true);
+                });
+            });
+            document.querySelectorAll('[data-insight-add]').forEach(button => {
+                button.addEventListener('click', function() {
+                    const id = Number(button.dataset.insightAdd || 0);
+                    if (!Number.isInteger(id) || id <= 0) return;
+                    const report = insightReports[id] || {};
+                    state.widgets.push({
+                        widget: 'insight:' + id,
+                        type: 'insight',
+                        insight_id: id,
+                        w: 12,
+                        h: 1,
+                        title: report.name || '',
+                    });
                     persist(true);
                 });
             });

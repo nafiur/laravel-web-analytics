@@ -43,6 +43,21 @@
                                          </div>
                                      </details>
                                  @endforeach
+                                 <details class="border-b lwa-border" open>
+                                     <summary class="px-3 py-2 text-xs font-medium text-slate-700 dark:text-slate-200 cursor-pointer hover:bg-slate-50 dark:hover:bg-slate-800/60">Saved insights</summary>
+                                     <div class="px-2 pb-2 space-y-0.5">
+                                         @forelse($insightReports as $report)
+                                             <button type="button" data-insight-add="{{ $report['id'] }}"
+                                                     class="w-full text-left px-2 py-1.5 rounded text-[11px] text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800">
+                                                 {{ $report['name'] }}
+                                                 <span class="block text-[10px] text-slate-400">{{ $report['type_label'] }}</span>
+                                             </button>
+                                         @empty
+                                             <p class="px-2 py-1 text-[10px] text-slate-400">No saved reports yet. Create one on the Trends, Funnels, Retention or Paths page.</p>
+                                         @endforelse
+                                     </div>
+                                 </details>
+                                 <p class="px-3 py-2 text-[10px] text-slate-400">Insight widgets read saved reports from <code class="font-mono">lwa_insights</code>; the first 12 are computed.</p>
                              </aside>
                          @endif
 
@@ -53,6 +68,7 @@
                                      'widgetId' => 'dw' . $index,
                                      'analytics'=> $analytics,
                                      'editing'  => $editing,
+                                     'insight'  => $insightResults[$index] ?? null,
                                  ])
                              @empty
                                  <div class="col-span-12 lwa-card p-8 text-center text-xs text-slate-400">
@@ -69,3 +85,6 @@
                      'url'     => route('lwa_dashboard_update', $dashboard->id),
                      'editing' => (bool) $editing,
                  ], JSON_HEX_TAG | JSON_HEX_AMP | JSON_HEX_APOS | JSON_HEX_QUOT) !!}</script>
+
+                 <script type="application/json" id="lwaDashboardCatalog">{!! json_encode($catalog, JSON_HEX_TAG | JSON_HEX_AMP | JSON_HEX_APOS | JSON_HEX_QUOT) !!}</script>
+                 <script type="application/json" id="lwaDashboardInsights">{!! json_encode(collect($insightReports)->keyBy('id')->all(), JSON_HEX_TAG | JSON_HEX_AMP | JSON_HEX_APOS | JSON_HEX_QUOT) !!}</script>

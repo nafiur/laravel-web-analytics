@@ -1,13 +1,14 @@
 @php
     $widgetId = $widgetId ?? 'w' . uniqid();
+    $widget = \Nafiur\WebAnalytics\Services\DashboardWidgets::resolve($widget);
     $widgetType = $widget['type'] ?? 'kpi';
     $widgetKey = $widget['key'] ?? '';
     $widgetTitle = \Nafiur\WebAnalytics\Services\DashboardWidgets::label($widget);
     $widgetWidth = max(3, min(12, (int) ($widget['w'] ?? 6)));
     $widgetSuffix = $widget['suffix'] ?? '';
 @endphp
-<div class="lwa-card p-4 lwa-dashboard-widget @if($widgetType === 'kpi') lwa-kpi @endif"
-     data-dashboard-widget data-widget-id="{{ $widgetId }}" style="grid-column: span {{ $widgetWidth }}">
+<div class="lwa-card p-4 lwa-dashboard-widget @if($widgetType === 'kpi' || $widgetType === 'insight') lwa-kpi @endif"
+     data-dashboard-widget data-widget-id="{{ $widgetId }}" data-widget-type="{{ $widgetType }}" style="grid-column: span {{ $widgetWidth }}">
     <div class="flex items-start justify-between gap-2 mb-3">
         <div class="lwa-card-title">{{ $widgetTitle }}</div>
         @if(!empty($editing))
@@ -81,6 +82,37 @@
             'subtitle' => 'Approximate visitor locations',
             'bare'     => true,
         ])
+
+    @elseif($widgetType === 'insight')
+        @php $insight = $insight ?? null; @endphp
+        @if($insight === null || !empty($insight['unavailable']))
+            <div class="text-xs text-slate-400 py-2">
+                {{ $insight['unavailable'] ?? 'Saved report unavailable.' }}
+            </div>
+        @else
+            <div class="flex items-start justify-between gap-2">
+                <div class="lwa-kpi-value">{{ $insight['headline'] }}</div>
+                <span class="lwa-chip shrink-0">{{ $insight['type_label'] }}</span>
+            </div>
+            <div class="lwa-subtitle mt-1">{{ $insight['headline_label'] }}</div>
+            <div class="mt-3 space-y-1">
+                @foreach($insight['rows'] as $row)
+                    <div class="flex items-center justify-between gap-2 text-[11px] border-b lwa-border py-1 last:border-0">
+                        <span class="truncate" title="{{ $row['label'] }}">{{ $row['label'] }}</span>
+                        <span class="font-mono shrink-0">{{ $row['value'] }}</span>
+                    </div>
+                @endforeach
+            </div>
+            @if(!empty($insight['definitions']))
+                <p class="mt-2 text-[10px] text-slate-400">{{ implode(' ', $insight['definitions']) }}</p>
+            @endif
+            @if(!empty($insight['url']))
+                <div class="mt-2 pt-2 border-t lwa-border flex flex-wrap items-center justify-between gap-2 text-[10px] text-slate-400">
+                    <span>Source: lwa_events · {{ number_format((int) ($insight['sample_size'] ?? 0)) }} events scanned@if(!empty($insight['capped'])) · sample capped@endif</span>
+                    <a href="{{ $insight['url'] }}" class="hover:underline shrink-0">Open report →</a>
+                </div>
+            @endif
+        @endif
 
     @else
         <div class="text-xs text-slate-400">Unknown widget type</div>

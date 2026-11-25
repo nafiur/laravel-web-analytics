@@ -13,7 +13,7 @@ A modern, fast, and self-hosted Web Traffic & Visitor Analytics Dashboard for La
 ## ⚡ Highlights & Key Features
 
 - 🚀 **Real-Time Live Stream (SSE)**: Live active visitor count and instant real-time traffic feed without WebSockets, Node.js, or Pusher. Each stream response is short-lived and paced by EventSource, so no PHP worker is held open while waiting for new traffic.
-- 🧭 **Sidebar Navigation**: 18 sidebar links — Overview, Real-time, Logs, Dashboards, Visitors, Traffic Sources, Pages & Screens, Geography, Devices & Browsers, Campaigns, Trends, Funnels, Event Explorer, Events & Goals, Conversions, Performance, Error Monitoring and Settings. Each has its own bookmarkable route and Blade page; the Settings screen has no analytics tab bar.
+- 🧭 **Sidebar Navigation**: 20 sidebar links — Overview, Real-time, Logs, Dashboards, Visitors, Traffic Sources, Pages & Screens, Geography, Devices & Browsers, Campaigns, Funnels, Retention, User Paths, Trends, Event Explorer, Events & Goals, Conversions, Performance, Error Monitoring and Settings. Each has its own bookmarkable route and Blade page; the Settings screen has no analytics tab bar.
 - 🎨 **Tailwind CSS UI with Dark Mode**: Modern, responsive dashboard powered by Tailwind CSS Play CDN (zero build step / zero npm dependencies). Uses CSS design tokens (`--lwa-*`, `[data-theme="dark"]`), Lucide outline icons, visible focus states, skeleton loaders, explicit empty/error states, and a 1-click persistent Dark/Light/System preference.
 - 📊 **Comprehensive Metrics**: Total Requests, Unique Visitors, Bandwidth (Data Transferred in GB/MB), Avg Response Time, Error Rate.
 - 🧪 **Built-In Live Traffic Simulator**: Easily generate realistic live traffic every second with `php artisan lwa:live` to demo and test live streaming.
@@ -32,7 +32,7 @@ A modern, fast, and self-hosted Web Traffic & Visitor Analytics Dashboard for La
 - 📈 **Chart Group by**: Traffic charts can be grouped by country, path, status code, browser, OS, device type, HTTP method, referrer, data center (city), host or cache status — trend series are computed for both database and file-log sources.
 - 🔗 **Observability deep links**: Row-level "View in Observability" opens the Real-time feed pre-filtered by that breakdown value.
 - 📜 **Raw request logs**: Dedicated `/web-analytics/logs` page with an outcomes-over-time chart, a collapsible field sidebar (Request / Client / Response / Other fields — click a field to add a filter chip), paginated table, expandable rows with full request details and filtered CSV export. Edge/security fields (bot score, edge status) are intentionally not collected.
-- 🧩 **Custom dashboards**: `/web-analytics/dashboards` with a create modal (blank or preset templates) and a DB-backed editor. Users pick widgets from a catalog of existing KPIs, charts, breakdowns, visitors map and recent logs; add/remove/reorder/resize them and save. Layouts are scoped by website and tenant, and also manageable through the token-authenticated REST API (`read` for listing, `admin` for writes).
+- 🧩 **Custom dashboards**: `/web-analytics/dashboards` with a create modal (blank or preset templates) and a DB-backed editor. Users pick widgets from a catalog of existing KPIs, charts, breakdowns, visitors map and recent logs, or place saved Trends/Funnels/Retention/Paths reports as insight widgets; add/remove/reorder/resize them and save. Layouts are scoped by website and tenant, and also manageable through the token-authenticated REST API (`read` for listing, `admin` for writes).
 
 ---
 
@@ -162,6 +162,12 @@ Both views come from one bounded `EventStore` read (20,000 events, 12 most recen
 Open `/web-analytics/paths` to see the most common ordered event sequences. Each user contributes one path — their first qualifying sequence — with consecutive repeats collapsed into one step. Choose a start/end event, depth (2–8) and number of paths (5–50); the page reports users and share per path plus the top events at each position. Users with a single step or who never reach the start event are counted separately, so denominators stay explicit.
 
 Everything is computed from the same bounded `EventStore` read (20,000 events) with canonical identities and documented definitions. Scripts can use `GET /web-analytics/api/v1/insights/paths` (read token); saved reports live in `lwa_insights` with `type: paths`.
+
+### Insight widgets on custom dashboards (v3.3)
+
+Open a dashboard in edit mode to see a **Saved insights** section next to the standard widget catalog. It lists website/tenant-scoped reports from `lwa_insights`; adding one creates a DB-backed widget that is rendered server-side by the same Trends, Funnel, Retention or Paths engine used on the full report page. Insight widgets follow the dashboard's selected time window (including custom dates), show a headline plus the top rows, and disclose the definition, `lwa_events` source and number of events scanned. At most 12 insight widgets are computed per page, and deleted or foreign reports render an explicit unavailable message instead of fabricated numbers.
+
+This is separate from the **Add to dashboard** card-menu action, which pins browser-local report shortcuts into Overview via `localStorage`. Only reports placed through the dashboard editor are saved in `lwa_dashboards` and shared across browsers.
 
 ## 🎨 Design System
 
@@ -295,6 +301,9 @@ The package defines routes with the `lwa_` prefix to avoid conflicts with your a
 | `POST /web-analytics/websites/switch` | `lwa_websites_switch` | Switch the active website (session) |
 | `DELETE /web-analytics/websites/{website}` | `lwa_websites_destroy` | Remove a website (requires `confirm=DELETE`) |
 | `POST /web-analytics/settings/test-alert` | `lwa_settings_test_alert` | Send a test alert through the configured channel |
+| `GET /web-analytics/dashboards` | `lwa_dashboards` | Custom dashboard list and create modal |
+| `GET /web-analytics/dashboards/{id}` | `lwa_dashboard_view` | Read-only custom dashboard |
+| `GET /web-analytics/dashboards/{id}/edit` | `lwa_dashboard_edit` | Custom dashboard editor |
 | `GET /web-analytics/api/v1/summary` | `lwa_api_summary` | JSON summary (bearer token, `read`) |
 | `GET /web-analytics/api/v1/timeseries` | `lwa_api_timeseries` | JSON time series (bearer token, `read`) |
 | `POST /web-analytics/api/v1/events` | `lwa_api_event` | Track a custom event (bearer token, `write`) |
@@ -323,8 +332,10 @@ Every sidebar section also has its own bookmarkable URL:
 | `/web-analytics/pages` | `lwa_pages` | `/web-analytics/errors` | `lwa_errors` |
 | `/web-analytics/geography` | `lwa_geography` | `/web-analytics/settings` | `lwa_settings` |
 | `/web-analytics/devices` | `lwa_devices` | `/web-analytics/explorer` | `lwa_explorer` |
-| `/web-analytics/trends` | `lwa_trends` | | |
-| `/web-analytics/funnels` | `lwa_funnels` | | |
+| `/web-analytics/trends` | `lwa_trends` | `/web-analytics/dashboards` | `lwa_dashboards` |
+| `/web-analytics/funnels` | `lwa_funnels` | `/web-analytics/logs` | `lwa_logs` |
+| `/web-analytics/retention` | `lwa_retention` | | |
+| `/web-analytics/paths` | `lwa_paths` | | |
 
 The legacy `/web-analytics` (`lwa_dashboard`) URL still works and shows the Overview pane. The Events and Conversions URLs render an explicit “not available yet” pane rather than fabricated numbers.
 
@@ -385,7 +396,7 @@ The legacy `dashboard.blade.php` simply extends the shared layout and renders th
 
 ## 🧭 Dashboard Navigation
 
-The sidebar exposes 15 sections, each rendered by its own route and Blade page:
+The sidebar exposes 20 sections, each rendered by its own route and Blade page:
 
 | Menu item | Shows |
 |-----------|-------|
@@ -399,6 +410,11 @@ The sidebar exposes 15 sections, each rendered by its own route and Blade page:
 | **Geography** | Top countries (scrolls to Countries) |
 | **Devices & Browsers** | Device / OS / browser breakdowns |
 | **Campaigns** | UTM source / medium / campaign breakdowns |
+| **Funnels** | Ordered per-user conversion funnels with drop-off and median completion time |
+| **Retention** | Daily/weekly cohorts, period retention and lifecycle stages |
+| **User Paths** | Most common ordered event sequences with shares and step distribution |
+| **Trends** | Event/user/value trends with breakdowns and saved reports |
+| **Event Explorer** | Raw event browser with name, property, user and time filters |
 | **Events & Goals** | Recent custom events captured through the facade/API (name, properties, value) |
 | **Conversions** | Recorded goal/purchase events — arrange them into a documented, ordered funnel; no inferred conversions |
 | **Performance** | Latency, response times, bandwidth by path |

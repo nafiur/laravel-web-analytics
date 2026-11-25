@@ -8,6 +8,7 @@ use Illuminate\Routing\Controller;
 use Nafiur\WebAnalytics\Models\Analytics\Dashboard;
 use Nafiur\WebAnalytics\Services\DatabaseTrafficAnalytics;
 use Nafiur\WebAnalytics\Services\DatabaseReadiness;
+use Nafiur\WebAnalytics\Services\DashboardInsights;
 use Nafiur\WebAnalytics\Services\DashboardWidgets;
 use Nafiur\WebAnalytics\Services\TenantResolver;
 use Nafiur\WebAnalytics\Services\WebsiteResolver;
@@ -37,7 +38,7 @@ class DashboardController extends Controller
         $data = $request->validate([
             'name'     => 'required|string|max:150',
             'template' => 'sometimes|nullable|string|max:50',
-            'widgets'  => 'sometimes|array',
+            'widgets'  => 'sometimes|array|max:50',
         ]);
 
         $template = (string) ($data['template'] ?? '');
@@ -84,7 +85,7 @@ class DashboardController extends Controller
 
         $data = $request->validate([
             'name'     => 'sometimes|required|string|max:150',
-            'widgets'  => 'sometimes|array',
+            'widgets'  => 'sometimes|array|max:50',
             'settings' => 'sometimes|array',
         ]);
 
@@ -117,14 +118,31 @@ class DashboardController extends Controller
         $catalog = DashboardWidgets::catalog();
         $templates = DashboardWidgets::templates();
 
+        // Saved reports are resolved in the dashboard's own website/tenant
+        // scope. Each widget result comes from the same engine as the full
+        // report page; at most DashboardInsights::MAX_WIDGETS are computed.
+        $insights = app(DashboardInsights::class);
+        $websiteId = app(WebsiteResolver::class)->currentId();
+        $insightReports = $insights->reports($websiteId, $tenantId);
+        $insightResults = $insights->results(
+            $websiteId,
+            $tenantId,
+            $dashboard->widgets ?? [],
+            (string) $timeRange,
+            $request->input('start_date'),
+            $request->input('end_date')
+        );
+
         return view('web-analytics::pages.dashboard-view', [
-            'dashboard' => $dashboard,
-            'analytics' => $analytics,
-            'timeRange' => $timeRange,
-            'editing'   => $editing,
-            'catalog'   => $catalog,
-            'templates' => $templates,
-            'section'   => 'dashboards',
+            'dashboard'      => $dashboard,
+            'analytics'      => $analytics,
+            'timeRange'      => $timeRange,
+            'editing'        => $editing,
+            'catalog'        => $catalog,
+            'templates'      => $templates,
+            'insightReports' => $insightReports,
+            'insightResults' => $insightResults,
+            'section'        => 'dashboards',
         ]);
     }
 

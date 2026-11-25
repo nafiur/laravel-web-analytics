@@ -181,7 +181,7 @@ class AnalyticsApiController extends Controller
         $data = $request->validate([
             'name'     => 'required|string|max:150',
             'template' => 'sometimes|nullable|string|max:50',
-            'widgets'  => 'sometimes|array',
+            'widgets'  => 'sometimes|array|max:50',
             'settings' => 'sometimes|array',
         ]);
 
@@ -218,7 +218,7 @@ class AnalyticsApiController extends Controller
         $model = $this->findDashboard($request, $dashboard);
         $data = $request->validate([
             'name'     => 'sometimes|required|string|max:150',
-            'widgets'  => 'sometimes|array',
+            'widgets'  => 'sometimes|array|max:50',
             'settings' => 'sometimes|array',
         ]);
         $model->fill($data);

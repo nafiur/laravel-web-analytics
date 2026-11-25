@@ -73,13 +73,29 @@ final class DashboardWidgets
         ];
     }
 
+    /**
+     * Merge a stored widget with its catalog definition. Layouts created before
+     * widget metadata was persisted only store `widget`, `w`, `h` and `title`,
+     * so type/key/suffix must be resolved at render time rather than read from
+     * the row. Explicit stored values still win.
+     *
+     * @param array<string, mixed> $widget
+     * @return array<string, mixed>
+     */
+    public static function resolve(array $widget): array
+    {
+        $id = (string) ($widget['widget'] ?? '');
+
+        return array_merge(self::catalog()[$id] ?? [], $widget);
+    }
+
     /** @param array<string, mixed> $widget */
     public static function label(array $widget): string
     {
+        $resolved = self::resolve($widget);
         $id = (string) ($widget['widget'] ?? '');
-        $catalog = self::catalog();
 
         return !empty($widget['title']) ? (string) $widget['title']
-            : ($catalog[$id]['label'] ?? ucfirst(str_replace('_', ' ', $id)));
+            : ((string) ($resolved['label'] ?? ucfirst(str_replace('_', ' ', $id))));
     }
 }
