@@ -58,6 +58,11 @@
 
                     <div class="lwa-nav-label">Insights</div>
 
+                    <a href="{{ route('lwa_trends') }}"
+                       class="sidebar-link {{ $current === 'trends' ? 'active' : '' }}">
+                        <i data-lucide="chart-no-axes-combined" class="text-sm"></i> <span class="sidebar-label">Trends</span>
+                    </a>
+
                     <a href="{{ route('lwa_explorer') }}"
                        class="sidebar-link {{ $current === 'explorer' ? 'active' : '' }}">
                         <i data-lucide="scan-search" class="text-sm"></i> <span class="sidebar-label">Event Explorer</span>

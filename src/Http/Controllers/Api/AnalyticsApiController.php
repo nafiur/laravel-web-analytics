@@ -6,12 +6,16 @@ use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Routing\Controller;
 use Nafiur\WebAnalytics\Contracts\EventStore;
+use Nafiur\WebAnalytics\Data\InsightQuery;
 use Nafiur\WebAnalytics\Facades\Analytics;
 use Nafiur\WebAnalytics\Models\Analytics\Dashboard;
+use Nafiur\WebAnalytics\Models\Analytics\Insight;
 use Nafiur\WebAnalytics\Models\Analytics\UserProfile;
 use Nafiur\WebAnalytics\Models\Analytics\Website;
+use Nafiur\WebAnalytics\Services\AnalyticsWindow;
 use Nafiur\WebAnalytics\Services\DashboardWidgets;
 use Nafiur\WebAnalytics\Services\IdentityService;
+use Nafiur\WebAnalytics\Services\InsightService;
 use Nafiur\WebAnalytics\Services\UnifiedEventMapper;
 
 class AnalyticsApiController extends Controller
@@ -222,6 +226,129 @@ class AnalyticsApiController extends Controller
         $this->findDashboard($request, $dashboard)->delete();
 
         return response()->json(['success' => true]);
+    }
+
+    /**
+     * v3.3 Trends: one documented query path shared with the Explorer UI.
+     */
+    public function trend(Request $request): JsonResponse
+    {
+        $filters = $this->validateInsightFilters($request);
+        [$from, $to] = AnalyticsWindow::resolve($filters);
+
+        $query = InsightQuery::fromArray([
+            'website_id'     => $this->websiteId($request) ?? 0,
+            'metric'         => $filters['metric'] ?? 'events',
+            'name'           => $filters['event'] ?? null,
+            'breakdown'      => $filters['breakdown'] ?? null,
+            'granularity'    => $filters['granularity'] ?? 'day',
+            'from'           => $from,
+            'to'             => $to,
+            'property_key'   => $filters['property_key'] ?? null,
+            'property_value' => $filters['property_value'] ?? null,
+        ]);
+
+        return response()->json([
+            'success' => true,
+            'data'    => app(InsightService::class)->trend($query),
+            'filters' => $filters,
+        ]);
+    }
+
+    public function insights(Request $request): JsonResponse
+    {
+        return response()->json([
+            'success' => true,
+            'data'    => $this->insightQuery($request)->latest()->limit(100)->get(),
+        ]);
+    }
+
+    public function insightStore(Request $request): JsonResponse
+    {
+        $data = $request->validate([
+            'name'   => 'required|string|max:150',
+            'config' => 'required|array',
+        ]);
+
+        $insight = Insight::create([
+            'name'       => $data['name'],
+            'config'     => $this->normalizeInsightConfig($data['config']),
+            'website_id' => $this->websiteId($request),
+            'tenant_id'  => $request->input('tenant_id'),
+        ]);
+
+        return response()->json(['success' => true, 'data' => $insight], 201);
+    }
+
+    public function insightShow(Request $request, int $insight): JsonResponse
+    {
+        return response()->json([
+            'success' => true,
+            'data'    => $this->findInsight($request, $insight),
+        ]);
+    }
+
+    public function insightUpdate(Request $request, int $insight): JsonResponse
+    {
+        $model = $this->findInsight($request, $insight);
+        $data = $request->validate([
+            'name'   => 'sometimes|required|string|max:150',
+            'config' => 'sometimes|array',
+        ]);
+
+        $model->fill([
+            'name'   => $data['name'] ?? $model->name,
+            'config' => isset($data['config']) ? $this->normalizeInsightConfig($data['config']) : $model->config,
+        ])->save();
+
+        return response()->json(['success' => true, 'data' => $model->fresh()]);
+    }
+
+    public function insightDestroy(Request $request, int $insight): JsonResponse
+    {
+        $this->findInsight($request, $insight)->delete();
+
+        return response()->json(['success' => true]);
+    }
+
+    /** @return array<string, mixed> */
+    private function validateInsightFilters(Request $request): array
+    {
+        return $request->validate([
+            'event'          => 'sometimes|string|max:100',
+            'metric'         => 'sometimes|string|in:' . implode(',', InsightQuery::METRICS),
+            'breakdown'      => 'sometimes|string|max:100',
+            'granularity'    => 'sometimes|string|in:' . implode(',', InsightQuery::GRANULARITIES),
+            'range'          => 'sometimes|string|in:' . implode(',', AnalyticsWindow::RANGES),
+            'start_date'     => 'sometimes|date',
+            'end_date'       => 'sometimes|date',
+            'property_key'   => 'sometimes|string|max:100',
+            'property_value' => 'sometimes|string|max:255',
+        ]);
+    }
+
+    /** @param array<string, mixed> $config */
+    private function normalizeInsightConfig(array $config): array
+    {
+        $allowed = [
+            'event', 'metric', 'breakdown', 'granularity',
+            'range', 'start_date', 'end_date', 'property_key', 'property_value',
+        ];
+
+        return array_intersect_key($config, array_flip($allowed));
+    }
+
+    private function insightQuery(Request $request): \Illuminate\Database\Eloquent\Builder
+    {
+        $query = Insight::query()->forWebsite($this->websiteId($request));
+        $tenantId = $request->input('tenant_id');
+
+        return $query->forTenant(is_string($tenantId) && $tenantId !== '' ? $tenantId : null);
+    }
+
+    private function findInsight(Request $request, int $id): Insight
+    {
+        return $this->insightQuery($request)->findOrFail($id);
     }
 
     private function findDashboard(Request $request, int $id): Dashboard

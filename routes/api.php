@@ -46,3 +46,23 @@ Route::put('/dashboards/{dashboard}', [AnalyticsApiController::class, 'dashboard
 Route::delete('/dashboards/{dashboard}', [AnalyticsApiController::class, 'dashboardDestroy'])
     ->middleware('lwa.api:admin')
     ->name('lwa_api_dashboards_destroy');
+
+Route::get('/insights/trend', [AnalyticsApiController::class, 'trend'])
+    ->middleware('lwa.api:read')
+    ->name('lwa_api_insights_trend');
+
+Route::get('/insights', [AnalyticsApiController::class, 'insights'])
+    ->middleware('lwa.api:read')
+    ->name('lwa_api_insights');
+Route::post('/insights', [AnalyticsApiController::class, 'insightStore'])
+    ->middleware('lwa.api:admin')
+    ->name('lwa_api_insights_store');
+Route::get('/insights/{insight}', [AnalyticsApiController::class, 'insightShow'])
+    ->middleware('lwa.api:read')
+    ->name('lwa_api_insights_show');
+Route::put('/insights/{insight}', [AnalyticsApiController::class, 'insightUpdate'])
+    ->middleware('lwa.api:admin')
+    ->name('lwa_api_insights_update');
+Route::delete('/insights/{insight}', [AnalyticsApiController::class, 'insightDestroy'])
+    ->middleware('lwa.api:admin')
+    ->name('lwa_api_insights_destroy');

@@ -216,9 +216,10 @@ class AnalyticsTest extends TestCase
         $this->assertStringContainsString('href="' . route('lwa_overview') . '"', $content);
         $this->assertStringContainsString('href="' . route('lwa_events') . '"', $content);
         $this->assertStringContainsString('href="' . route('lwa_explorer') . '"', $content);
-        $this->assertSame(16, substr_count($content, 'class="sidebar-link'));
+        $this->assertStringContainsString('href="' . route('lwa_trends') . '"', $content);
+        $this->assertSame(17, substr_count($content, 'class="sidebar-link'));
 
-        foreach (['Overview', 'Real-time', 'Logs', 'Dashboards', 'Event Explorer', 'Visitors', 'Traffic Sources', 'Pages &amp; Screens', 'Geography',
+        foreach (['Overview', 'Real-time', 'Logs', 'Dashboards', 'Trends', 'Event Explorer', 'Visitors', 'Traffic Sources', 'Pages &amp; Screens', 'Geography',
                   'Devices &amp; Browsers', 'Campaigns', 'Events &amp; Goals', 'Conversions',
                   'Performance', 'Error Monitoring', 'Settings'] as $label) {
             $this->assertStringContainsString($label, $content);

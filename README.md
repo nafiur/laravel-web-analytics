@@ -139,6 +139,12 @@ Enable bundle serving with `WEB_ANALYTICS_SDK_ENABLED=true`. Config defaults (`s
 
 `identify` aliases the current anonymous id to a known `u_<id>` profile, merges traits, and keeps pre-sign-in events in the same timeline. Browse the result at `/web-analytics/explorer`, or through the read-scoped REST endpoints `GET /users` and `GET /users/{distinctId}`.
 
+### Trends & saved reports (v3.3)
+
+Open `/web-analytics/trends` to chart **events**, **unique users** or summed **value** over hourly/daily/weekly/monthly buckets. Filter by event name, property key/value and time window; add a breakdown property to split the chart into up to six series. Every chart response includes its definitions, the number of events scanned and a note when the 20,000-event sample cap is reached. Anonymous visitor ids aliased by `identify` count as one profile in the users metric.
+
+The same engine is available to scripts via `GET /web-analytics/api/v1/insights/trend` (read token). Save a query from the page or manage reports through `/web-analytics/api/v1/insights` (read/admin tokens); reports live in the DB-backed `lwa_insights` table and are scoped to the active website.
+
 ## 🎨 Design System
 
 | Topic | Choice |
@@ -277,6 +283,12 @@ The package defines routes with the `lwa_` prefix to avoid conflicts with your a
 | `POST /web-analytics/api/v1/events/batch` | `lwa_api_events_batch` | Batch ingest (project key or bearer token, `write`) |
 | `GET /web-analytics/api/v1/users` | `lwa_api_users` | List user profiles (bearer token, `read`) |
 | `GET /web-analytics/api/v1/users/{distinctId}` | `lwa_api_user` | Profile, aliases and timeline (bearer token, `read`) |
+| `GET /web-analytics/api/v1/insights/trend` | `lwa_api_insights_trend` | Trends query with documented definitions (bearer token, `read`) |
+| `GET /web-analytics/api/v1/insights` | `lwa_api_insights` | List saved reports (bearer token, `read`) |
+| `POST /web-analytics/api/v1/insights` | `lwa_api_insights_store` | Save a report (bearer token, `admin`) |
+| `GET /web-analytics/api/v1/insights/{insight}` | `lwa_api_insights_show` | Show a report (bearer token, `read`) |
+| `PUT /web-analytics/api/v1/insights/{insight}` | `lwa_api_insights_update` | Update a report (bearer token, `admin`) |
+| `DELETE /web-analytics/api/v1/insights/{insight}` | `lwa_api_insights_destroy` | Delete a report (bearer token, `admin`) |
 | `GET /web-analytics/api/v1/websites` | `lwa_api_websites` | List websites (bearer token, `admin`) |
 
 Every sidebar section also has its own bookmarkable URL:
@@ -290,6 +302,7 @@ Every sidebar section also has its own bookmarkable URL:
 | `/web-analytics/pages` | `lwa_pages` | `/web-analytics/errors` | `lwa_errors` |
 | `/web-analytics/geography` | `lwa_geography` | `/web-analytics/settings` | `lwa_settings` |
 | `/web-analytics/devices` | `lwa_devices` | `/web-analytics/explorer` | `lwa_explorer` |
+| `/web-analytics/trends` | `lwa_trends` | | |
 
 The legacy `/web-analytics` (`lwa_dashboard`) URL still works and shows the Overview pane. The Events and Conversions URLs render an explicit “not available yet” pane rather than fabricated numbers.
 

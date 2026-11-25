@@ -4,6 +4,7 @@ use Illuminate\Support\Facades\Route;
 use Nafiur\WebAnalytics\Http\Controllers\DashboardController;
 use Nafiur\WebAnalytics\Http\Controllers\EventExplorerController;
 use Nafiur\WebAnalytics\Http\Controllers\SdkController;
+use Nafiur\WebAnalytics\Http\Controllers\TrendsController;
 use Nafiur\WebAnalytics\Http\Controllers\WebAnalyticsController;
 
 Route::get('/', [WebAnalyticsController::class, 'index'])->name('lwa_dashboard');
@@ -13,6 +14,9 @@ Route::get('/stream', [WebAnalyticsController::class, 'stream'])->name('lwa_stre
 Route::get('/export', [WebAnalyticsController::class, 'export'])->name('lwa_export');
 Route::get('/sdk.js', [SdkController::class, '__invoke'])->name('lwa_sdk');
 Route::get('/explorer', [EventExplorerController::class, 'index'])->name('lwa_explorer');
+Route::get('/trends', [TrendsController::class, 'index'])->name('lwa_trends');
+Route::post('/trends/save', [TrendsController::class, 'save'])->name('lwa_trends_save');
+Route::post('/trends/{insight}/delete', [TrendsController::class, 'destroy'])->name('lwa_trends_destroy');
 Route::post('/settings/prune', [WebAnalyticsController::class, 'prune'])->name('lwa_settings_prune');
 Route::post('/settings/empty', [WebAnalyticsController::class, 'emptyTable'])->name('lwa_settings_empty');
 Route::post('/settings/test-alert', [WebAnalyticsController::class, 'testAlert'])->name('lwa_settings_test_alert');

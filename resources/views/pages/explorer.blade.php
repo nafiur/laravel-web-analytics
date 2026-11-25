@@ -96,7 +96,7 @@
     <div class="lwa-card overflow-hidden">
         <div class="px-4 py-3 border-b lwa-border">
             <div class="lwa-card-title">Matched events</div>
-            <p class="lwa-subtitle mt-0.5">Showing up to 200 most recent events · every row comes from <code class="font-mono">lwa_events</code></p>
+            <p class="lwa-subtitle mt-0.5">Showing {{ number_format(count($rows)) }} of {{ number_format($totalRows) }} matching events · capped at 20,000 scanned rows · every row comes from <code class="font-mono">lwa_events</code></p>
         </div>
 
         @if(empty($rows))

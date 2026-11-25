@@ -56,8 +56,11 @@ class EloquentEventStore implements EventStore
             $builder->where('name', $query->name);
         }
 
-        if ($query->from !== null && $query->to !== null) {
-            $builder->whereBetween('created_at', [$query->from, $query->to]);
+        if ($query->from !== null && $query->from !== '') {
+            $builder->where('created_at', '>=', $query->from);
+        }
+        if ($query->to !== null && $query->to !== '') {
+            $builder->where('created_at', '<=', $query->to);
         }
 
         if ($query->visitorHash !== null && $query->visitorHash !== '') {
