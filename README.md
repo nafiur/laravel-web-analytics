@@ -13,7 +13,7 @@ A modern, fast, and self-hosted Web Traffic & Visitor Analytics Dashboard for La
 ## ⚡ Highlights & Key Features
 
 - 🚀 **Real-Time Live Stream (SSE)**: Live active visitor count and instant real-time traffic feed without WebSockets, Node.js, or Pusher. Each stream response is short-lived and paced by EventSource, so no PHP worker is held open while waiting for new traffic.
-- 🧭 **Sidebar Navigation**: 20 sidebar links — Overview, Real-time, Logs, Dashboards, Visitors, Traffic Sources, Pages & Screens, Geography, Devices & Browsers, Campaigns, Funnels, Retention, User Paths, Trends, Event Explorer, Events & Goals, Conversions, Performance, Error Monitoring and Settings. An optional 21st Session Replay link appears only when replay is enabled and the configured gate allows it. Each has its own bookmarkable route and Blade page; the Settings screen has no analytics tab bar.
+- 🧭 **Sidebar Navigation**: 20 sidebar links — Overview, Real-time, Logs, Dashboards, Visitors, Traffic Sources, Pages & Screens, Geography, Devices & Browsers, Campaigns, Funnels, Retention, User Paths, Trends, Event Explorer, Events & Goals, Conversions, Performance, Error Monitoring and Settings. Two optional links — Session Replay and Heatmaps — appear only when replay is enabled and the configured gate allows them. Each has its own bookmarkable route and Blade page; the Settings screen has no analytics tab bar.
 - 🎨 **Tailwind CSS UI with Dark Mode**: Modern, responsive dashboard powered by Tailwind CSS Play CDN (zero build step / zero npm dependencies). Uses CSS design tokens (`--lwa-*`, `[data-theme="dark"]`), Lucide outline icons, visible focus states, skeleton loaders, explicit empty/error states, and a 1-click persistent Dark/Light/System preference.
 - 📊 **Comprehensive Metrics**: Total Requests, Unique Visitors, Bandwidth (Data Transferred in GB/MB), Avg Response Time, Error Rate.
 - 🧪 **Built-In Live Traffic Simulator**: Easily generate realistic live traffic every second with `php artisan lwa:live` to demo and test live streaming.
@@ -183,7 +183,11 @@ The directive emits a signed, expiring config object plus a deferred, build-free
 
 Chunks are uploaded to `POST /web-analytics/api/v1/replay/chunks` with the signed token; no session cookie, CSRF token or secret bearer token is required. The server stores chunks verbatim on the configured Laravel disk and indexes them in `lwa_replay_sessions`, `lwa_replay_chunks`, `lwa_replay_markers` and `lwa_replay_assets`. Website and tenant scope come from the signed token, never client input. Run `php artisan lwa:replay:prune` daily to enforce the 30-day default retention.
 
-`/web-analytics/replay` lists indexed sessions behind the configurable gate. **Play** opens `/web-analytics/replay/{session}`, whose deferred player fetches a gated manifest and chunk routes, decompresses chunks in the browser and renders sanitized snapshots in a script-disabled sandbox with a timeline and marker list. Every playback and asset request re-checks the gate and the session's website/tenant scope. This is minimal playback, not full-fidelity DOM patching; heatmaps and rage/dead-click analytics remain open.
+`/web-analytics/replay` lists indexed sessions behind the configurable gate. **Play** opens `/web-analytics/replay/{session}`, whose deferred player fetches a gated manifest and chunk routes, decompresses chunks in the browser and renders sanitized snapshots in a script-disabled sandbox with a timeline and marker list. Every playback and asset request re-checks the gate and the session's website/tenant scope. This is minimal playback, not full-fidelity DOM patching.
+
+### Heatmaps & interaction signals (v3.4)
+
+`/web-analytics/heatmaps` is gated by the same `viewLwaReplay` gate and aggregates `lwa_replay_markers` into click and scroll views. Filter by recorded path and a 7/30/90-day or all-time window. The recorder captures viewport dimensions with each marker, so clicks are bucketed to a 2.5% grid and scroll depth to 10% bands. A bounded PHP aggregation (20,000 most recent scoped markers) also reports top targets, rage clicks (3 clicks on one target within 1 second) and dead clicks (no different marker within 2 seconds), with every definition and sample-cap note shown on the page. No input text is used — only masked, structural target metadata.
 
 ## 🎨 Design System
 
@@ -327,6 +331,7 @@ The package defines routes with the `lwa_` prefix to avoid conflicts with your a
 | `GET /web-analytics/replay/{id}/manifest` | `lwa_replay_manifest` | Gated chunk/marker manifest |
 | `GET /web-analytics/replay/{id}/chunk/{sequence}` | `lwa_replay_chunk` | Gated verbatim chunk download |
 | `GET /web-analytics/replay-player.js` | `lwa_replay_player_bundle` | Deferred player bundle (gated) |
+| `GET /web-analytics/heatmaps` | `lwa_heatmaps` | Gated click/scroll heatmaps and interaction signals |
 | `GET /web-analytics/api/v1/summary` | `lwa_api_summary` | JSON summary (bearer token, `read`) |
 | `GET /web-analytics/api/v1/timeseries` | `lwa_api_timeseries` | JSON time series (bearer token, `read`) |
 | `POST /web-analytics/api/v1/events` | `lwa_api_event` | Track a custom event (bearer token, `write`) |

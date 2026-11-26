@@ -148,10 +148,19 @@
     events.push({ at: 0, type: 'snapshot', html: sanitizedSnapshot().slice(0, 180000) });
 
     document.addEventListener('click', function (e) {
-        record('click', e.target, { x: e.clientX || 0, y: e.clientY || 0 });
+        record('click', e.target, {
+            x: e.clientX || 0,
+            y: e.clientY || 0,
+            vw: window.innerWidth || 0,
+            vh: window.innerHeight || 0
+        });
     }, true);
     document.addEventListener('scroll', function () {
-        record('scroll', document.body, { y: window.scrollY || 0 });
+        record('scroll', document.body, {
+            y: window.scrollY || 0,
+            vh: window.innerHeight || 0,
+            dh: document.documentElement.scrollHeight || 0
+        });
     }, true);
     window.addEventListener('error', function (e) {
         record('error', e.target || null, { message: short(e.message || '') });

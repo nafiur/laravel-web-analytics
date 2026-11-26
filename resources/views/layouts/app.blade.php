@@ -792,6 +792,25 @@
         body .shadow-sm { box-shadow: var(--lwa-shadow-card) !important; }
         body .shadow-lg,
         body .shadow-xl { box-shadow: var(--lwa-shadow-pop) !important; }
+
+        .lwa-heat-canvas {
+            position: relative;
+            height: 360px;
+            border: 1px solid var(--lwa-border);
+            border-radius: 6px;
+            background:
+                linear-gradient(to right, var(--lwa-border) 1px, transparent 1px) 0 0 / 10% 100%,
+                linear-gradient(to bottom, var(--lwa-border) 1px, transparent 1px) 0 0 / 100% 10%,
+                var(--lwa-surface);
+            overflow: hidden;
+        }
+        .lwa-heat-dot {
+            position: absolute;
+            transform: translate(-50%, -50%);
+            border-radius: 9999px;
+            background: var(--lwa-accent);
+            box-shadow: 0 0 0 1px var(--lwa-surface);
+        }
     </style>
 </head>
 

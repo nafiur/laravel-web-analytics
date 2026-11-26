@@ -88,6 +88,10 @@
                            class="sidebar-link {{ $current === 'replay' ? 'active' : '' }}">
                             <i data-lucide="circle-dot" class="text-sm"></i> <span class="sidebar-label">Session Replay</span>
                         </a>
+                        <a href="{{ route('lwa_heatmaps') }}"
+                           class="sidebar-link {{ $current === 'heatmaps' ? 'active' : '' }}">
+                            <i data-lucide="grid-2x2" class="text-sm"></i> <span class="sidebar-label">Heatmaps</span>
+                        </a>
                     @endif
 
                     <a href="{{ route('lwa_events') }}"
