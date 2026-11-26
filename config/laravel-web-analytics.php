@@ -285,6 +285,21 @@ return [
 
     /*
     |--------------------------------------------------------------------------
+    | Feature Flags (v3.5 foundation)
+    |--------------------------------------------------------------------------
+    |
+    | Flags are opt-in and evaluated deterministically. Evaluations are logged
+    | as lwa_events so flag exposure can be analyzed with the same bounded
+    | Trends engine used for every other custom event.
+    |
+    */
+    'flags'                 => [
+        'enabled'   => env('WEB_ANALYTICS_FLAGS_ENABLED', false),
+        'endpoint'  => env('WEB_ANALYTICS_FLAGS_ENDPOINT', '/web-analytics/api/v1/flags/evaluate'),
+    ],
+
+    /*
+    |--------------------------------------------------------------------------
     | Settings Page
     |--------------------------------------------------------------------------
     |

@@ -14,6 +14,7 @@ use Nafiur\WebAnalytics\Contracts\StorageDriver;
 use Nafiur\WebAnalytics\Services\AnalyticsCollector;
 use Nafiur\WebAnalytics\Services\EloquentEventStore;
 use Nafiur\WebAnalytics\Services\EloquentStorageDriver;
+use Nafiur\WebAnalytics\Services\FeatureFlagService;
 use Nafiur\WebAnalytics\Services\ReplayEmbed;
 use Nafiur\WebAnalytics\Services\ReplaySigner;
 
@@ -34,6 +35,7 @@ class WebAnalyticsServiceProvider extends ServiceProvider
         $this->app->singleton('lwa.analytics', \Nafiur\WebAnalytics\Services\AnalyticsManager::class);
         $this->app->singleton(ReplaySigner::class);
         $this->app->singleton(ReplayEmbed::class);
+        $this->app->singleton(FeatureFlagService::class);
     }
 
     /**
@@ -81,6 +83,18 @@ class WebAnalyticsServiceProvider extends ServiceProvider
         // emitted until config, APP_KEY and consent checks pass.
         Blade::directive('lwaReplay', function () {
             return '<?php echo app(\\Nafiur\\WebAnalytics\\Services\\ReplayEmbed::class)->render(); ?>';
+        });
+
+        // Host layouts can gate markup with @feature('key') ... @endfeature,
+        // or print the assigned variant with @featureVariant('key').
+        Blade::directive('feature', function ($expression) {
+            return '<?php if (app(\\Nafiur\\WebAnalytics\\Services\\FeatureFlagService::class)->evaluate(' . $expression . ')[\'enabled\']): ?>';
+        });
+        Blade::directive('endfeature', function () {
+            return '<?php endif; ?>';
+        });
+        Blade::directive('featureVariant', function ($expression) {
+            return '<?php echo e(app(\\Nafiur\\WebAnalytics\\Services\\FeatureFlagService::class)->evaluate(' . $expression . ')[\'variant\'] ?? \'\'); ?>';
         });
 
         // Register Routes

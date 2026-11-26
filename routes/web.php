@@ -3,6 +3,7 @@
 use Illuminate\Support\Facades\Route;
 use Nafiur\WebAnalytics\Http\Controllers\DashboardController;
 use Nafiur\WebAnalytics\Http\Controllers\EventExplorerController;
+use Nafiur\WebAnalytics\Http\Controllers\FeatureFlagsController;
 use Nafiur\WebAnalytics\Http\Controllers\FunnelsController;
 use Nafiur\WebAnalytics\Http\Controllers\FormsController;
 use Nafiur\WebAnalytics\Http\Controllers\HeatmapsController;
@@ -59,6 +60,11 @@ Route::post('/retention/{insight}/delete', [RetentionController::class, 'destroy
 Route::get('/paths', [PathsController::class, 'index'])->name('lwa_paths');
 Route::post('/paths/save', [PathsController::class, 'save'])->name('lwa_paths_save');
 Route::post('/paths/{insight}/delete', [PathsController::class, 'destroy'])->name('lwa_paths_destroy');
+Route::get('/flags', [FeatureFlagsController::class, 'index'])->name('lwa_flags');
+Route::get('/flags/{featureFlag}/edit', [FeatureFlagsController::class, 'index'])->name('lwa_flags_edit');
+Route::post('/flags', [FeatureFlagsController::class, 'store'])->name('lwa_flags_store');
+Route::put('/flags/{featureFlag}', [FeatureFlagsController::class, 'update'])->name('lwa_flags_update');
+Route::delete('/flags/{featureFlag}', [FeatureFlagsController::class, 'destroy'])->name('lwa_flags_destroy');
 Route::post('/settings/prune', [WebAnalyticsController::class, 'prune'])->name('lwa_settings_prune');
 Route::post('/settings/empty', [WebAnalyticsController::class, 'emptyTable'])->name('lwa_settings_empty');
 Route::post('/settings/test-alert', [WebAnalyticsController::class, 'testAlert'])->name('lwa_settings_test_alert');

@@ -2,6 +2,7 @@
 
 use Illuminate\Support\Facades\Route;
 use Nafiur\WebAnalytics\Http\Controllers\Api\AnalyticsApiController;
+use Nafiur\WebAnalytics\Http\Controllers\Api\FlagEvaluateController;
 use Nafiur\WebAnalytics\Http\Controllers\Api\ReplayIngestController;
 
 Route::get('/summary', [AnalyticsApiController::class, 'summary'])
@@ -23,6 +24,10 @@ Route::post('/events/batch', [AnalyticsApiController::class, 'storeBatch'])
 Route::post('/replay/chunks', [ReplayIngestController::class, 'store'])
     ->middleware('lwa.replay.ingest')
     ->name('lwa_api_replay_chunks');
+
+Route::get('/flags/evaluate', [FlagEvaluateController::class, 'evaluate'])
+    ->middleware('lwa.api:read')
+    ->name('lwa_api_flags_evaluate');
 
 Route::get('/websites', [AnalyticsApiController::class, 'websites'])
     ->middleware('lwa.api:admin')

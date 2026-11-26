@@ -98,6 +98,13 @@
                         </a>
                     @endif
 
+                    @if(config('laravel-web-analytics.flags.enabled'))
+                        <a href="{{ route('lwa_flags') }}"
+                           class="sidebar-link {{ $current === 'flags' ? 'active' : '' }}">
+                            <i data-lucide="toggle-right" class="text-sm"></i> <span class="sidebar-label">Feature Flags</span>
+                        </a>
+                    @endif
+
                     <a href="{{ route('lwa_events') }}"
                        class="sidebar-link is-disabled {{ $current === 'events' ? 'active' : '' }}"
                        title="Requires custom event tracking">

@@ -36,6 +36,12 @@
 
 **Replay flow:** `@lwaReplay` → signed expiring config + deferred recorder → masked snapshot/marker batches → HMAC-authenticated chunk upload → verbatim file on Laravel disk + relational index → gated list/player/manifest/chunk routes that re-check gate and scope on every request. This mirrors the pattern used by `packstub/session-replay` (disk for chunks, tables for the index), but uses a build-free native recorder rather than rrweb/npm assets.
 
+### Unreleased v3.5 feature flags (`dev`)
+
+- `lwa_feature_flags` and `lwa_flag_overrides` are website/tenant scoped. Boolean and multivariate flags use a deterministic `sha256(key:subject) % 100` bucket; overrides win first, then all targeting rules (AND), then `enabled` and rollout.
+- `@feature('key') ... @endfeature` / `@featureVariant('key')` gate host markup, and `GET /api/v1/flags/evaluate` (read token) serves scripts. Each distinct key+subject evaluation is logged to `lwa_events` as `feature_flag_evaluated` with a hashed subject.
+- A/B result statistics and automatic experiment analysis remain open.
+
 No paid tier, activation server, feature lock or mandatory third-party service exists.
 
 ---

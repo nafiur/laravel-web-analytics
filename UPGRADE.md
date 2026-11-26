@@ -30,7 +30,13 @@ Unified event schema, `EventStore` abstraction, browser SDK, identity resolution
 - Gated form analytics with masked field focus/change, submit and validation-error markers; no field values are recorded.
 - Optional Session Replay and Heatmaps sidebar links (22 links when enabled and the gate allows).
 
-v3.4 is preview quality: full-fidelity DOM patching and form analytics are not implemented.
+v3.4 is preview quality: full-fidelity DOM patching is not implemented.
+
+### v3.5 (unreleased on `dev`)
+
+- Opt-in feature flags at `/web-analytics/flags` with boolean/multivariate variants, deterministic rollout, per-subject overrides and targeting rules.
+- `@feature('key') ... @endfeature`, `@featureVariant('key')` and `GET /api/v1/flags/evaluate` (read token).
+- Evaluations are logged to `lwa_events` as `feature_flag_evaluated` with a hashed subject. A/B result statistics and experiments are not part of this foundation.
 
 ---
 
@@ -249,6 +255,8 @@ This deletes only `lwa_logs` rows already imported (tracked by the checkpoint). 
 | `WEB_ANALYTICS_REPLAY_RECORD_GUESTS` | `false` | Allow guest recording |
 | `WEB_ANALYTICS_REPLAY_RETENTION_DAYS` | `30` | Replay prune window |
 | `WEB_ANALYTICS_REPLAY_DISK` | — | Laravel disk for replay chunks |
+| `WEB_ANALYTICS_FLAGS_ENABLED` | `false` | Enable feature flag UI and evaluation endpoint |
+| `WEB_ANALYTICS_FLAGS_ENDPOINT` | `/web-analytics/api/v1/flags/evaluate` | Evaluation route prefix |
 
 Keep secrets in `.env` and run `php artisan optimize:clear` after any config change.
 
@@ -267,6 +275,9 @@ Keep secrets in `.env` and run `php artisan optimize:clear` after any config cha
 | Replay upload returns 401 | Signed config token missing/expired; reload the host page to get a fresh one |
 | Heatmaps empty | No recorded click/scroll markers yet, or path/window filter too narrow |
 | Forms report empty | No focus/change/submit markers yet; ensure replay consent was granted on a page containing a form |
+| `/web-analytics/flags` returns 404 | `WEB_ANALYTICS_FLAGS_ENABLED=false` |
+| Flag evaluates as `missing` | Key not found in the active website/tenant scope, or flags are disabled |
+| Flag evaluation returns `rollout` | Deterministic bucket is outside the configured rollout percentage |
 | Packagist “Upstream re-tag blocked” | A released tag was moved; restore the original reference or publish a new version |
 
 ---
@@ -292,3 +303,4 @@ No v2 config keys were removed, so a config rollback is not strictly required.
 - Multi-website isolation is session/config based; API tokens are bound to one website at issue time.
 - `queue` collector mode requires a worker; without one use `sync`.
 - v3.4 replay is minimal: sanitized snapshots, bounded markers, dashboard-style heatmaps and form funnel counts, not full-fidelity DOM patching. Only structural form metadata is recorded — never field values.
+- v3.5 flags provide deterministic evaluation and exposure events, not A/B result statistics or automatic experiment analysis.
