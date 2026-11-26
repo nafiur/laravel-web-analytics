@@ -15,7 +15,7 @@ A modern, fast, and self-hosted Web Traffic & Visitor Analytics Dashboard for La
 ## ⚡ Highlights & Key Features
 
 - 🚀 **Real-Time Live Stream (SSE)**: Live active visitor count and instant real-time traffic feed without WebSockets, Node.js, or Pusher. Each stream response is short-lived and paced by EventSource, so no PHP worker is held open while waiting for new traffic.
-- 🧭 **Sidebar Navigation**: 20 sidebar links — Overview, Real-time, Logs, Dashboards, Visitors, Traffic Sources, Pages & Screens, Geography, Devices & Browsers, Campaigns, Funnels, Retention, User Paths, Trends, Event Explorer, Events & Goals, Conversions, Performance, Error Monitoring and Settings. Three optional replay links — Session Replay, Heatmaps and Forms — appear only when replay is enabled and the configured gate allows them. Separate optional Feature Flags and Experiments links appear when flags are enabled, plus optional Observability and Web Vitals links when those features are enabled (Observability also requires its gate). Each has its own bookmarkable route and Blade page; the Settings screen has no analytics tab bar.
+- 🧭 **Sidebar Navigation**: 20 sidebar links — Overview, Real-time, Logs, Dashboards, Visitors, Traffic Sources, Pages & Screens, Geography, Devices & Browsers, Campaigns, Funnels, Retention, User Paths, Trends, Event Explorer, Events & Goals, Conversions, Performance, Error Monitoring and Settings. Three optional replay links — Session Replay, Heatmaps and Forms — appear only when replay is enabled and the configured gate allows them. Separate optional Feature Flags and Experiments links appear when flags are enabled, plus optional Observability, Web Vitals and Installation Health links when those features are enabled (Observability also requires its gate). Each has its own bookmarkable route and Blade page; the Settings screen has no analytics tab bar.
 - 🎨 **Tailwind CSS UI with Dark Mode**: Modern, responsive dashboard powered by Tailwind CSS Play CDN (zero build step / zero npm dependencies). Uses CSS design tokens (`--lwa-*`, `[data-theme="dark"]`), Lucide outline icons, visible focus states, skeleton loaders, explicit empty/error states, and a 1-click persistent Dark/Light/System preference.
 - 📊 **Comprehensive Metrics**: Total Requests, Unique Visitors, Bandwidth (Data Transferred in GB/MB), Avg Response Time, Error Rate.
 - 🧪 **Built-In Live Traffic Simulator**: Easily generate realistic live traffic every second with `php artisan lwa:live` to demo and test live streaming.
@@ -43,6 +43,7 @@ A modern, fast, and self-hosted Web Traffic & Visitor Analytics Dashboard for La
 - 🧪 **A/B experiments (v3.5)**: Link a flag to a recorded goal event and read per-variant counts, rates, lift, p-values and honest significance gates from `lwa_events` only.
 - 🐞 **Error tracking (v3.6, opt-in)**: Project-key error ingest with sanitised, bounded stacks, grouped exceptions behind an application gate and safe summaries mirrored into `lwa_events`.
 - 📈 **Web Vitals (opt-in)**: LCP, CLS and INP p75 values and rating buckets from recorded SDK events, with path filtering and published thresholds.
+- 🩺 **Installation Health (opt-in)**: Read-only Blade view of every `lwa:doctor` check with pass/warn/fail counts and a recommended next step.
 
 ---
 
@@ -237,6 +238,10 @@ Enable with `WEB_ANALYTICS_OBSERVABILITY_ENABLED=true`, define the `viewLwaObser
 
 Enable with `WEB_ANALYTICS_WEB_VITALS_ENABLED=true` and turn on the SDK's `web_vitals` option. The SDK reports LCP, CLS and the new INP metric as `web_vital` events with a path property. `/web-analytics/web-vitals` reads at most 20,000 of those events from `lwa_events` and shows p50/p75/max plus good / needs-work / poor buckets using published thresholds (LCP ≤ 2.5s, CLS ≤ 0.1, INP ≤ 200ms for good). A path filter narrows the report; no metric is inferred from server response times.
 
+### Installation Health (opt-in)
+
+Enable with `WEB_ANALYTICS_HEALTH_ENABLED=true` to expose `/web-analytics/health`, a read-only view of the same isolated checks used by `php artisan lwa:doctor`: PHP/Laravel versions, extensions, database connection, legacy and advanced tables, config cache, schema flag, collector/queue mode, cache and storage drivers, published views and upgrade checkpoint state. The page shows pass/warn/fail counts and the recommended next step; it never changes configuration or data. Use the CLI with `--json` for CI and `--repair` for missing advanced tables.
+
 ## 🎨 Design System
 
 | Topic | Choice |
@@ -390,6 +395,7 @@ The package defines routes with the `lwa_` prefix to avoid conflicts with your a
 | `GET /web-analytics/observability/{id}` | `lwa_observability_show` | Gated error detail with sanitised stack |
 | `POST /web-analytics/api/v1/observability/errors` | `lwa_api_observability_errors` | Error ingest (project key or bearer token, `write`) |
 | `GET /web-analytics/web-vitals` | `lwa_web_vitals` | LCP/CLS/INP report from recorded SDK events |
+| `GET /web-analytics/health` | `lwa_health` | Read-only `lwa:doctor` checks |
 | `GET /web-analytics/api/v1/summary` | `lwa_api_summary` | JSON summary (bearer token, `read`) |
 | `GET /web-analytics/api/v1/timeseries` | `lwa_api_timeseries` | JSON time series (bearer token, `read`) |
 | `POST /web-analytics/api/v1/events` | `lwa_api_event` | Track a custom event (bearer token, `write`) |
@@ -426,7 +432,7 @@ Every sidebar section also has its own bookmarkable URL:
 | `/web-analytics/replay` | `lwa_replay` | `/web-analytics/heatmaps` | `lwa_heatmaps` |
 | `/web-analytics/forms` | `lwa_forms` | `/web-analytics/flags` | `lwa_flags` |
 | `/web-analytics/experiments` | `lwa_experiments` | `/web-analytics/observability` | `lwa_observability` |
-| `/web-analytics/web-vitals` | `lwa_web_vitals` | | |
+| `/web-analytics/web-vitals` | `lwa_web_vitals` | `/web-analytics/health` | `lwa_health` |
 
 The legacy `/web-analytics` (`lwa_dashboard`) URL still works and shows the Overview pane. The Events and Conversions URLs render an explicit “not available yet” pane rather than fabricated numbers.
 
@@ -483,7 +489,7 @@ resources/views/
 │   ├── forms.blade.php            ├── flags.blade.php
 │   ├── experiments.blade.php      ├── observability.blade.php
 │   ├── observability-show.blade.php├── web-vitals.blade.php
-│   └── settings.blade.php
+│   ├── health.blade.php            └── settings.blade.php
 ├── sections/                      # content-only partials included by the pages
 └── partials/                      # header, sidebar, subheader, scripts, breakdown-list,
                                    # breakdown-card, breakdown-trend-list, card-menu,
@@ -494,7 +500,7 @@ The legacy `dashboard.blade.php` simply extends the shared layout and renders th
 
 ## 🧭 Dashboard Navigation
 
-The sidebar exposes 20 sections by default, plus three optional replay sections when replay is enabled and the gate allows them, optional Feature Flags and Experiments sections when flags are enabled, and optional Observability and Web Vitals sections when those features are enabled (Observability also requires its gate). Each is rendered by its own route and Blade page:
+The sidebar exposes 20 sections by default, plus three optional replay sections when replay is enabled and the gate allows them, optional Feature Flags and Experiments sections when flags are enabled, and optional Observability, Web Vitals and Installation Health sections when those features are enabled (Observability also requires its gate). Each is rendered by its own route and Blade page:
 
 | Menu item | Shows |
 |-----------|-------|
@@ -520,6 +526,7 @@ The sidebar exposes 20 sections by default, plus three optional replay sections 
 | **Experiments** *(optional)* | Per-variant counts, rates, lift and p-values from recorded flag exposures and goal events |
 | **Observability** *(optional)* | Gated exception groups, sanitised stacks and status workflow |
 | **Web Vitals** *(optional)* | LCP/CLS/INP p75 values and rating buckets from recorded SDK events |
+| **Installation Health** *(optional)* | Read-only `lwa:doctor` checks and recommended next step |
 | **Events & Goals** | Recent custom events captured through the facade/API (name, properties, value) |
 | **Conversions** | Recorded goal/purchase events — arrange them into a documented, ordered funnel; no inferred conversions |
 | **Performance** | Latency, response times, bandwidth by path |
@@ -804,6 +811,11 @@ return [
     /* Web Vitals report from lwa_events. */
     'web_vitals' => [
         'enabled' => env('WEB_ANALYTICS_WEB_VITALS_ENABLED', false),
+    ],
+
+    /* Read-only lwa:doctor checks in the dashboard. */
+    'health' => [
+        'enabled' => env('WEB_ANALYTICS_HEALTH_ENABLED', false),
     ],
 
     'settings' => [

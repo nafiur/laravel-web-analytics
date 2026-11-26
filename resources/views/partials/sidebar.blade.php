@@ -148,6 +148,12 @@
             </div>
 
             <div class="lwa-sidebar-footer space-y-1">
+                @if(config('laravel-web-analytics.health.enabled'))
+                    <a href="{{ route('lwa_health') }}"
+                       class="sidebar-link {{ $current === 'health' ? 'active' : '' }}">
+                        <i data-lucide="heart-pulse" class="text-sm"></i> <span class="sidebar-label">Installation Health</span>
+                    </a>
+                @endif
                 <a href="{{ route('lwa_settings') }}"
                    class="sidebar-link {{ $current === 'settings' ? 'active' : '' }}">
                     <i data-lucide="settings" class="text-sm"></i> <span class="sidebar-label" data-i18n="settings">Settings</span>

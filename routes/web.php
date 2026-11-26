@@ -7,6 +7,7 @@ use Nafiur\WebAnalytics\Http\Controllers\ExperimentsController;
 use Nafiur\WebAnalytics\Http\Controllers\FeatureFlagsController;
 use Nafiur\WebAnalytics\Http\Controllers\FunnelsController;
 use Nafiur\WebAnalytics\Http\Controllers\FormsController;
+use Nafiur\WebAnalytics\Http\Controllers\HealthController;
 use Nafiur\WebAnalytics\Http\Controllers\HeatmapsController;
 use Nafiur\WebAnalytics\Http\Controllers\ObservabilityController;
 use Nafiur\WebAnalytics\Http\Controllers\PathsController;
@@ -84,6 +85,7 @@ Route::post('/observability/{errorGroup}/status', [ObservabilityController::clas
     ->middleware($observabilityGate)
     ->name('lwa_observability_status');
 Route::get('/web-vitals', [WebVitalsController::class, 'index'])->name('lwa_web_vitals');
+Route::get('/health', [HealthController::class, 'index'])->name('lwa_health');
 Route::post('/settings/prune', [WebAnalyticsController::class, 'prune'])->name('lwa_settings_prune');
 Route::post('/settings/empty', [WebAnalyticsController::class, 'emptyTable'])->name('lwa_settings_empty');
 Route::post('/settings/test-alert', [WebAnalyticsController::class, 'testAlert'])->name('lwa_settings_test_alert');

@@ -178,7 +178,9 @@ class ReplayTest extends TestCase
             ->assertJsonPath('message', 'Guest replay is disabled');
 
         $token = $this->token();
-        $tampered = substr($token, 0, -1) . ($token[strlen($token) - 1] === 'A' ? 'B' : 'A');
+        $parts = explode('.', $token);
+        $parts[0] = ($parts[0][0] === 'A' ? 'B' : 'A') . substr($parts[0], 1);
+        $tampered = implode('.', $parts);
         $this->postJson(route('lwa_api_replay_chunks'), $this->chunkPayload($tampered))
             ->assertStatus(401);
 

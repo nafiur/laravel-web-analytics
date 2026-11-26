@@ -48,7 +48,7 @@
 - Fingerprints normalise digits in messages; reports are de-duplicated by event id, grouped by website/tenant, and a recurrence reopens a resolved group. A safe summary is mirrored to `lwa_events` as `error`.
 - `/web-analytics/observability` and its detail/status routes re-check the configured `viewLwaObservability` gate and session scope on every request. Performance spans and tracing remain open.
 
-A PostHog-inspired UI parity backlog is recorded in the external blueprint/gap docs. The **Web Vitals page** now ships on `dev`: it aggregates LCP/CLS/INP from `web_vital` events in `lwa_events` with p75 and rating buckets. Still planned and unscheduled: Page reports, Installation Health UI, compare-to-previous period, test-account filtering, per-path replay links, richer replay timelines, an integrated error card and an Activity-style event stream. Everything must preserve the MIT/self-hosted/zero-build model.
+A PostHog-inspired UI parity backlog is recorded in the external blueprint/gap docs. The **Web Vitals page** now ships on `dev`: it aggregates LCP/CLS/INP from `web_vital` events in `lwa_events` with p75 and rating buckets. The **Installation Health UI** now ships on `dev` as a read-only Blade view of `lwa:doctor`. Still planned and unscheduled: Page reports, compare-to-previous period, test-account filtering, per-path replay links, richer replay timelines, an integrated error card and an Activity-style event stream. Everything must preserve the MIT/self-hosted/zero-build model.
 
 No paid tier, activation server, feature lock or mandatory third-party service exists.
 
