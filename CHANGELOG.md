@@ -4,6 +4,10 @@ All notable changes to this project are documented here. The format is based on 
 
 ## [Unreleased]
 
+## [3.4.0] - 2026-11-26
+
+This release consolidates the previously planned v3.4 replay/heatmaps, v3.5 flags/experiments and v3.6 observability increments, plus the first PostHog-inspired UI parity items. Everything remains MIT, self-hosted, zero-build and free of paid tiers or activation servers.
+
 ### Added
 
 - **Feature flags foundation (v3.5, opt-in)** — new `/web-analytics/flags` CRUD page and `GET /web-analytics/api/v1/flags/evaluate` endpoint backed by website/tenant-scoped `lwa_feature_flags` / `lwa_flag_overrides` tables. Boolean and multivariate flags support deterministic `sha256(key:subject) % 100` rollout buckets, per-subject overrides and AND-combined targeting rules. `@feature('key') ... @endfeature` and `@featureVariant('key')` gate host markup; each distinct key+subject evaluation is logged to `lwa_events` as `feature_flag_evaluated` with a hashed subject for honest exposure analysis.

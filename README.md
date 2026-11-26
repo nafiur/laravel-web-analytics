@@ -8,7 +8,7 @@
 
 A modern, fast, and self-hosted Web Traffic & Visitor Analytics Dashboard for Laravel with real-time Server-Sent Events (SSE) live streaming and Tailwind CSS styling.
 
-**Current release:** `v3.3.0` (Trends, saved reports, Funnels, Retention, Paths and insight widgets). **Preview on `dev`:** opt-in session replay, minimal playback and heatmaps.
+**Current release:** `v3.4.0` (session replay, heatmaps, form analytics, feature flags, experiments, error tracking and the first UI parity reports). `v3.3.0` remains the previous stable release with Trends, saved reports, Funnels, Retention, Paths and insight widgets.
 
 ---
 

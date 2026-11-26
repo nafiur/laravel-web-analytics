@@ -1,10 +1,10 @@
-# Upgrade guide — v2 / v3 → v3.3.0 (plus the v3.4 preview)
+# Upgrade guide — v2 / v3 → v3.4.0
 
-**Released target:** `v3.3.0` (tag `v3.3.0`, 2026-11-25). **Preview target:** `dev` for the unreleased v3.4 replay work. **Supported:** PHP `^8.2 || ^8.3 || ^8.4 || ^8.5`, Laravel `^11 || ^12 || ^13`.
+**Released target:** `v3.4.0` (tag `v3.4.0`, 2026-11-26). **Previous stable:** `v3.3.0`. **Supported:** PHP `^8.2 || ^8.3 || ^8.4 || ^8.5`, Laravel `^11 || ^12 || ^13`.
 
 All v3 migrations are additive: they create their own tables and add nullable `host` / `cache_status` columns to `lwa_logs` (backfilling `host` from `full_url`). No legacy `lwa_logs` row is rewritten or deleted. Existing v2 dashboards keep working without configuration changes.
 
-> **Important:** Packagist treats stable versions as immutable. Never delete or re-point a released tag. If a release needs a fix, publish the next version (`v3.3.1`, `v3.3.0.1`, …) instead.
+> **Important:** Packagist treats stable versions as immutable. Never delete or re-point a released tag. If a release needs a fix, publish the next version (`v3.4.1`, `v3.4.0.1`, …) instead.
 
 ---
 
@@ -23,23 +23,23 @@ Unified event schema, `EventStore` abstraction, browser SDK, identity resolution
 - Insight widgets on custom dashboards, scoped to website/tenant and rendered by the same bounded engines.
 - Sidebar has **20** links by default (Funnels, Retention, User Paths, Trends and Event Explorer were added).
 
-### v3.4 (unreleased on `dev`)
+### v3.4 (released in v3.4.0)
 
 - Opt-in, consent-gated session replay with masked recording, signed uploads, verbatim chunk storage and a minimal gated player.
 - Gated click/scroll heatmaps with bounded aggregation, top targets and rage/dead-click signals.
 - Gated form analytics with masked field focus/change, submit and validation-error markers; no field values are recorded.
 - Optional Session Replay and Heatmaps sidebar links (22 links when enabled and the gate allows).
 
-v3.4 is preview quality: full-fidelity DOM patching is not implemented.
+v3.4.0 replay is minimal: full-fidelity DOM patching is not implemented.
 
-### v3.5 (unreleased on `dev`)
+### v3.5 (released in v3.4.0)
 
 - Opt-in feature flags at `/web-analytics/flags` with boolean/multivariate variants, deterministic rollout, per-subject overrides and targeting rules.
 - `@feature('key') ... @endfeature`, `@featureVariant('key')` and `GET /api/v1/flags/evaluate` (read token).
 - Evaluations are logged to `lwa_events` as `feature_flag_evaluated` with a hashed subject.
 - A/B experiments link a flag to a recorded goal event and report per-variant rates, lift, p-values and significance gates from `lwa_events` only.
 
-### v3.6 (unreleased on `dev`)
+### v3.6 (released in v3.4.0)
 
 - Opt-in error tracking: project-key ingest to `POST /web-analytics/api/v1/observability/errors`, bounded/sanitised stacks, fingerprinted groups and a gated `/web-analytics/observability` viewer.
 - Safe error summaries are mirrored into `lwa_events`; performance spans and distributed tracing remain open.
@@ -49,10 +49,10 @@ v3.4 is preview quality: full-fidelity DOM patching is not implemented.
 ## 1. Update the package
 
 ```bash
-# Released v3.3
-composer require nafiur/laravel-web-analytics:^3.3 -W
+# Released v3.4
+composer require nafiur/laravel-web-analytics:^3.4 -W
 
-# Preview the unreleased v3.4 work instead
+# Track unreleased development work explicitly
 # composer require nafiur/laravel-web-analytics:dev-dev -W
 
 php artisan optimize:clear
@@ -93,7 +93,7 @@ Additive tables now include:
 - Core reporting: `lwa_websites`, `lwa_visitors`, `lwa_sessions`, `lwa_pageviews`, `lwa_events`, `lwa_hourly_stats`, `lwa_daily_stats`, `lwa_upgrade_checkpoints`, `lwa_api_tokens`.
 - Identity / ingestion: `lwa_profiles`, `lwa_identity_aliases`, `lwa_dead_letters`.
 - Product analytics: `lwa_insights`, `lwa_dashboards`.
-- Replay (v3.4 preview): `lwa_replay_sessions`, `lwa_replay_chunks`, `lwa_replay_markers`, `lwa_replay_assets`.
+- Replay (v3.4.0): `lwa_replay_sessions`, `lwa_replay_chunks`, `lwa_replay_markers`, `lwa_replay_assets`.
 
 `request_uuid` idempotency columns are added to `lwa_pageviews` and `lwa_events`.
 
@@ -159,7 +159,7 @@ use Illuminate\Support\Facades\Schedule;
 Schedule::command('lwa:aggregate --granularity=hourly')->hourly();
 Schedule::command('lwa:aggregate --granularity=daily')->daily();
 Schedule::command('lwa:prune')->daily();
-Schedule::command('lwa:replay:prune')->daily(); // v3.4 preview, replay retention
+Schedule::command('lwa:replay:prune')->daily(); // v3.4.0 replay retention
 Schedule::command('lwa:upgrade --website-domain=example.com')->hourly();
 Schedule::command('lwa:geoip --auto')->weekly();
 ```
@@ -177,7 +177,7 @@ Dashboard KPIs then come from rollup tables rather than raw scans.
 
 ---
 
-## 7. Enable v3.4 session replay (preview)
+## 7. Enable v3.4.0 session replay
 
 Replay is disabled by default and must be consented to. Add to `.env`:
 
@@ -304,7 +304,7 @@ Keep secrets in `.env` and run `php artisan optimize:clear` after any config cha
 2. Disable replay with `WEB_ANALYTICS_REPLAY_ENABLED=false`.
 3. `php artisan optimize:clear`.
 4. Re-publish/restore older views if you customized them.
-5. Remove replay tables only (v3.4 preview): `php artisan migrate:rollback --step=1`.
+5. Remove replay tables only (v3.4.0): `php artisan migrate:rollback --step=1`.
 6. Remove all advanced tables: roll back the remaining v3 migrations. Verify with `php artisan lwa:doctor`.
 7. Restore the DB backup if you ran `--prune-legacy`.
 

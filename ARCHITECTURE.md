@@ -2,20 +2,20 @@
 
 > This file began as the v3.0 architecture blueprint. The original audit is preserved below as a historical baseline; the current implementation is summarised first.
 
-**Current branch:** `dev` @ `9319c5f` (2026-11-26) · **Released:** `v3.3.0` · **Preview:** v3.4 replay/heatmaps on `dev`
+**Current branch:** `dev` @ `1d557fc` (2026-11-26) · **Released:** `v3.4.0` · **Previous stable:** `v3.3.0`
 **Companion documents:** `CHANGELOG.md`, `UPGRADE.md`, and the external v3.2–v4.0 blueprint / gap analysis.
 **Audience:** maintainers and contributors
 
 ---
 
-## 0. Current-state addendum (v3.3.0 + v3.4 preview)
+## 0. Current-state addendum (v3.4.0)
 
 ### Runtime and storage
 
 - PHP `^8.2 || ^8.3 || ^8.4 || ^8.5`; Laravel `^11 || ^12 || ^13`.
 - SQLite, MySQL 8 (`ONLY_FULL_GROUP_BY`) and PostgreSQL 16 run the same 194-test / 995-assertion suite.
 - All analytics are stored in `lwa_*` tables: `lwa_logs`, `lwa_websites`, `lwa_visitors`, `lwa_sessions`, `lwa_pageviews`, `lwa_events`, rollups, `lwa_api_tokens`, `lwa_profiles`, `lwa_identity_aliases`, `lwa_dead_letters`, `lwa_insights`, `lwa_dashboards`.
-- The v3.4 preview adds `lwa_replay_sessions`, `lwa_replay_chunks`, `lwa_replay_markers` and `lwa_replay_assets`. Chunk bytes live on a Laravel disk; the tables are only an index.
+- v3.4.0 adds `lwa_replay_sessions`, `lwa_replay_chunks`, `lwa_replay_markers` and `lwa_replay_assets`. Chunk bytes live on a Laravel disk; the tables are only an index.
 
 ### Released v3.3 product analytics
 
@@ -24,7 +24,7 @@
 - Dashboard insight widgets resolve saved reports in `DashboardInsights` and follow the dashboard time window; at most 12 are computed per page.
 - The sidebar has 20 default links: Overview, Real-time, Logs, Dashboards, Visitors, Traffic Sources, Pages & Screens, Geography, Devices & Browsers, Campaigns, Funnels, Retention, User Paths, Trends, Event Explorer, Events & Goals, Conversions, Performance, Error Monitoring and Settings.
 
-### Unreleased v3.4 replay and heatmaps (`dev`)
+### v3.4.0 replay and heatmaps
 
 - `@lwaReplay` emits an expiring HMAC-signed config plus a deferred build-free recorder. Consent is separate from analytics consent; guests are excluded by default; all input values and `[data-lwa-mask]` nodes are removed before upload.
 - `POST /web-analytics/api/v1/replay/chunks` authenticates with the signed token only and stores chunks verbatim. Website/tenant scope comes from the signature, never client input.
@@ -36,13 +36,13 @@
 
 **Replay flow:** `@lwaReplay` → signed expiring config + deferred recorder → masked snapshot/marker batches → HMAC-authenticated chunk upload → verbatim file on Laravel disk + relational index → gated list/player/manifest/chunk routes that re-check gate and scope on every request. This mirrors the pattern used by `packstub/session-replay` (disk for chunks, tables for the index), but uses a build-free native recorder rather than rrweb/npm assets.
 
-### Unreleased v3.5 feature flags (`dev`)
+### v3.4.0 feature flags and experiments
 
 - `lwa_feature_flags` and `lwa_flag_overrides` are website/tenant scoped. Boolean and multivariate flags use a deterministic `sha256(key:subject) % 100` bucket; overrides win first, then all targeting rules (AND), then `enabled` and rollout.
 - `@feature('key') ... @endfeature` / `@featureVariant('key')` gate host markup, and `GET /api/v1/flags/evaluate` (read token) serves scripts. Each distinct key+subject evaluation is logged to `lwa_events` as `feature_flag_evaluated` with a hashed subject.
 - `ExperimentService` reads bounded `lwa_events` rows: exposures from `feature_flag_evaluated` and conversions from the configured goal event's variant property. Results include per-variant rates, lift versus control, a two-proportion z-test p-value and a significance gate requiring at least 30 exposures and 5 conversions in both groups.
 
-### Unreleased v3.6 error tracking (`dev`)
+### v3.4.0 error tracking
 
 - `POST /api/v1/observability/errors` ingests project-key-authenticated reports. Messages, context and stack traces are sanitised and size-bounded before storage in `lwa_error_groups` / `lwa_error_events`.
 - Fingerprints normalise digits in messages; reports are de-duplicated by event id, grouped by website/tenant, and a recurrence reopens a resolved group. A safe summary is mirrored to `lwa_events` as `error`.
