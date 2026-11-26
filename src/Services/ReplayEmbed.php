@@ -66,7 +66,12 @@ class ReplayEmbed
             }
 
             $consent = (bool) config('laravel-web-analytics.replay.consent.replay', false);
+            $engine = (string) config('laravel-web-analytics.replay.engine', 'builtin');
+            if (! in_array($engine, ['builtin', 'rrweb'], true)) {
+                $engine = 'builtin';
+            }
             $settings = [
+                'engine'          => $engine,
                 'session_key'     => $sessionKey,
                 'path'            => request()->path(),
                 'sample_rate'     => (float) config('laravel-web-analytics.replay.sample_rate', 0),
@@ -77,11 +82,18 @@ class ReplayEmbed
                 'endpoint'        => (string) config('laravel-web-analytics.replay.endpoint', '/web-analytics/api/v1/replay/chunks'),
             ];
 
+            $vendor = '';
+            if ($engine === 'rrweb') {
+                $vendor = '<link rel="stylesheet" href="' . e(route('lwa_vendor_rrweb_css')) . '">'
+                    . '<script defer src="' . e(route('lwa_vendor_rrweb_js')) . '"></script>';
+            }
+
             return '<script>window.LWA_REPLAY_CONFIG=' . json_encode([
                 'token'    => $token,
                 'consent'  => $consent,
                 'settings' => $settings,
             ], JSON_HEX_TAG | JSON_HEX_AMP | JSON_HEX_APOS | JSON_HEX_QUOT | JSON_UNESCAPED_SLASHES) . ';</script>'
+                . $vendor
                 . '<script defer src="' . e($bundle) . '"></script>';
         } catch (Throwable $e) {
             return '';

@@ -47,7 +47,7 @@ class ReplayPlayerController extends Controller
                 'bytes'       => $session->bytes,
             ],
             'chunks' => $session->chunks()->orderBy('sequence')->get([
-                'sequence', 'from_ms', 'to_ms', 'event_count', 'bytes', 'encoding',
+                'sequence', 'from_ms', 'to_ms', 'event_count', 'bytes', 'encoding', 'format',
             ])->map(fn ($chunk) => [
                 'sequence'    => $chunk->sequence,
                 'from_ms'     => $chunk->from_ms,
@@ -55,6 +55,7 @@ class ReplayPlayerController extends Controller
                 'event_count' => $chunk->event_count,
                 'bytes'       => $chunk->bytes,
                 'encoding'    => $chunk->encoding,
+                'format'      => $chunk->format ?: 'snapshot',
             ])->all(),
             'markers' => $session->markers()->orderBy('at_ms')->limit(200)->get([
                 'type', 'at_ms', 'payload',

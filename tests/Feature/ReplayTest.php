@@ -272,7 +272,9 @@ class ReplayTest extends TestCase
             ->assertSee('failed_request', false)
             ->assertSee('rage_click', false)
             ->assertSee('layout-shift', false)
-            ->assertSee('[redacted]', false);
+            ->assertSee('[redacted]', false)
+            ->assertSee('rrweb.record', false)
+            ->assertSee("'rrweb'", false);
     }
 
     public function test_manifest_and_chunk_views_are_scoped_and_gated(): void
@@ -286,12 +288,14 @@ class ReplayTest extends TestCase
             ->assertSee('Replay ' . $this->sessionKey)
             ->assertSee(route('lwa_replay_manifest', $session->id), false)
             ->assertSee('Inspect DOM')
-            ->assertSee('Speed');
+            ->assertSee('Speed')
+            ->assertSee(route('lwa_vendor_rrweb_js'), false);
 
         $this->getJson(route('lwa_replay_manifest', $session->id))
             ->assertOk()
             ->assertJsonPath('session.session_key', $this->sessionKey)
             ->assertJsonPath('chunks.0.sequence', 1)
+            ->assertJsonPath('chunks.0.format', 'snapshot')
             ->assertJsonPath('markers.0.type', 'click')
             ->assertHeader('Cache-Control', 'no-store, private');
 
@@ -348,5 +352,25 @@ class ReplayTest extends TestCase
 
         $this->assertStringContainsString(route('lwa_replay', ['path' => '/checkout']), $html);
         $this->assertStringContainsString('View recordings', $html);
+    }
+
+    public function test_embed_loads_rrweb_vendor_assets_when_engine_is_rrweb(): void
+    {
+        config()->set('laravel-web-analytics.replay.engine', 'rrweb');
+        $this->actingAs($this->user());
+
+        $html = \Illuminate\Support\Facades\Blade::render('@lwaReplay');
+
+        $this->assertStringContainsString(route('lwa_vendor_rrweb_js'), $html);
+        $this->assertStringContainsString(route('lwa_vendor_rrweb_css'), $html);
+        $this->assertStringContainsString('"engine":"rrweb"', $html);
+    }
+
+    public function test_ingest_stores_chunk_format(): void
+    {
+        $this->postJson(route('lwa_api_replay_chunks'), $this->chunkPayload($this->token(), ['format' => 'rrweb']))
+            ->assertStatus(202);
+
+        $this->assertSame('rrweb', ReplayChunk::firstOrFail()->format);
     }
 }

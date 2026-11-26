@@ -206,7 +206,7 @@ The directive emits a signed, expiring config object plus a deferred, build-free
 
 Chunks are uploaded to `POST /web-analytics/api/v1/replay/chunks` with the signed token; no session cookie, CSRF token or secret bearer token is required. The server stores chunks verbatim on the configured Laravel disk and indexes them in `lwa_replay_sessions`, `lwa_replay_chunks`, `lwa_replay_markers` and `lwa_replay_assets`. Website and tenant scope come from the signed token, never client input. Run `php artisan lwa:replay:prune` daily to enforce the 30-day default retention.
 
-`/web-analytics/replay` lists indexed sessions behind the configurable gate. **Play** opens `/web-analytics/replay/{session}`, whose deferred player fetches a gated manifest and chunk routes, decompresses chunks in the browser and renders sanitized snapshots in a script-disabled sandbox with a timeline and marker list. Every playback and asset request re-checks the gate and the session's website/tenant scope. The player offers 0.5x/1x/2x speed and an Inspect DOM panel with the current sanitized snapshot source. The timeline also carries console errors, failed requests (query strings stripped), rage clicks and CLS alongside the existing markers. This is still minimal playback, not full-fidelity DOM patching.
+`/web-analytics/replay` lists indexed sessions behind the configurable gate. **Play** opens `/web-analytics/replay/{session}`, whose deferred player fetches a gated manifest and chunk routes, decompresses chunks in the browser and renders sanitized snapshots in a script-disabled sandbox with a timeline and marker list. Every playback and asset request re-checks the gate and the session's website/tenant scope. The player offers 0.5x/1x/2x speed and an Inspect DOM panel with the current sanitized snapshot source. The timeline also carries console errors, failed requests (query strings stripped), rage clicks and CLS alongside the existing markers. For full-fidelity recording set `WEB_ANALYTICS_REPLAY_ENGINE=rrweb`: the embed loads the vendored MIT rrweb bundle, chunks are tagged `format: rrweb`, and the player uses `rrweb.Replayer`. The built-in masked snapshot engine remains the default, and existing snapshot chunks stay playable.
 
 #### How replay works
 
@@ -798,6 +798,7 @@ return [
      */
     'replay' => [
         'enabled'           => env('WEB_ANALYTICS_REPLAY_ENABLED', false),
+        'engine'            => env('WEB_ANALYTICS_REPLAY_ENGINE', 'builtin'), // builtin | rrweb
         'gate'              => env('WEB_ANALYTICS_REPLAY_GATE', 'viewLwaReplay'),
         'sample_rate'       => (float) env('WEB_ANALYTICS_REPLAY_SAMPLE_RATE', 0),
         'record_guests'     => env('WEB_ANALYTICS_REPLAY_RECORD_GUESTS', false),

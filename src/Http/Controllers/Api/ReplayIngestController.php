@@ -40,6 +40,7 @@ class ReplayIngestController extends Controller
             'sequence'    => 'required|integer|min:0|max:1000000',
             'chunk'       => 'required|string',
             'encoding'    => 'sometimes|in:gzip,identity',
+            'format'      => 'sometimes|in:snapshot,rrweb',
             'from_ms'     => 'sometimes|integer|min:0',
             'to_ms'       => 'sometimes|integer|min:0',
             'event_count' => 'sometimes|integer|min:0|max:100000',
@@ -63,6 +64,7 @@ class ReplayIngestController extends Controller
         }
 
         $encoding = (string) ($data['encoding'] ?? 'gzip');
+        $format = (string) ($data['format'] ?? 'snapshot');
         $sessionKey = (string) $signed['session_key'];
         $safeKey = preg_replace('/[^A-Za-z0-9_-]/', '', $sessionKey) ?: 'session';
         $sequence = (int) $data['sequence'];
@@ -103,6 +105,7 @@ class ReplayIngestController extends Controller
             'tenant_id'   => $tenantId,
             'disk_path'   => $path,
             'encoding'    => $encoding,
+            'format'      => $format,
             'bytes'       => strlen($bytes),
             'event_count' => $eventCount,
             'from_ms'     => $fromMs,

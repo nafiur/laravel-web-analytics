@@ -22,6 +22,7 @@
     var speedSelect = document.getElementById('lwaReplaySpeed');
     var inspectButton = document.getElementById('lwaReplayInspect');
     var domPanel = document.getElementById('lwaReplayDom');
+    var rrwebRoot = document.getElementById('lwaReplayRrwebRoot');
 
     var manifestUrl = root.dataset.manifestUrl || '';
     var chunkTemplate = root.dataset.chunkTemplate || '';
@@ -31,6 +32,7 @@
     var cache = {};
     var currentHtml = '';
     var playbackMs = 1200;
+    var replayer = null;
 
     function seconds(ms) {
         return (Number(ms || 0) / 1000).toFixed(1) + 's';
@@ -106,14 +108,39 @@
     }
 
     function renderPayload(payload, chunk, markers) {
-        var html = snapshotFrom(payload);
-        if (!html) {
-            html = '<!doctype html><html><body style="font:14px system-ui;padding:24px">'
-                + '<h3>No snapshot in chunk ' + chunk.sequence + '</h3>'
-                + '<p>' + (payload.events || []).length + ' structured events stored.</p></body></html>';
+        if (replayer) {
+            replayer.pause();
+            replayer = null;
         }
-        currentHtml = html;
-        frame.srcdoc = html;
+
+        var replayEvents = payload.events || [];
+        if (chunk.format === 'rrweb' && rrwebRoot && window.rrweb && typeof window.rrweb.Replayer === 'function') {
+            frame.hidden = true;
+            rrwebRoot.hidden = false;
+            rrwebRoot.innerHTML = '';
+            replayer = new window.rrweb.Replayer(replayEvents, { root: rrwebRoot });
+            var ratio = 1200 / Math.max(200, parseInt(speedSelect ? speedSelect.value : '1200', 10) || 1200);
+            if (typeof replayer.setSpeed === 'function') {
+                replayer.setSpeed(ratio);
+            }
+            replayer.play();
+            currentHtml = 'rrweb events: ' + replayEvents.length;
+        } else {
+            if (rrwebRoot) {
+                rrwebRoot.hidden = true;
+                rrwebRoot.innerHTML = '';
+            }
+            frame.hidden = false;
+            var html = snapshotFrom(payload);
+            if (!html) {
+                html = '<!doctype html><html><body style="font:14px system-ui;padding:24px">'
+                    + '<h3>No snapshot in chunk ' + chunk.sequence + '</h3>'
+                    + '<p>' + replayEvents.length + ' structured events stored.</p></body></html>';
+            }
+            currentHtml = html;
+            frame.srcdoc = html;
+        }
+
         if (domPanel && !domPanel.hidden) {
             domPanel.textContent = currentHtml;
         }
@@ -140,6 +167,10 @@
     }
 
     function stop() {
+        if (replayer) {
+            replayer.pause();
+            replayer = null;
+        }
         if (timer) {
             clearInterval(timer);
             timer = null;
@@ -202,6 +233,9 @@
     if (speedSelect) {
         speedSelect.addEventListener('change', function () {
             playbackMs = Math.max(200, parseInt(speedSelect.value, 10) || 1200);
+            if (replayer && typeof replayer.setSpeed === 'function') {
+                replayer.setSpeed(1200 / playbackMs);
+            }
             if (timer) {
                 stop();
                 play();

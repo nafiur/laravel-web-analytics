@@ -49,6 +49,7 @@
             <div class="md:col-span-2 p-4 border-r lwa-border">
                 <iframe id="lwaReplayFrame" title="Replay snapshot" sandbox="" class="w-full" style="height: 460px; border: 1px solid var(--lwa-border); border-radius: 6px; background: #fff" srcdoc="&lt;p&gt;Loading snapshot…&lt;/p&gt;"></iframe>
                 <pre id="lwaReplayDom" hidden class="mt-3 p-3 text-[10px] whitespace-pre-wrap break-all lwa-surface-muted" style="max-height: 360px; overflow: auto; border: 1px solid var(--lwa-border); border-radius: 6px"></pre>
+                <div id="lwaReplayRrwebRoot" hidden class="mt-2" style="height: 460px; border: 1px solid var(--lwa-border); border-radius: 6px; overflow: hidden; background: #fff"></div>
             </div>
             <div class="p-4">
                 <div class="lwa-card-title mb-2">Markers</div>
@@ -60,5 +61,7 @@
         </div>
     </div>
 
+    <link rel="stylesheet" href="{{ route('lwa_vendor_rrweb_css') }}">
+    <script defer src="{{ route('lwa_vendor_rrweb_js') }}"></script>
     <script defer src="{{ route('lwa_replay_player_bundle') }}"></script>
 @endsection

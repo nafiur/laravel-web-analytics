@@ -255,6 +255,7 @@ This deletes only `lwa_logs` rows already imported (tracked by the checkpoint). 
 | `WEB_ANALYTICS_API_RATE_LIMIT` | `60` | API requests/minute |
 | `WEB_ANALYTICS_GEOIP_PROVIDER` | — | `''`, `ip-api`, `maxmind` |
 | `WEB_ANALYTICS_REPLAY_ENABLED` | `false` | Enable replay routes and recorder bundle |
+| `WEB_ANALYTICS_REPLAY_ENGINE` | `builtin` | `builtin` masked snapshots or `rrweb` full-fidelity recording |
 | `WEB_ANALYTICS_REPLAY_GATE` | `viewLwaReplay` | Gate required for replay/heatmap pages |
 | `WEB_ANALYTICS_REPLAY_CONSENT` | `false` | Replay consent default |
 | `WEB_ANALYTICS_REPLAY_SAMPLE_RATE` | `0` | Fraction of sessions recorded |

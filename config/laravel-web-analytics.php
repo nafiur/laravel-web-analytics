@@ -258,6 +258,7 @@ return [
     */
     'replay'                => [
         'enabled'         => env('WEB_ANALYTICS_REPLAY_ENABLED', false),
+        'engine'          => env('WEB_ANALYTICS_REPLAY_ENGINE', 'builtin'), // builtin | rrweb
         'gate'            => env('WEB_ANALYTICS_REPLAY_GATE', 'viewLwaReplay'),
         'sample_rate'     => (float) env('WEB_ANALYTICS_REPLAY_SAMPLE_RATE', 0),
         'record_guests'   => env('WEB_ANALYTICS_REPLAY_RECORD_GUESTS', false),

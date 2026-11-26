@@ -45,6 +45,10 @@
     var sequence = parseInt(sessionStorage.getItem(sequenceKey) || '0', 10) || 0;
     var startedAt = Date.now();
     var events = [];
+    var rrwebEvents = [];
+    var rrwebStop = null;
+    var usingRrweb = false;
+    var engine = String(settings.engine || 'builtin');
     var stopped = false;
 
     function matchesGlob(value, pattern) {
@@ -158,7 +162,24 @@
         }
     }
 
-    events.push({ at: 0, type: 'snapshot', html: sanitizedSnapshot().slice(0, 180000) });
+    if (engine === 'rrweb' && window.rrweb && typeof window.rrweb.record === 'function') {
+        usingRrweb = true;
+        rrwebStop = window.rrweb.record({
+            emit: function (event) {
+                if (rrwebEvents.length < 2000) {
+                    rrwebEvents.push(event);
+                }
+            },
+            maskAllInputs: true,
+            maskInputOptions: { password: true, email: true, textarea: true },
+            blockClass: 'lwa-replay-block',
+            maskClass: 'lwa-replay-mask',
+            recordCanvas: false,
+            inlineStylesheet: true,
+        });
+    } else {
+        events.push({ at: 0, type: 'snapshot', html: sanitizedSnapshot().slice(0, 180000) });
+    }
 
     var seenFormFields = Object.create(null);
 
@@ -388,12 +409,18 @@
     }
 
     function flush(final) {
-        if (stopped || events.length === 0) {
+        if (stopped) {
             return Promise.resolve();
         }
         var batch = events.splice(0, events.length);
+        var replayEvents = usingRrweb ? rrwebEvents.splice(0, rrwebEvents.length) : [];
+        if (batch.length === 0 && replayEvents.length === 0) {
+            return Promise.resolve();
+        }
         var to = Date.now() - startedAt;
-        var from = batch[0].at || 0;
+        var from = batch.length > 0
+            ? (batch[0].at || 0)
+            : Math.max(0, Number(replayEvents[0] && replayEvents[0].timestamp ? replayEvents[0].timestamp - startedAt : 0));
         var markerTypes = [
             'click', 'scroll', 'web_vital', 'error',
             'console', 'failed_request', 'rage_click',
@@ -409,12 +436,14 @@
             };
         });
 
+        var payloadEvents = usingRrweb ? replayEvents : batch;
         return encode({
-            v: 1,
+            v: usingRrweb ? 2 : 1,
+            format: usingRrweb ? 'rrweb' : 'snapshot',
             session_key: sessionKey,
             from_ms: from,
             to_ms: to,
-            events: batch
+            events: payloadEvents
         }).then(function (encoded) {
             if (encoded.body.length > maxBytes) {
                 return;
@@ -426,9 +455,10 @@
                 session_key: sessionKey,
                 sequence: sequence,
                 encoding: encoded.encoding,
+                format: usingRrweb ? 'rrweb' : 'snapshot',
                 from_ms: from,
                 to_ms: to,
-                event_count: batch.length,
+                event_count: payloadEvents.length,
                 chunk: encoded.body,
                 markers: markers
             };
@@ -455,5 +485,9 @@
         stopped = true;
         clearInterval(timer);
         flush(true);
+        if (typeof rrwebStop === 'function') {
+            rrwebStop();
+            rrwebStop = null;
+        }
     });
 })();
