@@ -1,9 +1,39 @@
-# Laravel Web Analytics — v3.0 Architecture Blueprint
+# Laravel Web Analytics — Architecture
 
-**Source branch:** `dev` @ `d1acd7b` (audited 2026-11-22)
-**Companion document:** `laravel-web-analytics-v3-roadmap.md`
-**Status:** Proposed — derived from the actual codebase, not from assumptions
-**Audience:** maintainer / contributors planning v3.0
+> This file began as the v3.0 architecture blueprint. The original audit is preserved below as a historical baseline; the current implementation is summarised first.
+
+**Current branch:** `dev` @ `9319c5f` (2026-11-26) · **Released:** `v3.3.0` · **Preview:** v3.4 replay/heatmaps on `dev`
+**Companion documents:** `CHANGELOG.md`, `UPGRADE.md`, and the external v3.2–v4.0 blueprint / gap analysis.
+**Audience:** maintainers and contributors
+
+---
+
+## 0. Current-state addendum (v3.3.0 + v3.4 preview)
+
+### Runtime and storage
+
+- PHP `^8.2 || ^8.3 || ^8.4 || ^8.5`; Laravel `^11 || ^12 || ^13`.
+- SQLite, MySQL 8 (`ONLY_FULL_GROUP_BY`) and PostgreSQL 16 run the same 194-test / 995-assertion suite.
+- All analytics are stored in `lwa_*` tables: `lwa_logs`, `lwa_websites`, `lwa_visitors`, `lwa_sessions`, `lwa_pageviews`, `lwa_events`, rollups, `lwa_api_tokens`, `lwa_profiles`, `lwa_identity_aliases`, `lwa_dead_letters`, `lwa_insights`, `lwa_dashboards`.
+- The v3.4 preview adds `lwa_replay_sessions`, `lwa_replay_chunks`, `lwa_replay_markers` and `lwa_replay_assets`. Chunk bytes live on a Laravel disk; the tables are only an index.
+
+### Released v3.3 product analytics
+
+- `EventStore` is the single bounded read path. Trends, Funnels, Retention and Paths each cap scans at 20,000 most recent matching events and ship their definitions with every response.
+- Saved reports are DB-backed in website/tenant-scoped `lwa_insights`, never localStorage.
+- Dashboard insight widgets resolve saved reports in `DashboardInsights` and follow the dashboard time window; at most 12 are computed per page.
+- The sidebar has 20 default links: Overview, Real-time, Logs, Dashboards, Visitors, Traffic Sources, Pages & Screens, Geography, Devices & Browsers, Campaigns, Funnels, Retention, User Paths, Trends, Event Explorer, Events & Goals, Conversions, Performance, Error Monitoring and Settings.
+
+### Unreleased v3.4 replay and heatmaps (`dev`)
+
+- `@lwaReplay` emits an expiring HMAC-signed config plus a deferred build-free recorder. Consent is separate from analytics consent; guests are excluded by default; all input values and `[data-lwa-mask]` nodes are removed before upload.
+- `POST /web-analytics/api/v1/replay/chunks` authenticates with the signed token only and stores chunks verbatim. Website/tenant scope comes from the signature, never client input.
+- `/web-analytics/replay`, `/web-analytics/replay/{id}`, gated manifest/chunk routes and `/web-analytics/heatmaps` all re-check the configurable `viewLwaReplay` gate and session scope on every request.
+- `HeatmapService` aggregates at most 20,000 most recent scoped markers in PHP: 2.5% click buckets, 10% scroll-depth bands, top targets, rage clicks (3 clicks within 1 s) and dead clicks (no different marker within 2 s).
+- `lwa:replay:prune` enforces the default 30-day replay retention.
+- Two optional sidebar links (Session Replay, Heatmaps) appear only when replay is enabled and the gate allows them.
+
+No paid tier, activation server, feature lock or mandatory third-party service exists.
 
 ---
 
@@ -36,7 +66,7 @@ This blueprint defines the current state, target architecture, schema, migration
 
 > v3 target baseline (decision §9): **PHP 8.2+, Laravel 11+**. The table above records the *current v2* constraints; the drop is a deliberate major-version change.
 
-### 2.2 Database schema — `lwa_logs` (only analytics table)
+### 2.2 Database schema — `lwa_logs` (only analytics table in the v3.0 audit baseline)
 
 | Column | Type | Index | Notes |
 |---|---|---|---|
@@ -66,7 +96,7 @@ Migrations are **auto-loaded** by the service provider (not published). The thre
 
 - Dashboard/data/stream/export: `lwa_dashboard`, `lwa_index`, `lwa_data`, `lwa_stream`, `lwa_export`
 - Settings actions: `lwa_settings_prune`, `lwa_settings_empty`, `lwa_settings_test_alert`
-- 13 section URLs: `lwa_overview`, `lwa_realtime`, `lwa_visitors`, `lwa_sources`, `lwa_pages`, `lwa_geography`, `lwa_devices`, `lwa_campaigns`, `lwa_events`, `lwa_conversions`, `lwa_performance`, `lwa_errors`, `lwa_settings`
+- 13 section URLs in the **v3.0 audit baseline**: `lwa_overview`, `lwa_realtime`, `lwa_visitors`, `lwa_sources`, `lwa_pages`, `lwa_geography`, `lwa_devices`, `lwa_campaigns`, `lwa_events`, `lwa_conversions`, `lwa_performance`, `lwa_errors`, `lwa_settings`. The current 20-link sidebar is listed in §0 above.
 
 All inherit `['web', 'auth']` by default. Tenant scoping ignores client-supplied `?tenant_id=` / `X-Tenant-ID` unless an opt-in authorizer is configured.
 

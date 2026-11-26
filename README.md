@@ -8,6 +8,8 @@
 
 A modern, fast, and self-hosted Web Traffic & Visitor Analytics Dashboard for Laravel with real-time Server-Sent Events (SSE) live streaming and Tailwind CSS styling.
 
+**Current release:** `v3.3.0` (Trends, saved reports, Funnels, Retention, Paths and insight widgets). **Preview on `dev`:** opt-in session replay, minimal playback and heatmaps.
+
 ---
 
 ## ⚡ Highlights & Key Features
@@ -33,6 +35,9 @@ A modern, fast, and self-hosted Web Traffic & Visitor Analytics Dashboard for La
 - 🔗 **Observability deep links**: Row-level "View in Observability" opens the Real-time feed pre-filtered by that breakdown value.
 - 📜 **Raw request logs**: Dedicated `/web-analytics/logs` page with an outcomes-over-time chart, a collapsible field sidebar (Request / Client / Response / Other fields — click a field to add a filter chip), paginated table, expandable rows with full request details and filtered CSV export. Edge/security fields (bot score, edge status) are intentionally not collected.
 - 🧩 **Custom dashboards**: `/web-analytics/dashboards` with a create modal (blank or preset templates) and a DB-backed editor. Users pick widgets from a catalog of existing KPIs, charts, breakdowns, visitors map and recent logs, or place saved Trends/Funnels/Retention/Paths reports as insight widgets; add/remove/reorder/resize them and save. Layouts are scoped by website and tenant, and also manageable through the token-authenticated REST API (`read` for listing, `admin` for writes).
+- 📊 **Product analytics (v3.3)**: Trends, DB-backed saved reports, ordered funnels, cohort retention, lifecycle stages and per-user event paths — all computed from bounded `lwa_events` reads with published definitions, never fabricated numbers.
+- 🎬 **Session replay (v3.4, opt-in)**: Consent-gated, masked browser recorder with signed uploads, verbatim chunk storage, a gated minimal player and `lwa:replay:prune` retention. Guests are excluded by default and no input values are recorded.
+- 🔥 **Heatmaps (v3.4)**: Gated click/scroll heatmaps with path and time filters, bounded aggregation, top targets and explicit rage/dead-click signals derived from recorded replay markers.
 
 ---
 
@@ -48,7 +53,7 @@ WEB_ANALYTICS_WRITE_LEGACY=true     # keep writing lwa_logs during migration
 WEB_ANALYTICS_QUEUE=                # optional named queue
 ```
 
-This creates separate `lwa_websites`, `lwa_visitors`, `lwa_sessions`, `lwa_pageviews`, `lwa_events`, hourly/daily rollup and upgrade-checkpoint tables. Existing `lwa_logs` rows are never rewritten or deleted by these migrations; a later additive migration only adds nullable `host` and `cache_status` columns (with `host` backfilled from `full_url`). `WEB_ANALYTICS_WRITE_LEGACY=true` keeps new requests in `lwa_logs` as well. When enabled, the middleware also feeds the collector, which resolves visitors/sessions with a 30-minute inactivity timeout and either writes inline (`sync`) or dispatches `RecordPageview` / `RecordEvent` jobs (`queue`). Custom event properties are validated and stripped of sensitive keys. Run `php artisan lwa:aggregate` (or schedule it hourly/daily) to build rollups; `MetricService` then answers KPI/chart queries from those rollups instead of scanning raw events.
+This creates separate `lwa_websites`, `lwa_visitors`, `lwa_sessions`, `lwa_pageviews`, `lwa_events`, hourly/daily rollup, upgrade-checkpoint, API-token, identity, dead-letter, saved-insight and custom-dashboard tables. Session replay adds opt-in `lwa_replay_sessions`, `lwa_replay_chunks`, `lwa_replay_markers` and `lwa_replay_assets` index tables. Existing `lwa_logs` rows are never rewritten or deleted by these migrations; a later additive migration only adds nullable `host` and `cache_status` columns (with `host` backfilled from `full_url`). `WEB_ANALYTICS_WRITE_LEGACY=true` keeps new requests in `lwa_logs` as well. When enabled, the middleware also feeds the collector, which resolves visitors/sessions with a 30-minute inactivity timeout and either writes inline (`sync`) or dispatches `RecordPageview` / `RecordEvent` jobs (`queue`). Custom event properties are validated and stripped of sensitive keys. Run `php artisan lwa:aggregate` (or schedule it hourly/daily) to build rollups; `MetricService` then answers KPI/chart queries from those rollups instead of scanning raw events.
 
 If tables are missing, the dashboard shows a setup page with the `php artisan migrate` instruction, the API returns `503`, the SSE stream emits an `error` event, and commands exit with guidance — no raw stack traces.
 
@@ -171,7 +176,15 @@ This is separate from the **Add to dashboard** card-menu action, which pins brow
 
 ### Session replay foundation (v3.4, opt-in)
 
-Session replay is disabled by default and must be explicitly consented to. Enable the recorder with `WEB_ANALYTICS_REPLAY_ENABLED=true`, define the `viewLwaReplay` gate in your app, and place the directive in the layouts where recording is allowed:
+Session replay is disabled by default and must be explicitly consented to. Enable the recorder with `WEB_ANALYTICS_REPLAY_ENABLED=true` and define the `viewLwaReplay` gate in your app — replay pages fail closed when it is missing:
+
+```php
+use Illuminate\Support\Facades\Gate;
+
+Gate::define('viewLwaReplay', fn ($user = null) => $user !== null);
+```
+
+Then place the directive in the layouts where recording is allowed:
 
 ```blade
 @if (config('laravel-web-analytics.replay.enabled'))
@@ -365,6 +378,7 @@ Every sidebar section also has its own bookmarkable URL:
 | `/web-analytics/funnels` | `lwa_funnels` | `/web-analytics/logs` | `lwa_logs` |
 | `/web-analytics/retention` | `lwa_retention` | | |
 | `/web-analytics/paths` | `lwa_paths` | | |
+| `/web-analytics/replay` | `lwa_replay` | `/web-analytics/heatmaps` | `lwa_heatmaps` |
 
 The legacy `/web-analytics` (`lwa_dashboard`) URL still works and shows the Overview pane. The Events and Conversions URLs render an explicit “not available yet” pane rather than fabricated numbers.
 
@@ -413,8 +427,11 @@ resources/views/
 │   ├── overview.blade.php         ├── sources.blade.php      ├── devices.blade.php
 │   ├── realtime.blade.php         ├── pages.blade.php        ├── campaigns.blade.php
 │   ├── visitors.blade.php         ├── geography.blade.php    ├── performance.blade.php
+│   ├── logs.blade.php             ├── explorer.blade.php     ├── trends.blade.php
+│   ├── funnels.blade.php          ├── retention.blade.php    ├── paths.blade.php
 │   ├── events.blade.php           ├── conversions.blade.php  ├── errors.blade.php
-│   └── settings.blade.php
+│   ├── dashboards.blade.php       ├── dashboard-view.blade.php├── replay.blade.php
+│   ├── replay-show.blade.php      ├── heatmaps.blade.php     └── settings.blade.php
 ├── sections/                      # content-only partials included by the pages
 └── partials/                      # header, sidebar, subheader, scripts, breakdown-list,
                                    # breakdown-card, breakdown-trend-list, card-menu,
@@ -425,7 +442,7 @@ The legacy `dashboard.blade.php` simply extends the shared layout and renders th
 
 ## 🧭 Dashboard Navigation
 
-The sidebar exposes 20 sections, each rendered by its own route and Blade page:
+The sidebar exposes 20 sections by default, plus two optional replay sections when replay is enabled and the gate allows them. Each is rendered by its own route and Blade page:
 
 | Menu item | Shows |
 |-----------|-------|
@@ -444,6 +461,8 @@ The sidebar exposes 20 sections, each rendered by its own route and Blade page:
 | **User Paths** | Most common ordered event sequences with shares and step distribution |
 | **Trends** | Event/user/value trends with breakdowns and saved reports |
 | **Event Explorer** | Raw event browser with name, property, user and time filters |
+| **Session Replay** *(optional)* | Gated recording index and minimal player with timeline and markers |
+| **Heatmaps** *(optional)* | Gated click/scroll concentration, top targets and rage/dead-click signals |
 | **Events & Goals** | Recent custom events captured through the facade/API (name, properties, value) |
 | **Conversions** | Recorded goal/purchase events — arrange them into a documented, ordered funnel; no inferred conversions |
 | **Performance** | Latency, response times, bandwidth by path |

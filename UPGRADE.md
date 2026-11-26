@@ -1,110 +1,125 @@
-# Upgrade guide — v2 request logs → advanced analytics schema
+# Upgrade guide — v2 / v3 → v3.3.0 (plus the v3.4 preview)
 
-**Target:** v3.1.0 (reporting additions; `v3.0.0` remains the stable tag) · **Source:** any supported v2 release on PHP 8.2+ / Laravel 11+
+**Released target:** `v3.3.0` (tag `v3.3.0`, 2026-11-25). **Preview target:** `dev` for the unreleased v3.4 replay work. **Supported:** PHP `^8.2 || ^8.3 || ^8.4 || ^8.5`, Laravel `^11 || ^12 || ^13`.
 
-The advanced analytics **collector and API are opt-in**. The v3 migrations are additive: they create their tables and add nullable `host` / `cache_status` columns to `lwa_logs` (backfilling `host` from `full_url`). They never rewrite or delete existing `lwa_logs` rows, and existing v2 dashboards keep working with no configuration changes.
+All v3 migrations are additive: they create their own tables and add nullable `host` / `cache_status` columns to `lwa_logs` (backfilling `host` from `full_url`). No legacy `lwa_logs` row is rewritten or deleted. Existing v2 dashboards keep working without configuration changes.
 
-## What's new in v3.1.0 (reporting additions)
-
-- Technology page with a device-types-over-time chart and icon-decorated OS/browser/user-agent breakdowns.
-- Breakdown detail modal (grid icon) with search, sorting, row limits and per-row actions, plus reusable card menus (Proportion/Trend, per-card export, pin-to-dashboard).
-- Chart **Group by** across 11 dimensions, including new **Host** and **Cache status** columns populated by the middleware.
-- Row-level "View in Observability" deep links into the Real-time feed.
-- A **Logs** page (`/web-analytics/logs`) for filtering, inspecting and exporting recorded requests.
-- A **Dashboards** page (`/web-analytics/dashboards`) with DB-backed custom dashboards and REST API endpoints. This adds a 15th sidebar link in total; sidebar-link count tests in downstream apps should be updated. Edge/security/bot fields are not collected.
-
-No config keys were removed. After upgrading, run `php artisan migrate` (additive), then `php artisan optimize:clear` and re-publish views with `--force` if you had published them before.
+> **Important:** Packagist treats stable versions as immutable. Never delete or re-point a released tag. If a release needs a fix, publish the next version (`v3.3.1`, `v3.3.0.1`, …) instead.
 
 ---
 
-## Before you start
+## Release summary
 
-0. **Run the preflight check:**
+### v3.2.0 (released)
 
-```bash
-php artisan lwa:doctor          # human-readable table
-php artisan lwa:doctor --json   # machine-readable report
-```
+Unified event schema, `EventStore` abstraction, browser SDK, identity resolution/profiles, Event Explorer and batch ingestion with retry/dead-letter support.
 
-If it reports missing tables (this happened on some installs where an older, guarded migration was recorded as "run" without creating anything), repair idempotently:
+### v3.3.0 (released)
 
-```bash
-php artisan lwa:doctor --repair
-php artisan lwa:doctor           # re-check until no FAIL remains
-```
+- Trends / Insights builder with event, user and value metrics, breakdowns and documented definitions.
+- DB-backed saved reports in `lwa_insights` (no localStorage); REST CRUD with `read` / `admin` abilities.
+- Ordered funnels with conversion windows, drop-off and median completion time.
+- Cohort retention, lifecycle stages and per-user event paths.
+- Insight widgets on custom dashboards, scoped to website/tenant and rendered by the same bounded engines.
+- Sidebar has **20** links by default (Funnels, Retention, User Paths, Trends and Event Explorer were added).
 
-1. **Back up the database** — especially `lwa_logs` — and `.env`.
-2. Note your `WEB_ANALYTICS_TABLE_NAME` (default `lwa_logs`).
-3. If you plan to use `queue` collector mode, make sure a queue worker can reach the same DB/cache.
-4. Run the whole flow on staging with a production copy first.
+### v3.4 (unreleased on `dev`)
+
+- Opt-in, consent-gated session replay with masked recording, signed uploads, verbatim chunk storage and a minimal gated player.
+- Gated click/scroll heatmaps with bounded aggregation, top targets and rage/dead-click signals.
+- Optional Session Replay and Heatmaps sidebar links (22 links when enabled and the gate allows).
+
+v3.4 is preview quality: full-fidelity DOM patching and form analytics are not implemented.
 
 ---
 
 ## 1. Update the package
 
 ```bash
-composer require nafiur/laravel-web-analytics:^3.0 -W
-# development branch alternative:
+# Released v3.3
+composer require nafiur/laravel-web-analytics:^3.3 -W
+
+# Preview the unreleased v3.4 work instead
 # composer require nafiur/laravel-web-analytics:dev-dev -W
 
 php artisan optimize:clear
 ```
 
-If you published views earlier, refresh them (otherwise you will keep seeing the old UI):
+If you published views earlier, refresh them — otherwise you will keep seeing the old UI:
 
 ```bash
 php artisan vendor:publish --tag=web-analytics-views --force
 php artisan view:clear
 ```
 
+Config may also be refreshed selectively:
+
+```bash
+php artisan vendor:publish --tag=laravel-web-analytics-config
+```
+
 ---
 
-## 2. Enable the collector and migrate
+## 2. Migrate
+
+```bash
+php artisan migrate
+php artisan lwa:doctor
+php artisan lwa:doctor --json   # CI-friendly
+```
+
+If `lwa:doctor` reports missing tables because an older guarded migration was recorded as run without creating them:
+
+```bash
+php artisan lwa:doctor --repair
+php artisan lwa:doctor
+```
+
+Additive tables now include:
+
+- Core reporting: `lwa_websites`, `lwa_visitors`, `lwa_sessions`, `lwa_pageviews`, `lwa_events`, `lwa_hourly_stats`, `lwa_daily_stats`, `lwa_upgrade_checkpoints`, `lwa_api_tokens`.
+- Identity / ingestion: `lwa_profiles`, `lwa_identity_aliases`, `lwa_dead_letters`.
+- Product analytics: `lwa_insights`, `lwa_dashboards`.
+- Replay (v3.4 preview): `lwa_replay_sessions`, `lwa_replay_chunks`, `lwa_replay_markers`, `lwa_replay_assets`.
+
+`request_uuid` idempotency columns are added to `lwa_pageviews` and `lwa_events`.
+
+---
+
+## 3. Enable the collector (optional)
+
+The collector and API remain opt-in:
 
 ```env
 WEB_ANALYTICS_SCHEMA_ENABLED=true
 WEB_ANALYTICS_COLLECTOR_MODE=sync     # use 'queue' only with a running worker
-WEB_ANALYTICS_WRITE_LEGACY=true       # keep v2 logging during transition
+WEB_ANALYTICS_WRITE_LEGACY=true       # keep writing lwa_logs during transition
 # WEB_ANALYTICS_WEBSITE_ID=1          # optional; upgrade can create one from --website-domain
 ```
 
 ```bash
 php artisan optimize:clear
-php artisan migrate
 ```
-
-This creates, additively: `lwa_websites`, `lwa_visitors`, `lwa_sessions`, `lwa_pageviews`, `lwa_events`, `lwa_hourly_stats`, `lwa_daily_stats`, `lwa_upgrade_checkpoints`, `lwa_api_tokens`, plus `request_uuid` idempotency columns.
-
-> `optimize:clear` is mandatory after any `.env`/config change. Cached config is the most common reason for "Nothing to migrate" and missing tables.
 
 ---
 
-## 3. Dry run
+## 4. Backfill legacy `lwa_logs` rows (v2 upgrades)
 
 ```bash
 php artisan lwa:upgrade --dry-run --website-domain=example.com
-```
-
-Understand the report:
-
-| Column | Meaning |
-|---|---|
-| `read` | **Total** legacy rows scanned — not the number pending |
-| `pending_since_id` | Rows the next real run will import |
-| `checkpoint_last_id` | Current resumable position |
-| `pageviews` | Always `0` in dry-run — nothing is written |
-
----
-
-## 4. Backfill
-
-```bash
 php artisan lwa:upgrade --website-domain=example.com --chunk=2000
 ```
 
-- Resumable via `lwa_upgrade_checkpoints`; re-run to import rows logged since the last run.
-- Safe to interrupt — just re-run (it resumes from `last_id`).
-- For very large tables, run it in the background so an SSH disconnect cannot stop it:
+| Column / behaviour | Meaning |
+|---|---|
+| `read` | Total legacy rows scanned, not the pending count |
+| `pending_since_id` | Rows the next run will import |
+| `checkpoint_last_id` | Current resumable position |
+| `pageviews` | Always `0` in dry-run |
+
+The command is resumable via `lwa_upgrade_checkpoints`; re-run it to import rows logged since the last run. Imported rows use `legacy_<id>` request UUIDs so retries cannot duplicate them.
+
+For large tables, run it detached:
 
 ```bash
 nohup php artisan lwa:upgrade --website-domain=example.com --chunk=2000 \
@@ -112,29 +127,18 @@ nohup php artisan lwa:upgrade --website-domain=example.com --chunk=2000 \
 tail -f storage/logs/lwa-upgrade.log
 ```
 
-- Visitors are reconstructed from `session_id` (or daily salted IP/UA hash).
-- Sessions use the configured 30-minute inactivity timeout.
-- Imported pageviews get a stable `request_uuid` (`legacy_<id>`), so re-runs cannot duplicate them.
-
-Check progress any time:
-
-```bash
-php artisan lwa:doctor
-# OK Upgrade checkpoint  last_id=..., N legacy row(s) pending
-```
-
 ---
 
-## 5. Build rollups
+## 5. Build rollups and schedule maintenance
 
-The upgrade command automatically aggregates the **last 2 days hourly** and **last 90 days daily**. For older history, run explicitly:
+The upgrade command aggregates the last 2 days hourly and 90 days daily. For older history:
 
 ```bash
-php artisan lwa:aggregate --granularity=daily --from=2025-01-01 --to=2026-11-23
-php artisan lwa:aggregate --granularity=hourly --from=2026-11-20 --to=2026-11-23
+php artisan lwa:aggregate --granularity=daily --from=2025-01-01 --to=2026-11-25
+php artisan lwa:aggregate --granularity=hourly --from=2026-11-23 --to=2026-11-25
 ```
 
-Schedule ongoing aggregation in `routes/console.php`:
+Suggested `routes/console.php` schedule:
 
 ```php
 use Illuminate\Support\Facades\Schedule;
@@ -142,26 +146,79 @@ use Illuminate\Support\Facades\Schedule;
 Schedule::command('lwa:aggregate --granularity=hourly')->hourly();
 Schedule::command('lwa:aggregate --granularity=daily')->daily();
 Schedule::command('lwa:prune')->daily();
-Schedule::command('lwa:upgrade --website-domain=example.com')->hourly(); // import late-arriving legacy rows
-Schedule::command('lwa:geoip --auto')->weekly();                          // if using MaxMind
+Schedule::command('lwa:replay:prune')->daily(); // v3.4 preview, replay retention
+Schedule::command('lwa:upgrade --website-domain=example.com')->hourly();
+Schedule::command('lwa:geoip --auto')->weekly();
 ```
 
-Dashboard KPIs then come from rollup tables, not raw scans.
+Dashboard KPIs then come from rollup tables rather than raw scans.
 
 ---
 
-## 6. Verify
+## 6. Notes for v3.3 users
+
+- Saved reports are database-backed. Anything previously pinned with the card menu stays browser-local and is separate from Trends/Funnel/Retention/Paths reports and dashboard insight widgets.
+- Insight widgets are stored in `lwa_dashboards`; the dashboard time window overrides the window saved with a report.
+- Funnel, retention and path metrics read only from `lwa_events` through `EventStore`, with published definitions and a 20,000-event cap.
+- Published views must be refreshed after upgrading to see the new pages and sidebar links.
+
+---
+
+## 7. Enable v3.4 session replay (preview)
+
+Replay is disabled by default and must be consented to. Add to `.env`:
+
+```env
+WEB_ANALYTICS_REPLAY_ENABLED=true
+WEB_ANALYTICS_REPLAY_CONSENT=false        # set true only after user consent
+WEB_ANALYTICS_REPLAY_SAMPLE_RATE=1         # 0–1 fraction of sessions
+WEB_ANALYTICS_REPLAY_RECORD_GUESTS=false
+WEB_ANALYTICS_REPLAY_RETENTION_DAYS=30
+WEB_ANALYTICS_REPLAY_DISK=                 # blank = default filesystem disk
+```
+
+Define the viewing gate in your application (the package intentionally does not define it for you):
+
+```php
+use Illuminate\Support\Facades\Gate;
+
+Gate::define('viewLwaReplay', fn ($user = null) => $user !== null);
+```
+
+Without that gate, replay and heatmap routes fail closed with `403`.
+
+Opt into recording in a layout:
+
+```blade
+@if (config('laravel-web-analytics.replay.enabled'))
+    @lwaReplay
+@endif
+```
+
+Set consent at runtime only after your consent UI grants it:
+
+```php
+config()->set('laravel-web-analytics.replay.consent.replay', true);
+```
+
+The recorder removes every input value, empties `[data-lwa-mask]` nodes, strips framework state attributes such as `wire:snapshot`, and uploads masked structural markers with an expiring HMAC-signed token. Chunks are stored verbatim; the server never parses replay payloads.
+
+Run `php artisan lwa:replay:prune` daily to enforce retention.
+
+---
+
+## 8. Verify
 
 ```bash
 php artisan lwa:doctor
 php artisan lwa:benchmark --range=24h
 ```
 
-Check the Overview, Visitors, Geography and Real-time pages. With MaxMind configured, country/city markers are precise; without it, country-centroid fallback still plots approximate locations.
+Check Overview, Visitors, Geography, Real-time, Trends, Funnels, Retention, Paths and Dashboards. With replay enabled and the gate defined, also check `/web-analytics/replay` and `/web-analytics/heatmaps`.
 
 ---
 
-## 7. Optional — retire legacy data
+## 9. Optional — retire legacy data
 
 Only after verification:
 
@@ -169,7 +226,7 @@ Only after verification:
 php artisan lwa:upgrade --prune-legacy --website-domain=example.com
 ```
 
-Deletes only `lwa_logs` rows already imported (tracked by the checkpoint). Keep `WEB_ANALYTICS_WRITE_LEGACY=true` until comfortable, then set it `false`.
+This deletes only `lwa_logs` rows already imported (tracked by the checkpoint). Keep `WEB_ANALYTICS_WRITE_LEGACY=true` until comfortable, then set it to `false`.
 
 ---
 
@@ -177,21 +234,22 @@ Deletes only `lwa_logs` rows already imported (tracked by the checkpoint). Keep 
 
 | Setting | Default | Purpose |
 |---|---|---|
-| `WEB_ANALYTICS_SCHEMA_ENABLED` | `false` | Enables collector + API (tables always exist) |
+| `WEB_ANALYTICS_SCHEMA_ENABLED` | `false` | Enables collector + API |
 | `WEB_ANALYTICS_COLLECTOR_MODE` | `sync` | `sync` or `queue` |
 | `WEB_ANALYTICS_WRITE_LEGACY` | `true` | Keep writing `lwa_logs` |
-| `WEB_ANALYTICS_QUEUE` | — | Optional named queue |
 | `WEB_ANALYTICS_WEBSITE_ID` | — | Default website scope |
 | `WEB_ANALYTICS_SESSION_TIMEOUT` | `30` | Session inactivity minutes |
-| `WEB_ANALYTICS_BOUNCE_MAX_SECONDS` | `0` | Bounce duration threshold |
 | `WEB_ANALYTICS_API_RATE_LIMIT` | `60` | API requests/minute |
 | `WEB_ANALYTICS_GEOIP_PROVIDER` | — | `''`, `ip-api`, `maxmind` |
-| `WEB_ANALYTICS_MAXMIND_DB` | — | Local `.mmdb` path |
-| `MAXMIND_LICENSE_KEY` / `MAXMIND_ACCOUNT_ID` | — | Secrets — keep in `.env` only |
-| `WEB_ANALYTICS_GEOIP_AUTO_DOWNLOAD` | `false` | Scheduled DB refresh |
-| `WEB_ANALYTICS_GEOIP_UPDATE_DAYS` | `7` | Refresh interval |
+| `WEB_ANALYTICS_REPLAY_ENABLED` | `false` | Enable replay routes and recorder bundle |
+| `WEB_ANALYTICS_REPLAY_GATE` | `viewLwaReplay` | Gate required for replay/heatmap pages |
+| `WEB_ANALYTICS_REPLAY_CONSENT` | `false` | Replay consent default |
+| `WEB_ANALYTICS_REPLAY_SAMPLE_RATE` | `0` | Fraction of sessions recorded |
+| `WEB_ANALYTICS_REPLAY_RECORD_GUESTS` | `false` | Allow guest recording |
+| `WEB_ANALYTICS_REPLAY_RETENTION_DAYS` | `30` | Replay prune window |
+| `WEB_ANALYTICS_REPLAY_DISK` | — | Laravel disk for replay chunks |
 
-Non-secret values can also be set in published `config/laravel-web-analytics.php`; keep secrets in `.env` and run `optimize:clear` after any change.
+Keep secrets in `.env` and run `php artisan optimize:clear` after any config change.
 
 ---
 
@@ -199,29 +257,31 @@ Non-secret values can also be set in published `config/laravel-web-analytics.php
 
 | Symptom | Cause / fix |
 |---|---|
-| `Nothing to migrate`, advanced tables missing | Older guarded migration was recorded as run → `php artisan lwa:doctor --repair` |
-| Dashboard shows setup page / API 503 / SSE `error` event | Required tables missing → doctor + `--repair`, then `optimize:clear` |
-| `lwa:upgrade --dry-run` shows huge `read` but tiny `pending` | Normal — `read` is the total row count; only `pending_since_id` will be imported |
-| Upgrade interrupted (`^C`) | Nothing lost — re-run; checkpoint resumes from `last_id` |
-| Pending rows never reach zero | Tracking is still active in v2 → normal; schedule `lwa:upgrade` hourly or accept a small tail |
-| `Reconnecting…` flashes on Real-time | Fixed in v3 — a single normal SSE EOF no longer flips the badge |
-| Map shows country codes as `BD BD` | Old published views — re-publish with `--force` and `view:clear` |
-| City list empty | City data requires GeoIP; configure MaxMind or Cloudflare headers |
-| "Host"/"Cache status" group-by is empty | Run `php artisan migrate` — the additive migration adds the columns. Cache status only appears on requests logged after the upgrade (from `cf-cache-status` / `x-cache` headers) |
-| New card menu/modal not visible | Old published views are still in use → `php artisan vendor:publish --tag=web-analytics-views --force` and `php artisan view:clear` |
-| Exposed MaxMind license key | Revoke it in the MaxMind portal immediately, then use `.env` only |
+| `Nothing to migrate`, advanced tables missing | Older guarded migration recorded as run → `php artisan lwa:doctor --repair` |
+| Dashboard setup page / API 503 / SSE `error` | Required tables missing → doctor + `--repair`, then `optimize:clear` |
+| New pages or sidebar links not visible | Published views are stale → `vendor:publish --tag=web-analytics-views --force` and `view:clear` |
+| Trends/Funnels/Retention/Paths empty | Advanced schema disabled or no matching `lwa_events` |
+| `403` on `/web-analytics/replay` or `/web-analytics/heatmaps` | Define the gate named by `WEB_ANALYTICS_REPLAY_GATE`; replay fails closed |
+| `/web-analytics/replay.js` returns 404 | `WEB_ANALYTICS_REPLAY_ENABLED=false` |
+| Replay upload returns 401 | Signed config token missing/expired; reload the host page to get a fresh one |
+| Heatmaps empty | No recorded click/scroll markers yet, or path/window filter too narrow |
+| Packagist “Upstream re-tag blocked” | A released tag was moved; restore the original reference or publish a new version |
 
 ---
 
 ## Rollback
 
 1. Set `WEB_ANALYTICS_SCHEMA_ENABLED=false` and `WEB_ANALYTICS_WRITE_LEGACY=true`.
-2. `php artisan optimize:clear`.
-3. Re-publish/restore v2 views if you customized them.
-4. Remove advanced tables: `php artisan migrate:rollback --step=3` (three v3 migrations: host/cache-status columns, idempotency keys, table creation). Verify with `php artisan lwa:doctor` afterwards.
-5. Restore the DB backup if you ran `--prune-legacy`.
+2. Disable replay with `WEB_ANALYTICS_REPLAY_ENABLED=false`.
+3. `php artisan optimize:clear`.
+4. Re-publish/restore older views if you customized them.
+5. Remove replay tables only (v3.4 preview): `php artisan migrate:rollback --step=1`.
+6. Remove all advanced tables: roll back the remaining v3 migrations. Verify with `php artisan lwa:doctor`.
+7. Restore the DB backup if you ran `--prune-legacy`.
 
 No v2 config keys were removed, so a config rollback is not strictly required.
+
+---
 
 ## Known limitations
 
@@ -229,3 +289,4 @@ No v2 config keys were removed, so a config rollback is not strictly required.
 - Bounce and engagement for imported sessions are approximations from legacy `session_id` and timestamps.
 - Multi-website isolation is session/config based; API tokens are bound to one website at issue time.
 - `queue` collector mode requires a worker; without one use `sync`.
+- v3.4 replay is minimal: sanitized snapshots, bounded markers and dashboard-style heatmaps, not full-fidelity DOM patching. Form analytics is not implemented.
