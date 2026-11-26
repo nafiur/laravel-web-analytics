@@ -27,6 +27,7 @@ Unified event schema, `EventStore` abstraction, browser SDK, identity resolution
 
 - Opt-in, consent-gated session replay with masked recording, signed uploads, verbatim chunk storage and a minimal gated player.
 - Gated click/scroll heatmaps with bounded aggregation, top targets and rage/dead-click signals.
+- Gated form analytics with masked field focus/change, submit and validation-error markers; no field values are recorded.
 - Optional Session Replay and Heatmaps sidebar links (22 links when enabled and the gate allows).
 
 v3.4 is preview quality: full-fidelity DOM patching and form analytics are not implemented.
@@ -214,7 +215,7 @@ php artisan lwa:doctor
 php artisan lwa:benchmark --range=24h
 ```
 
-Check Overview, Visitors, Geography, Real-time, Trends, Funnels, Retention, Paths and Dashboards. With replay enabled and the gate defined, also check `/web-analytics/replay` and `/web-analytics/heatmaps`.
+Check Overview, Visitors, Geography, Real-time, Trends, Funnels, Retention, Paths and Dashboards. With replay enabled and the gate defined, also check `/web-analytics/replay`, `/web-analytics/heatmaps` and `/web-analytics/forms`.
 
 ---
 
@@ -265,6 +266,7 @@ Keep secrets in `.env` and run `php artisan optimize:clear` after any config cha
 | `/web-analytics/replay.js` returns 404 | `WEB_ANALYTICS_REPLAY_ENABLED=false` |
 | Replay upload returns 401 | Signed config token missing/expired; reload the host page to get a fresh one |
 | Heatmaps empty | No recorded click/scroll markers yet, or path/window filter too narrow |
+| Forms report empty | No focus/change/submit markers yet; ensure replay consent was granted on a page containing a form |
 | Packagist “Upstream re-tag blocked” | A released tag was moved; restore the original reference or publish a new version |
 
 ---
@@ -289,4 +291,4 @@ No v2 config keys were removed, so a config rollback is not strictly required.
 - Bounce and engagement for imported sessions are approximations from legacy `session_id` and timestamps.
 - Multi-website isolation is session/config based; API tokens are bound to one website at issue time.
 - `queue` collector mode requires a worker; without one use `sync`.
-- v3.4 replay is minimal: sanitized snapshots, bounded markers and dashboard-style heatmaps, not full-fidelity DOM patching. Form analytics is not implemented.
+- v3.4 replay is minimal: sanitized snapshots, bounded markers, dashboard-style heatmaps and form funnel counts, not full-fidelity DOM patching. Only structural form metadata is recorded — never field values.

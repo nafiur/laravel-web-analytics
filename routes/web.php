@@ -4,6 +4,7 @@ use Illuminate\Support\Facades\Route;
 use Nafiur\WebAnalytics\Http\Controllers\DashboardController;
 use Nafiur\WebAnalytics\Http\Controllers\EventExplorerController;
 use Nafiur\WebAnalytics\Http\Controllers\FunnelsController;
+use Nafiur\WebAnalytics\Http\Controllers\FormsController;
 use Nafiur\WebAnalytics\Http\Controllers\HeatmapsController;
 use Nafiur\WebAnalytics\Http\Controllers\PathsController;
 use Nafiur\WebAnalytics\Http\Controllers\ReplayBundleController;
@@ -33,6 +34,9 @@ Route::get('/replay', [ReplayController::class, 'index'])
 Route::get('/heatmaps', [HeatmapsController::class, 'index'])
     ->middleware($replayGate)
     ->name('lwa_heatmaps');
+Route::get('/forms', [FormsController::class, 'index'])
+    ->middleware($replayGate)
+    ->name('lwa_forms');
 Route::get('/replay/{replaySession}/manifest', [ReplayPlayerController::class, 'manifest'])
     ->middleware($replayGate)
     ->name('lwa_replay_manifest');

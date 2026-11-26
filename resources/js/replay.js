@@ -147,6 +147,107 @@
 
     events.push({ at: 0, type: 'snapshot', html: sanitizedSnapshot().slice(0, 180000) });
 
+    var seenFormFields = Object.create(null);
+
+    function formInfo(form) {
+        return {
+            id: short(form.id || ''),
+            cls: short(typeof form.className === 'string' ? form.className : ''),
+            method: short(form.getAttribute('method') || 'get')
+        };
+    }
+
+    function fieldInfo(field) {
+        return {
+            tag: short(field.tagName || '').toLowerCase(),
+            type: short(field.getAttribute('type') || ''),
+            name: short(field.name || ''),
+            id: short(field.id || ''),
+            cls: short(typeof field.className === 'string' ? field.className : '')
+        };
+    }
+
+    function formKey(form) {
+        var info = formInfo(form);
+        return info.id || info.cls || 'form';
+    }
+
+    function fieldKey(field) {
+        var info = fieldInfo(field);
+        return info.name || info.id || info.type || info.tag;
+    }
+
+    document.addEventListener('focusin', function (e) {
+        var field = e.target;
+        if (!field || field.nodeType !== 1 || !/^(INPUT|TEXTAREA|SELECT)$/.test(field.tagName)) {
+            return;
+        }
+        var form = field.closest ? field.closest('form') : null;
+        if (!form) {
+            return;
+        }
+        var key = formKey(form) + '|' + fieldKey(field);
+        if (seenFormFields[key]) {
+            return;
+        }
+        seenFormFields[key] = true;
+        record('field_focus', form, { form: formInfo(form), field: fieldInfo(field) });
+    }, true);
+
+    document.addEventListener('change', function (e) {
+        var field = e.target;
+        if (!field || field.nodeType !== 1 || !/^(INPUT|TEXTAREA|SELECT)$/.test(field.tagName)) {
+            return;
+        }
+        var form = field.closest ? field.closest('form') : null;
+        if (!form) {
+            return;
+        }
+        var key = formKey(form) + '|' + fieldKey(field) + '|change';
+        if (seenFormFields[key]) {
+            return;
+        }
+        seenFormFields[key] = true;
+        record('field_change', form, { form: formInfo(form), field: fieldInfo(field) });
+    }, true);
+
+    document.addEventListener('submit', function (e) {
+        var form = e.target;
+        if (!form || form.tagName !== 'FORM') {
+            return;
+        }
+        var valid = form.checkValidity ? form.checkValidity() : true;
+        var invalid = 0;
+        try {
+            invalid = form.querySelectorAll(':invalid').length;
+        } catch (err) {
+            invalid = 0;
+        }
+        record('form_submit', form, {
+            form: formInfo(form),
+            valid: !!valid,
+            invalid_fields: invalid
+        });
+    }, true);
+
+    document.addEventListener('invalid', function (e) {
+        var field = e.target;
+        var form = field && field.closest ? field.closest('form') : null;
+        if (!form) {
+            return;
+        }
+        var validity = field.validity || {};
+        record('form_error', form, {
+            form: formInfo(form),
+            field: fieldInfo(field),
+            validity: {
+                valueMissing: !!validity.valueMissing,
+                typeMismatch: !!validity.typeMismatch,
+                patternMismatch: !!validity.patternMismatch
+            }
+        });
+    }, true);
+
     document.addEventListener('click', function (e) {
         record('click', e.target, {
             x: e.clientX || 0,
@@ -212,14 +313,15 @@
         var batch = events.splice(0, events.length);
         var to = Date.now() - startedAt;
         var from = batch[0].at || 0;
+        var markerTypes = [
+            'click', 'scroll', 'web_vital', 'error',
+            'field_focus', 'field_change', 'form_submit', 'form_error'
+        ];
         var markers = batch.filter(function (event) {
             return event.type !== 'snapshot';
         }).slice(0, maxMarkers).map(function (event) {
             return {
-                type: event.type === 'web_vital' ? 'web_vital' :
-                    (event.type === 'error' ? 'error' :
-                        (event.type === 'click' ? 'click' :
-                            (event.type === 'scroll' ? 'scroll' : 'custom'))),
+                type: markerTypes.indexOf(event.type) >= 0 ? event.type : 'custom',
                 at_ms: event.at,
                 payload: { target: event.target, data: event.data || null }
             };

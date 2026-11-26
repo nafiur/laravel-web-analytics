@@ -28,10 +28,11 @@
 
 - `@lwaReplay` emits an expiring HMAC-signed config plus a deferred build-free recorder. Consent is separate from analytics consent; guests are excluded by default; all input values and `[data-lwa-mask]` nodes are removed before upload.
 - `POST /web-analytics/api/v1/replay/chunks` authenticates with the signed token only and stores chunks verbatim. Website/tenant scope comes from the signature, never client input.
-- `/web-analytics/replay`, `/web-analytics/replay/{id}`, gated manifest/chunk routes and `/web-analytics/heatmaps` all re-check the configurable `viewLwaReplay` gate and session scope on every request.
+- `/web-analytics/replay`, `/web-analytics/replay/{id}`, gated manifest/chunk routes and `/web-analytics/heatmaps` and `/web-analytics/forms` all re-check the configurable `viewLwaReplay` gate and session scope on every request.
 - `HeatmapService` aggregates at most 20,000 most recent scoped markers in PHP: 2.5% click buckets, 10% scroll-depth bands, top targets, rage clicks (3 clicks within 1 s) and dead clicks (no different marker within 2 s).
+- `FormAnalyticsService` turns masked `field_focus` / `field_change` / `form_submit` / `form_error` markers into distinct-session starts, submits, errors, invalid submits and per-field change rates; field values and validation messages are never recorded.
 - `lwa:replay:prune` enforces the default 30-day replay retention.
-- Two optional sidebar links (Session Replay, Heatmaps) appear only when replay is enabled and the gate allows them.
+- Three optional sidebar links (Session Replay, Heatmaps, Forms) appear only when replay is enabled and the gate allows them.
 
 **Replay flow:** `@lwaReplay` → signed expiring config + deferred recorder → masked snapshot/marker batches → HMAC-authenticated chunk upload → verbatim file on Laravel disk + relational index → gated list/player/manifest/chunk routes that re-check gate and scope on every request. This mirrors the pattern used by `packstub/session-replay` (disk for chunks, tables for the index), but uses a build-free native recorder rather than rrweb/npm assets.
 

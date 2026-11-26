@@ -92,6 +92,10 @@
                            class="sidebar-link {{ $current === 'heatmaps' ? 'active' : '' }}">
                             <i data-lucide="grid-2x2" class="text-sm"></i> <span class="sidebar-label">Heatmaps</span>
                         </a>
+                        <a href="{{ route('lwa_forms') }}"
+                           class="sidebar-link {{ $current === 'forms' ? 'active' : '' }}">
+                            <i data-lucide="text-cursor-input" class="text-sm"></i> <span class="sidebar-label">Forms</span>
+                        </a>
                     @endif
 
                     <a href="{{ route('lwa_events') }}"

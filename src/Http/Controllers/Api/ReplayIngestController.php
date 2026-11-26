@@ -15,6 +15,7 @@ class ReplayIngestController extends Controller
     private const MARKER_TYPES = [
         'click', 'scroll', 'pageview', 'error', 'failed_request',
         'web_vital', 'rage_click', 'console', 'custom',
+        'field_focus', 'field_change', 'form_submit', 'form_error',
     ];
 
     public function store(Request $request): JsonResponse

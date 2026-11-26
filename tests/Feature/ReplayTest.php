@@ -191,6 +191,29 @@ class ReplayTest extends TestCase
             ->assertStatus(422);
     }
 
+    public function test_ingest_accepts_masked_form_markers(): void
+    {
+        $payload = $this->chunkPayload($this->token(), [
+            'markers' => [
+                [
+                    'type'   => 'field_focus',
+                    'at_ms'  => 100,
+                    'payload' => ['form' => ['id' => 'checkout'], 'field' => ['name' => 'email']],
+                ],
+                [
+                    'type'   => 'form_submit',
+                    'at_ms'  => 400,
+                    'payload' => ['form' => ['id' => 'checkout'], 'valid' => true],
+                ],
+            ],
+        ]);
+
+        $this->postJson(route('lwa_api_replay_chunks'), $payload)->assertStatus(202);
+
+        $this->assertTrue(ReplayMarker::where('type', 'field_focus')->exists());
+        $this->assertTrue(ReplayMarker::where('type', 'form_submit')->exists());
+    }
+
     public function test_prune_command_removes_old_replay_rows_and_files(): void
     {
         $response = $this->postJson(route('lwa_api_replay_chunks'), $this->chunkPayload($this->token()));

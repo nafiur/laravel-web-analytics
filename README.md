@@ -15,7 +15,7 @@ A modern, fast, and self-hosted Web Traffic & Visitor Analytics Dashboard for La
 ## ⚡ Highlights & Key Features
 
 - 🚀 **Real-Time Live Stream (SSE)**: Live active visitor count and instant real-time traffic feed without WebSockets, Node.js, or Pusher. Each stream response is short-lived and paced by EventSource, so no PHP worker is held open while waiting for new traffic.
-- 🧭 **Sidebar Navigation**: 20 sidebar links — Overview, Real-time, Logs, Dashboards, Visitors, Traffic Sources, Pages & Screens, Geography, Devices & Browsers, Campaigns, Funnels, Retention, User Paths, Trends, Event Explorer, Events & Goals, Conversions, Performance, Error Monitoring and Settings. Two optional links — Session Replay and Heatmaps — appear only when replay is enabled and the configured gate allows them. Each has its own bookmarkable route and Blade page; the Settings screen has no analytics tab bar.
+- 🧭 **Sidebar Navigation**: 20 sidebar links — Overview, Real-time, Logs, Dashboards, Visitors, Traffic Sources, Pages & Screens, Geography, Devices & Browsers, Campaigns, Funnels, Retention, User Paths, Trends, Event Explorer, Events & Goals, Conversions, Performance, Error Monitoring and Settings. Three optional links — Session Replay, Heatmaps and Forms — appear only when replay is enabled and the configured gate allows them. Each has its own bookmarkable route and Blade page; the Settings screen has no analytics tab bar.
 - 🎨 **Tailwind CSS UI with Dark Mode**: Modern, responsive dashboard powered by Tailwind CSS Play CDN (zero build step / zero npm dependencies). Uses CSS design tokens (`--lwa-*`, `[data-theme="dark"]`), Lucide outline icons, visible focus states, skeleton loaders, explicit empty/error states, and a 1-click persistent Dark/Light/System preference.
 - 📊 **Comprehensive Metrics**: Total Requests, Unique Visitors, Bandwidth (Data Transferred in GB/MB), Avg Response Time, Error Rate.
 - 🧪 **Built-In Live Traffic Simulator**: Easily generate realistic live traffic every second with `php artisan lwa:live` to demo and test live streaming.
@@ -38,6 +38,7 @@ A modern, fast, and self-hosted Web Traffic & Visitor Analytics Dashboard for La
 - 📊 **Product analytics (v3.3)**: Trends, DB-backed saved reports, ordered funnels, cohort retention, lifecycle stages and per-user event paths — all computed from bounded `lwa_events` reads with published definitions, never fabricated numbers.
 - 🎬 **Session replay (v3.4, opt-in)**: Consent-gated, masked browser recorder with signed uploads, verbatim chunk storage, a gated minimal player and `lwa:replay:prune` retention. Guests are excluded by default and no input values are recorded.
 - 🔥 **Heatmaps (v3.4)**: Gated click/scroll heatmaps with path and time filters, bounded aggregation, top targets and explicit rage/dead-click signals derived from recorded replay markers.
+- 📝 **Form analytics (v3.4)**: Masked field focus/change, submit and validation-error markers become per-form and per-field funnel counts — without recording a single field value.
 
 ---
 
@@ -210,6 +211,10 @@ Chunks are uploaded to `POST /web-analytics/api/v1/replay/chunks` with the signe
 
 `/web-analytics/heatmaps` is gated by the same `viewLwaReplay` gate and aggregates `lwa_replay_markers` into click and scroll views. Filter by recorded path and a 7/30/90-day or all-time window. The recorder captures viewport dimensions with each marker, so clicks are bucketed to a 2.5% grid and scroll depth to 10% bands. A bounded PHP aggregation (20,000 most recent scoped markers) also reports top targets, rage clicks (3 clicks on one target within 1 second) and dead clicks (no different marker within 2 seconds), with every definition and sample-cap note shown on the page. No input text is used — only masked, structural target metadata.
 
+### Form analytics (v3.4)
+
+`/web-analytics/forms` uses the same gate, path filter and time windows. The recorder emits only structural markers: first focus and first change per field, form submit with `checkValidity()` result, and validation errors with boolean validity flags. Field values and validation messages are never captured. The service aggregates distinct sessions per form into starts, submits, errors, invalid submits and conversion/error rates, plus per-field focus/change counts and change rates. Conversion is `submits / starts` and stays `0%` when no start was recorded — no submission is inferred from navigation.
+
 ## 🎨 Design System
 
 | Topic | Choice |
@@ -353,6 +358,7 @@ The package defines routes with the `lwa_` prefix to avoid conflicts with your a
 | `GET /web-analytics/replay/{id}/chunk/{sequence}` | `lwa_replay_chunk` | Gated verbatim chunk download |
 | `GET /web-analytics/replay-player.js` | `lwa_replay_player_bundle` | Deferred player bundle (gated) |
 | `GET /web-analytics/heatmaps` | `lwa_heatmaps` | Gated click/scroll heatmaps and interaction signals |
+| `GET /web-analytics/forms` | `lwa_forms` | Gated form funnel and field engagement report |
 | `GET /web-analytics/api/v1/summary` | `lwa_api_summary` | JSON summary (bearer token, `read`) |
 | `GET /web-analytics/api/v1/timeseries` | `lwa_api_timeseries` | JSON time series (bearer token, `read`) |
 | `POST /web-analytics/api/v1/events` | `lwa_api_event` | Track a custom event (bearer token, `write`) |
@@ -387,6 +393,7 @@ Every sidebar section also has its own bookmarkable URL:
 | `/web-analytics/retention` | `lwa_retention` | | |
 | `/web-analytics/paths` | `lwa_paths` | | |
 | `/web-analytics/replay` | `lwa_replay` | `/web-analytics/heatmaps` | `lwa_heatmaps` |
+| `/web-analytics/forms` | `lwa_forms` | | |
 
 The legacy `/web-analytics` (`lwa_dashboard`) URL still works and shows the Overview pane. The Events and Conversions URLs render an explicit “not available yet” pane rather than fabricated numbers.
 
@@ -439,7 +446,8 @@ resources/views/
 │   ├── funnels.blade.php          ├── retention.blade.php    ├── paths.blade.php
 │   ├── events.blade.php           ├── conversions.blade.php  ├── errors.blade.php
 │   ├── dashboards.blade.php       ├── dashboard-view.blade.php├── replay.blade.php
-│   ├── replay-show.blade.php      ├── heatmaps.blade.php     └── settings.blade.php
+│   ├── replay-show.blade.php      ├── heatmaps.blade.php
+│   ├── forms.blade.php            └── settings.blade.php
 ├── sections/                      # content-only partials included by the pages
 └── partials/                      # header, sidebar, subheader, scripts, breakdown-list,
                                    # breakdown-card, breakdown-trend-list, card-menu,
@@ -450,7 +458,7 @@ The legacy `dashboard.blade.php` simply extends the shared layout and renders th
 
 ## 🧭 Dashboard Navigation
 
-The sidebar exposes 20 sections by default, plus two optional replay sections when replay is enabled and the gate allows them. Each is rendered by its own route and Blade page:
+The sidebar exposes 20 sections by default, plus three optional replay sections when replay is enabled and the gate allows them. Each is rendered by its own route and Blade page:
 
 | Menu item | Shows |
 |-----------|-------|
@@ -471,6 +479,7 @@ The sidebar exposes 20 sections by default, plus two optional replay sections wh
 | **Event Explorer** | Raw event browser with name, property, user and time filters |
 | **Session Replay** *(optional)* | Gated recording index and minimal player with timeline and markers |
 | **Heatmaps** *(optional)* | Gated click/scroll concentration, top targets and rage/dead-click signals |
+| **Forms** *(optional)* | Gated per-form starts, submits, errors and per-field engagement, without field values |
 | **Events & Goals** | Recent custom events captured through the facade/API (name, properties, value) |
 | **Conversions** | Recorded goal/purchase events — arrange them into a documented, ordered funnel; no inferred conversions |
 | **Performance** | Latency, response times, bandwidth by path |
