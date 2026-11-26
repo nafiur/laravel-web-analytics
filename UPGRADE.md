@@ -269,6 +269,7 @@ This deletes only `lwa_logs` rows already imported (tracked by the checkpoint). 
 | `WEB_ANALYTICS_OBSERVABILITY_RETENTION_DAYS` | `30` | Error retention window |
 | `WEB_ANALYTICS_WEB_VITALS_ENABLED` | `false` | Enable LCP/CLS/INP report |
 | `WEB_ANALYTICS_HEALTH_ENABLED` | `false` | Enable read-only Installation Health page |
+| `WEB_ANALYTICS_PAGE_REPORTS_ENABLED` | `false` | Enable per-path Page Reports |
 
 Keep secrets in `.env` and run `php artisan optimize:clear` after any config change.
 

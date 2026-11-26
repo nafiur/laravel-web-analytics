@@ -36,6 +36,13 @@
                         <i data-lucide="share-2" class="text-sm"></i> <span class="sidebar-label" data-i18n="trafficSources">Traffic Sources</span>
                     </a>
 
+                    @if(config('laravel-web-analytics.page_reports.enabled'))
+                        <a href="{{ route('lwa_page_reports') }}"
+                           class="sidebar-link {{ $current === 'page-reports' ? 'active' : '' }}">
+                            <i data-lucide="file-chart-column" class="text-sm"></i> <span class="sidebar-label">Page Reports</span>
+                        </a>
+                    @endif
+
                     <a href="{{ route('lwa_pages') }}"
                        class="sidebar-link {{ $current === 'pages' ? 'active' : '' }}">
                         <i data-lucide="file-text" class="text-sm"></i> <span class="sidebar-label" data-i18n="pages">Pages &amp; Screens</span>

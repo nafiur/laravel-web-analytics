@@ -344,6 +344,19 @@ return [
 
     /*
     |--------------------------------------------------------------------------
+    | Page Reports (PostHog-inspired parity)
+    |--------------------------------------------------------------------------
+    |
+    | Per-path visitor, view, bounce, entry and exit reports read from bounded
+    | lwa_logs rows with explicit definitions.
+    |
+    */
+    'page_reports'          => [
+        'enabled' => env('WEB_ANALYTICS_PAGE_REPORTS_ENABLED', false),
+    ],
+
+    /*
+    |--------------------------------------------------------------------------
     | Settings Page
     |--------------------------------------------------------------------------
     |
