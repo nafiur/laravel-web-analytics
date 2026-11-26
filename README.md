@@ -198,6 +198,14 @@ Chunks are uploaded to `POST /web-analytics/api/v1/replay/chunks` with the signe
 
 `/web-analytics/replay` lists indexed sessions behind the configurable gate. **Play** opens `/web-analytics/replay/{session}`, whose deferred player fetches a gated manifest and chunk routes, decompresses chunks in the browser and renders sanitized snapshots in a script-disabled sandbox with a timeline and marker list. Every playback and asset request re-checks the gate and the session's website/tenant scope. This is minimal playback, not full-fidelity DOM patching.
 
+#### How replay works
+
+1. **Recorder** — `@lwaReplay` emits a small signed config object and a deferred, build-free `replay.js`. One recording is kept per browser session key, with masked DOM snapshots plus structural click/scroll/error/web-vital markers. No rrweb or npm build step is involved.
+2. **Signed token** — the server signs website, tenant, user, session key, path and sampling settings with `APP_KEY` (signed, not encrypted, and expiring). The recorder sends this token back with every upload, so ingest needs no session, cookie, CSRF token or secret bearer token.
+3. **Ingest** — every few seconds the recorder uploads a gzipped, size-bounded chunk with a compact marker index to `POST /web-analytics/api/v1/replay/chunks`. Uploads are idempotent per session key + sequence; the server stores the file and updates the index without parsing the replay events.
+4. **Storage** — chunks go to `lwa-replay/sessions/{key}/{seq}.json.gz` on any Laravel disk. `lwa_replay_sessions`, `lwa_replay_chunks` and `lwa_replay_markers` hold the searchable index; `lwa_replay_assets` is reserved for content-hashed stylesheets.
+5. **Viewer** — `/web-analytics/replay` lists recordings; `/web-analytics/replay/{id}` loads a manifest, chunks and markers through routes that re-check the configured gate and the recording's website/tenant scope on **every** request.
+
 ### Heatmaps & interaction signals (v3.4)
 
 `/web-analytics/heatmaps` is gated by the same `viewLwaReplay` gate and aggregates `lwa_replay_markers` into click and scroll views. Filter by recorded path and a 7/30/90-day or all-time window. The recorder captures viewport dimensions with each marker, so clicks are bucketed to a 2.5% grid and scroll depth to 10% bands. A bounded PHP aggregation (20,000 most recent scoped markers) also reports top targets, rage clicks (3 clicks on one target within 1 second) and dead clicks (no different marker within 2 seconds), with every definition and sample-cap note shown on the page. No input text is used — only masked, structural target metadata.

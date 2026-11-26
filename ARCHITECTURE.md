@@ -33,6 +33,8 @@
 - `lwa:replay:prune` enforces the default 30-day replay retention.
 - Two optional sidebar links (Session Replay, Heatmaps) appear only when replay is enabled and the gate allows them.
 
+**Replay flow:** `@lwaReplay` → signed expiring config + deferred recorder → masked snapshot/marker batches → HMAC-authenticated chunk upload → verbatim file on Laravel disk + relational index → gated list/player/manifest/chunk routes that re-check gate and scope on every request. This mirrors the pattern used by `packstub/session-replay` (disk for chunks, tables for the index), but uses a build-free native recorder rather than rrweb/npm assets.
+
 No paid tier, activation server, feature lock or mandatory third-party service exists.
 
 ---
