@@ -60,6 +60,19 @@
         return String(value == null ? '' : value).slice(0, 100);
     }
 
+    function safeText(value, max) {
+        var text = short(value || '').replace(/([?&])(token|password|secret|api_key|apikey|authorization)=[^&\s]+/gi, '$1$2=[redacted]');
+        return text.slice(0, max || 300);
+    }
+
+    function pathOnly(value) {
+        try {
+            return new URL(String(value || ''), window.location.href).pathname;
+        } catch (e) {
+            return String(value || '').split('?')[0].slice(0, 300);
+        }
+    }
+
     function describe(target) {
         if (!target || target.nodeType !== 1) {
             return { tag: 'unknown' };
@@ -248,13 +261,27 @@
         });
     }, true);
 
+    var clickBursts = Object.create(null);
+
     document.addEventListener('click', function (e) {
+        var now = Date.now();
+        var info = describe(e.target);
+        var targetKey = JSON.stringify(info);
         record('click', e.target, {
             x: e.clientX || 0,
             y: e.clientY || 0,
             vw: window.innerWidth || 0,
             vh: window.innerHeight || 0
         });
+
+        var burst = clickBursts[targetKey] || [];
+        burst.push(now);
+        burst = burst.filter(function (time) { return now - time <= 1000; });
+        if (burst.length >= 3) {
+            record('rage_click', e.target, { target: info, clicks_in_window: burst.length });
+            burst = [];
+        }
+        clickBursts[targetKey] = burst;
     }, true);
     document.addEventListener('scroll', function () {
         record('scroll', document.body, {
@@ -264,11 +291,28 @@
         });
     }, true);
     window.addEventListener('error', function (e) {
-        record('error', e.target || null, { message: short(e.message || '') });
+        record('error', e.target || null, { message: safeText(e.message || '', 300) });
     });
     window.addEventListener('unhandledrejection', function () {
         record('error', null, { message: 'unhandledrejection' });
     });
+
+    if (window.console && typeof console.error === 'function') {
+        var originalConsoleError = console.error;
+        console.error = function () {
+            try {
+                var parts = [];
+                for (var i = 0; i < arguments.length && i < 4; i++) {
+                    parts.push(safeText(String(arguments[i]), 300));
+                }
+                record('console', null, { level: 'error', message: parts.join(' ').slice(0, 600) });
+            } catch (e) {
+                // Never break the host application's logging.
+            }
+            return originalConsoleError.apply(console, arguments);
+        };
+    }
+
     if ('PerformanceObserver' in window) {
         try {
             var observer = new PerformanceObserver(function (list) {
@@ -280,6 +324,43 @@
             observer.observe({ type: 'largest-contentful-paint', buffered: true });
         } catch (e) {
             // Web vitals are optional; never block replay for them.
+        }
+
+        var lastShift = 0;
+        try {
+            var shiftObserver = new PerformanceObserver(function (list) {
+                var total = 0;
+                list.getEntries().forEach(function (entry) {
+                    if (!entry.hadRecentInput) {
+                        total += Number(entry.value || 0);
+                    }
+                });
+                if (total > lastShift + 0.01) {
+                    lastShift = total;
+                    record('web_vital', null, { name: 'cls', value: Math.round(total * 1000) / 1000 });
+                }
+            });
+            shiftObserver.observe({ type: 'layout-shift', buffered: true });
+        } catch (e) {
+            // CLS is optional.
+        }
+
+        try {
+            var resourceObserver = new PerformanceObserver(function (list) {
+                list.getEntries().forEach(function (entry) {
+                    var status = Number(entry.responseStatus || 0);
+                    if (status >= 400) {
+                        record('failed_request', null, {
+                            path: pathOnly(entry.name),
+                            status: status,
+                            duration_ms: Math.round(Number(entry.duration || 0))
+                        });
+                    }
+                });
+            });
+            resourceObserver.observe({ type: 'resource', buffered: true });
+        } catch (e) {
+            // responseStatus is not exposed by every browser.
         }
     }
 
@@ -315,6 +396,7 @@
         var from = batch[0].at || 0;
         var markerTypes = [
             'click', 'scroll', 'web_vital', 'error',
+            'console', 'failed_request', 'rage_click',
             'field_focus', 'field_change', 'form_submit', 'form_error'
         ];
         var markers = batch.filter(function (event) {

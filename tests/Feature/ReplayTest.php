@@ -207,6 +207,9 @@ class ReplayTest extends TestCase
                     'at_ms'  => 400,
                     'payload' => ['form' => ['id' => 'checkout'], 'valid' => true],
                 ],
+                ['type' => 'console', 'at_ms' => 450, 'payload' => ['level' => 'error', 'message' => 'boom']],
+                ['type' => 'failed_request', 'at_ms' => 460, 'payload' => ['path' => '/api/checkout', 'status' => 500]],
+                ['type' => 'rage_click', 'at_ms' => 470, 'payload' => ['target' => ['tag' => 'button'], 'clicks_in_window' => 3]],
             ],
         ]);
 
@@ -214,6 +217,9 @@ class ReplayTest extends TestCase
 
         $this->assertTrue(ReplayMarker::where('type', 'field_focus')->exists());
         $this->assertTrue(ReplayMarker::where('type', 'form_submit')->exists());
+        $this->assertTrue(ReplayMarker::where('type', 'console')->exists());
+        $this->assertTrue(ReplayMarker::where('type', 'failed_request')->exists());
+        $this->assertTrue(ReplayMarker::where('type', 'rage_click')->exists());
     }
 
     public function test_prune_command_removes_old_replay_rows_and_files(): void
@@ -258,6 +264,17 @@ class ReplayTest extends TestCase
         $this->get(route('lwa_replay_player_bundle'))->assertStatus(403);
     }
 
+    public function test_recorder_bundle_emits_richer_markers(): void
+    {
+        $this->get(route('lwa_replay_bundle'))
+            ->assertOk()
+            ->assertSee('console.error', false)
+            ->assertSee('failed_request', false)
+            ->assertSee('rage_click', false)
+            ->assertSee('layout-shift', false)
+            ->assertSee('[redacted]', false);
+    }
+
     public function test_manifest_and_chunk_views_are_scoped_and_gated(): void
     {
         $response = $this->postJson(route('lwa_api_replay_chunks'), $this->chunkPayload($this->token()));
@@ -267,7 +284,9 @@ class ReplayTest extends TestCase
         $this->get(route('lwa_replay_show', $session->id))
             ->assertOk()
             ->assertSee('Replay ' . $this->sessionKey)
-            ->assertSee(route('lwa_replay_manifest', $session->id), false);
+            ->assertSee(route('lwa_replay_manifest', $session->id), false)
+            ->assertSee('Inspect DOM')
+            ->assertSee('Speed');
 
         $this->getJson(route('lwa_replay_manifest', $session->id))
             ->assertOk()

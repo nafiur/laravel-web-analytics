@@ -23,10 +23,19 @@
          data-chunk-template="{{ $chunkUrl }}">
         <div class="p-4 flex items-center justify-between gap-3 border-b lwa-border">
             <div class="lwa-card-title">Playback</div>
-            <div class="flex items-center gap-2">
+            <div class="flex flex-wrap items-center gap-2">
                 <button type="button" id="lwaReplayPrev" class="lwa-btn-ghost" aria-label="Previous chunk">Prev</button>
                 <button type="button" id="lwaReplayPlay" class="lwa-btn-primary">Play</button>
                 <button type="button" id="lwaReplayNext" class="lwa-btn-ghost" aria-label="Next chunk">Next</button>
+                <label class="flex items-center gap-1 text-[11px]" style="color: var(--lwa-muted)">
+                    Speed
+                    <select id="lwaReplaySpeed" class="lwa-select" aria-label="Replay speed">
+                        <option value="2400">0.5x</option>
+                        <option value="1200" selected>1x</option>
+                        <option value="600">2x</option>
+                    </select>
+                </label>
+                <button type="button" id="lwaReplayInspect" class="lwa-btn-ghost" aria-expanded="false" aria-controls="lwaReplayDom">Inspect DOM</button>
             </div>
         </div>
         <div class="p-4 border-b lwa-border">
@@ -39,6 +48,7 @@
         <div class="grid md:grid-cols-3">
             <div class="md:col-span-2 p-4 border-r lwa-border">
                 <iframe id="lwaReplayFrame" title="Replay snapshot" sandbox="" class="w-full" style="height: 460px; border: 1px solid var(--lwa-border); border-radius: 6px; background: #fff" srcdoc="&lt;p&gt;Loading snapshot…&lt;/p&gt;"></iframe>
+                <pre id="lwaReplayDom" hidden class="mt-3 p-3 text-[10px] whitespace-pre-wrap break-all lwa-surface-muted" style="max-height: 360px; overflow: auto; border: 1px solid var(--lwa-border); border-radius: 6px"></pre>
             </div>
             <div class="p-4">
                 <div class="lwa-card-title mb-2">Markers</div>

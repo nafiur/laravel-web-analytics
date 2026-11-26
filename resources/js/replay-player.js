@@ -19,6 +19,9 @@
     var timeLabel = document.getElementById('lwaReplayTime');
     var chunkLabel = document.getElementById('lwaReplayChunk');
     var markerList = document.getElementById('lwaReplayMarkers');
+    var speedSelect = document.getElementById('lwaReplaySpeed');
+    var inspectButton = document.getElementById('lwaReplayInspect');
+    var domPanel = document.getElementById('lwaReplayDom');
 
     var manifestUrl = root.dataset.manifestUrl || '';
     var chunkTemplate = root.dataset.chunkTemplate || '';
@@ -26,6 +29,8 @@
     var current = 0;
     var timer = null;
     var cache = {};
+    var currentHtml = '';
+    var playbackMs = 1200;
 
     function seconds(ms) {
         return (Number(ms || 0) / 1000).toFixed(1) + 's';
@@ -107,7 +112,11 @@
                 + '<h3>No snapshot in chunk ' + chunk.sequence + '</h3>'
                 + '<p>' + (payload.events || []).length + ' structured events stored.</p></body></html>';
         }
+        currentHtml = html;
         frame.srcdoc = html;
+        if (domPanel && !domPanel.hidden) {
+            domPanel.textContent = currentHtml;
+        }
         renderMarkers(markers, chunk.to_ms);
         timeLabel.textContent = seconds(chunk.to_ms);
         setStatus('Chunk ' + (current + 1) + ' / ' + chunks.length + ' · ' + seconds(chunk.from_ms) + ' → ' + seconds(chunk.to_ms));
@@ -156,7 +165,7 @@
                 return;
             }
             select(current + 1);
-        }, 1200);
+        }, playbackMs);
     }
 
     fetch(manifestUrl, { credentials: 'same-origin', headers: { Accept: 'application/json' } })
@@ -189,6 +198,26 @@
     prevButton.addEventListener('click', function () { stop(); select(current - 1); });
     nextButton.addEventListener('click', function () { stop(); select(current + 1); });
     seek.addEventListener('input', function () { stop(); select(parseInt(seek.value, 10) || 0); });
+
+    if (speedSelect) {
+        speedSelect.addEventListener('change', function () {
+            playbackMs = Math.max(200, parseInt(speedSelect.value, 10) || 1200);
+            if (timer) {
+                stop();
+                play();
+            }
+        });
+    }
+
+    if (inspectButton && domPanel) {
+        inspectButton.addEventListener('click', function () {
+            domPanel.hidden = !domPanel.hidden;
+            inspectButton.setAttribute('aria-expanded', domPanel.hidden ? 'false' : 'true');
+            if (!domPanel.hidden) {
+                domPanel.textContent = currentHtml || 'No snapshot loaded.';
+            }
+        });
+    }
 
     window.LWA_REPLAY_PLAYER_READY = true;
 })();
