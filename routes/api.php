@@ -5,6 +5,7 @@ use Nafiur\WebAnalytics\Http\Controllers\Api\AnalyticsApiController;
 use Nafiur\WebAnalytics\Http\Controllers\Api\ErrorIngestController;
 use Nafiur\WebAnalytics\Http\Controllers\Api\FlagEvaluateController;
 use Nafiur\WebAnalytics\Http\Controllers\Api\ReplayIngestController;
+use Nafiur\WebAnalytics\Http\Controllers\Api\SurveyResponseController;
 
 Route::get('/summary', [AnalyticsApiController::class, 'summary'])
     ->middleware('lwa.api:read')
@@ -33,6 +34,10 @@ Route::get('/flags/evaluate', [FlagEvaluateController::class, 'evaluate'])
 Route::post('/observability/errors', [ErrorIngestController::class, 'store'])
     ->middleware('lwa.ingest')
     ->name('lwa_api_observability_errors');
+
+Route::post('/surveys/responses', [SurveyResponseController::class, 'store'])
+    ->middleware('lwa.ingest')
+    ->name('lwa_api_surveys_responses');
 
 Route::get('/websites', [AnalyticsApiController::class, 'websites'])
     ->middleware('lwa.api:admin')

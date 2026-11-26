@@ -42,6 +42,7 @@ A modern, fast, and self-hosted Web Traffic & Visitor Analytics Dashboard for La
 - 📝 **Form analytics (v3.4)**: Masked field focus/change, submit and validation-error markers become per-form and per-field funnel counts — without recording a single field value.
 - 🚩 **Feature flags (v3.5, opt-in)**: Website/tenant-scoped boolean and multivariate flags with deterministic rollout, overrides and targeting; evaluations are logged to `lwa_events` with a hashed subject.
 - 🧪 **A/B experiments (v3.5)**: Link a flag to a recorded goal event and read per-variant counts, rates, lift, p-values and honest significance gates from `lwa_events` only.
+- 💬 **Surveys (v3.7, opt-in)**: Build NPS or text feedback surveys and embed a build-free widget; responses are hashed, sanitised and scoped.
 - 🐞 **Error tracking (v3.6, opt-in)**: Project-key error ingest with sanitised, bounded stacks, grouped exceptions behind an application gate and safe summaries mirrored into `lwa_events`.
 - 📈 **Web Vitals (opt-in)**: LCP, CLS and INP p75 values and rating buckets from recorded SDK events, with path filtering and published thresholds.
 - 🩺 **Installation Health (opt-in)**: Read-only Blade view of every `lwa:doctor` check with pass/warn/fail counts and a recommended next step.
@@ -257,6 +258,10 @@ Enable with `WEB_ANALYTICS_PAGE_REPORTS_ENABLED=true` to expose `/web-analytics/
 ### Filter test accounts (opt-in)
 
 Enable with `WEB_ANALYTICS_FILTER_TEST_ACCOUNTS=true` and list internal identities in `WEB_ANALYTICS_TEST_ACCOUNT_KEYS`, `WEB_ANALYTICS_TEST_ACCOUNT_IPS` and `WEB_ANALYTICS_TEST_ACCOUNT_SESSIONS` (comma separated). The **Filter test accounts** subheader toggle adds `exclude_test=1`: request-log dashboards exclude those session ids/IPs, and every `EventStore`-backed report excludes matching visitor hashes (raw key, `u_<id>` and sha256 forms). The identifiers are read only from configuration — a request cannot nominate accounts to hide. Raw `lwa_logs` / `lwa_events` rows are never modified.
+
+### Surveys (v3.7, opt-in)
+
+Enable with `WEB_ANALYTICS_SURVEYS_ENABLED=true`, define `viewLwaSurveys`, and build NPS (0–10) or text feedback surveys at `/web-analytics/surveys`. Embed a running survey in any host layout with `@lwaSurvey('key')`. The widget is build-free, posts only on explicit submit, and honours an optional target path. Subject ids are hashed server-side, free-text answers are sanitised and truncated, and each response is mirrored into `lwa_events` as `survey_response`. Results include NPS score, promoter/passive/detractor counts, score distribution and grouped text answers.
 
 ## 🎨 Design System
 
@@ -846,6 +851,14 @@ return [
     /* Per-path reports from bounded lwa_logs rows. */
     'page_reports' => [
         'enabled' => env('WEB_ANALYTICS_PAGE_REPORTS_ENABLED', false),
+    ],
+
+    /* Feedback & surveys. */
+    'surveys' => [
+        'enabled'  => env('WEB_ANALYTICS_SURVEYS_ENABLED', false),
+        'gate'     => env('WEB_ANALYTICS_SURVEYS_GATE', 'viewLwaSurveys'),
+        'endpoint' => env('WEB_ANALYTICS_SURVEYS_ENDPOINT', '/web-analytics/api/v1/surveys/responses'),
+        'max_answer_chars' => (int) env('WEB_ANALYTICS_SURVEY_MAX_ANSWER', 2000),
     ],
 
     'settings' => [

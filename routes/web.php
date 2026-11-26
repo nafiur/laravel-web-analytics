@@ -18,6 +18,7 @@ use Nafiur\WebAnalytics\Http\Controllers\ReplayPlayerBundleController;
 use Nafiur\WebAnalytics\Http\Controllers\ReplayPlayerController;
 use Nafiur\WebAnalytics\Http\Controllers\RetentionController;
 use Nafiur\WebAnalytics\Http\Controllers\SdkController;
+use Nafiur\WebAnalytics\Http\Controllers\SurveysController;
 use Nafiur\WebAnalytics\Http\Controllers\TrendsController;
 use Nafiur\WebAnalytics\Http\Controllers\VendorAssetController;
 use Nafiur\WebAnalytics\Http\Controllers\WebAnalyticsController;
@@ -25,6 +26,7 @@ use Nafiur\WebAnalytics\Http\Controllers\WebVitalsController;
 
 $replayGate = 'can:' . config('laravel-web-analytics.replay.gate', 'viewLwaReplay');
 $observabilityGate = 'can:' . config('laravel-web-analytics.observability.gate', 'viewLwaObservability');
+$surveysGate = 'can:' . config('laravel-web-analytics.surveys.gate', 'viewLwaSurveys');
 
 Route::get('/', [WebAnalyticsController::class, 'index'])->name('lwa_dashboard');
 Route::get('/index', [WebAnalyticsController::class, 'index'])->name('lwa_index');
@@ -92,6 +94,22 @@ Route::post('/observability/{errorGroup}/status', [ObservabilityController::clas
 Route::get('/web-vitals', [WebVitalsController::class, 'index'])->name('lwa_web_vitals');
 Route::get('/health', [HealthController::class, 'index'])->name('lwa_health');
 Route::get('/page-reports', [PageReportsController::class, 'index'])->name('lwa_page_reports');
+Route::get('/surveys', [SurveysController::class, 'index'])
+    ->middleware($surveysGate)
+    ->name('lwa_surveys');
+Route::get('/surveys/{survey}/edit', [SurveysController::class, 'index'])
+    ->middleware($surveysGate)
+    ->name('lwa_surveys_edit');
+Route::post('/surveys', [SurveysController::class, 'store'])
+    ->middleware($surveysGate)
+    ->name('lwa_surveys_store');
+Route::put('/surveys/{survey}', [SurveysController::class, 'update'])
+    ->middleware($surveysGate)
+    ->name('lwa_surveys_update');
+Route::delete('/surveys/{survey}', [SurveysController::class, 'destroy'])
+    ->middleware($surveysGate)
+    ->name('lwa_surveys_destroy');
+Route::get('/surveys.js', \Nafiur\WebAnalytics\Http\Controllers\SurveyBundleController::class)->name('lwa_survey_bundle');
 Route::post('/settings/prune', [WebAnalyticsController::class, 'prune'])->name('lwa_settings_prune');
 Route::post('/settings/empty', [WebAnalyticsController::class, 'emptyTable'])->name('lwa_settings_empty');
 Route::post('/settings/test-alert', [WebAnalyticsController::class, 'testAlert'])->name('lwa_settings_test_alert');

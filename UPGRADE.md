@@ -275,6 +275,8 @@ This deletes only `lwa_logs` rows already imported (tracked by the checkpoint). 
 | `WEB_ANALYTICS_TEST_ACCOUNT_KEYS` | — | Comma-separated internal user keys |
 | `WEB_ANALYTICS_TEST_ACCOUNT_IPS` | — | Comma-separated internal IPs |
 | `WEB_ANALYTICS_TEST_ACCOUNT_SESSIONS` | — | Comma-separated internal session ids |
+| `WEB_ANALYTICS_SURVEYS_ENABLED` | `false` | Enable survey builder, widget and APIs |
+| `WEB_ANALYTICS_SURVEYS_GATE` | `viewLwaSurveys` | Gate required for survey results |
 
 Keep secrets in `.env` and run `php artisan optimize:clear` after any config change.
 

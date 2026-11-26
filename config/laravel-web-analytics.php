@@ -362,6 +362,22 @@ return [
 
     /*
     |--------------------------------------------------------------------------
+    | Feedback & Surveys (v3.7 foundation)
+    |--------------------------------------------------------------------------
+    |
+    | Surveys are opt-in. Responses are stored in dedicated tables and mirrored
+    | as privacy-safe summary events in lwa_events.
+    |
+    */
+    'surveys'               => [
+        'enabled'  => env('WEB_ANALYTICS_SURVEYS_ENABLED', false),
+        'gate'     => env('WEB_ANALYTICS_SURVEYS_GATE', 'viewLwaSurveys'),
+        'endpoint' => env('WEB_ANALYTICS_SURVEYS_ENDPOINT', '/web-analytics/api/v1/surveys/responses'),
+        'max_answer_chars' => (int) env('WEB_ANALYTICS_SURVEY_MAX_ANSWER', 2000),
+    ],
+
+    /*
+    |--------------------------------------------------------------------------
     | Settings Page
     |--------------------------------------------------------------------------
     |

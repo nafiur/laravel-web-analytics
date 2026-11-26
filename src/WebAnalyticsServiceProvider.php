@@ -18,6 +18,8 @@ use Nafiur\WebAnalytics\Services\ErrorTrackingService;
 use Nafiur\WebAnalytics\Services\FeatureFlagService;
 use Nafiur\WebAnalytics\Services\ReplayEmbed;
 use Nafiur\WebAnalytics\Services\ReplaySigner;
+use Nafiur\WebAnalytics\Services\SurveyEmbed;
+use Nafiur\WebAnalytics\Services\SurveyService;
 use Nafiur\WebAnalytics\Services\TestAccountFilter;
 
 class WebAnalyticsServiceProvider extends ServiceProvider
@@ -40,6 +42,8 @@ class WebAnalyticsServiceProvider extends ServiceProvider
         $this->app->singleton(FeatureFlagService::class);
         $this->app->singleton(ErrorTrackingService::class);
         $this->app->singleton(TestAccountFilter::class);
+        $this->app->singleton(SurveyService::class);
+        $this->app->singleton(SurveyEmbed::class);
     }
 
     /**
@@ -99,6 +103,9 @@ class WebAnalyticsServiceProvider extends ServiceProvider
         });
         Blade::directive('featureVariant', function ($expression) {
             return '<?php echo e(app(\\Nafiur\\WebAnalytics\\Services\\FeatureFlagService::class)->evaluate(' . $expression . ')[\'variant\'] ?? \'\'); ?>';
+        });
+        Blade::directive('lwaSurvey', function ($expression) {
+            return '<?php echo app(\\Nafiur\\WebAnalytics\\Services\\SurveyEmbed::class)->render(' . $expression . '); ?>';
         });
 
         // Register Routes

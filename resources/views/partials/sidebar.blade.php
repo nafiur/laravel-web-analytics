@@ -105,6 +105,13 @@
                         </a>
                     @endif
 
+                    @if(config('laravel-web-analytics.surveys.enabled') && app(\Illuminate\Contracts\Auth\Access\Gate::class)->allows(config('laravel-web-analytics.surveys.gate')))
+                        <a href="{{ route('lwa_surveys') }}"
+                           class="sidebar-link {{ $current === 'surveys' ? 'active' : '' }}">
+                            <i data-lucide="message-square-more" class="text-sm"></i> <span class="sidebar-label">Surveys</span>
+                        </a>
+                    @endif
+
                     @if(config('laravel-web-analytics.flags.enabled'))
                         <a href="{{ route('lwa_flags') }}"
                            class="sidebar-link {{ $current === 'flags' ? 'active' : '' }}">
