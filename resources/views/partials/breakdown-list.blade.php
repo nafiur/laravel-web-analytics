@@ -21,6 +21,12 @@
                         @include('web-analytics::partials.flag', ['country' => $item['name'], 'emoji' => $item['flag']])
                     @endif
                     <span class="truncate">{{ $item['name'] }}</span>
+                    @if(($key ?? '') === 'top_paths' && config('laravel-web-analytics.replay.enabled'))
+                        <a href="{{ route('lwa_replay', ['path' => $item['name']]) }}"
+                           class="ml-2 shrink-0 text-[10px]"
+                           style="color: var(--lwa-accent)"
+                           title="View recordings for this path">View recordings</a>
+                    @endif
                 </span>
                 <div class="lwa-list-metric">
                     <div class="lwa-progress" title="{{ number_format((float) ($item['percentage'] ?? 0), 1) }}%">

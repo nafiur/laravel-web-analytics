@@ -6,6 +6,13 @@
         <p class="lwa-subtitle mt-1">Recorded sessions are stored verbatim on your configured disk. Index rows are scoped to the active website and tenant; chunks are never parsed or enriched on the server.</p>
     </div>
 
+    @if($path !== null)
+        <div class="lwa-card p-3 flex items-center justify-between gap-3 text-xs">
+            <span>Filtered to path <code class="font-mono">{{ $path }}</code></span>
+            <a href="{{ route('lwa_replay') }}" class="lwa-btn-ghost">Clear filter</a>
+        </div>
+    @endif
+
     <div class="lwa-card p-4">
         <div class="lwa-card-title">Privacy defaults</div>
         <p class="lwa-subtitle mt-1">

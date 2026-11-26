@@ -101,7 +101,12 @@
                                 <td>{{ number_format($item['visitors']) }}</td>
                                 <td>{{ number_format($item['views']) }}</td>
                                 <td>{{ number_format($item['bounce_rate'], 2) }}%</td>
-                                <td><a href="{{ route('lwa_page_reports', ['path' => $item['path'], 'range' => $range, 'compare' => request()->boolean('compare') ? 1 : 0]) }}" class="lwa-btn-ghost">Open</a></td>
+                                <td class="flex gap-2">
+                                    <a href="{{ route('lwa_page_reports', ['path' => $item['path'], 'range' => $range, 'compare' => request()->boolean('compare') ? 1 : 0]) }}" class="lwa-btn-ghost">Open</a>
+                                    @if(config('laravel-web-analytics.replay.enabled'))
+                                        <a href="{{ route('lwa_replay', ['path' => $item['path']]) }}" class="lwa-btn-ghost">Recordings</a>
+                                    @endif
+                                </td>
                             </tr>
                         @endforeach
                     </tbody>

@@ -250,7 +250,7 @@ The **Compare prior** control in the subheader adds `compare=1` to the current d
 
 ### Page reports (opt-in)
 
-Enable with `WEB_ANALYTICS_PAGE_REPORTS_ENABLED=true` to expose `/web-analytics/page-reports`. It reads at most 20,000 recent `lwa_logs` rows in the selected window and shows a top-path table (visitors, views, bounce rate). Opening a path adds entry/exit counts and rates, next/previous paths within the same session, and optional previous-period deltas using the same comparison rules. Bounce means a session that started at that path and had exactly one request in the window; every definition and the sample cap are printed on the page.
+Enable with `WEB_ANALYTICS_PAGE_REPORTS_ENABLED=true` to expose `/web-analytics/page-reports`. It reads at most 20,000 recent `lwa_logs` rows in the selected window and shows a top-path table (visitors, views, bounce rate). Opening a path adds entry/exit counts and rates, next/previous paths within the same session, and optional previous-period deltas using the same comparison rules. Bounce means a session that started at that path and had exactly one request in the window; every definition and the sample cap are printed on the page. When replay is enabled, top-path rows and Page Reports also offer **View recordings**, opening the replay list pre-filtered to that path.
 
 ## 🎨 Design System
 

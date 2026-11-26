@@ -77,6 +77,17 @@ class PageReportsTest extends TestCase
         $this->assertSame('points', $result['comparison']['bounce_rate']['unit']);
     }
 
+    public function test_page_reports_link_to_filtered_recordings_when_replay_is_enabled(): void
+    {
+        config()->set('laravel-web-analytics.replay.enabled', true);
+        $this->seedRows();
+
+        $this->get(route('lwa_page_reports'))
+            ->assertOk()
+            ->assertSee(route('lwa_replay', ['path' => '/landing']), false)
+            ->assertSee('Recordings');
+    }
+
     public function test_page_reports_page_filters_and_hides_when_disabled(): void
     {
         $this->seedRows();

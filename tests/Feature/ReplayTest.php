@@ -299,4 +299,35 @@ class ReplayTest extends TestCase
         $this->getJson(route('lwa_replay_manifest', $session->id))->assertStatus(403);
         $this->get(route('lwa_replay_chunk', [$session->id, 1]))->assertStatus(403);
     }
+
+    public function test_replay_index_can_be_filtered_by_path(): void
+    {
+        ReplaySession::create([
+            'session_key' => 'replay_path_checkout', 'website_id' => $this->websiteId,
+            'url' => 'checkout', 'started_at' => now(), 'duration_ms' => 100, 'event_count' => 1, 'bytes' => 0, 'sample_rate' => 1,
+        ]);
+        ReplaySession::create([
+            'session_key' => 'replay_path_pricing', 'website_id' => $this->websiteId,
+            'url' => 'pricing', 'started_at' => now(), 'duration_ms' => 100, 'event_count' => 1, 'bytes' => 0, 'sample_rate' => 1,
+        ]);
+
+        $this->get(route('lwa_replay', ['path' => 'checkout']))
+            ->assertOk()
+            ->assertSee('Filtered to path')
+            ->assertSee('replay_path_checkout')
+            ->assertDontSee('replay_path_pricing');
+
+        $this->get(route('lwa_replay'))->assertOk()->assertSee('replay_path_pricing');
+    }
+
+    public function test_breakdown_rows_link_to_filtered_recordings_when_replay_is_enabled(): void
+    {
+        $html = view('web-analytics::partials.breakdown-list', [
+            'key'   => 'top_paths',
+            'items' => [['name' => '/checkout', 'count' => 3, 'percentage' => 100]],
+        ])->render();
+
+        $this->assertStringContainsString(route('lwa_replay', ['path' => '/checkout']), $html);
+        $this->assertStringContainsString('View recordings', $html);
+    }
 }
