@@ -5,6 +5,8 @@ namespace Nafiur\WebAnalytics\Http\Controllers;
 use Illuminate\Http\Request;
 use Illuminate\Routing\Controller;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Gate;
+use Illuminate\Support\Facades\Schema;
 use Nafiur\WebAnalytics\Models\Analytics\AnalyticEvent;
 use Nafiur\WebAnalytics\Models\Analytics\Website;
 use Nafiur\WebAnalytics\Models\LwaLogs;
@@ -13,6 +15,7 @@ use Nafiur\WebAnalytics\Services\AnalyticsWindow;
 use Nafiur\WebAnalytics\Services\ComparisonService;
 use Nafiur\WebAnalytics\Services\CountryFlag;
 use Nafiur\WebAnalytics\Services\DatabaseReadiness;
+use Nafiur\WebAnalytics\Services\ErrorTrackingService;
 use Nafiur\WebAnalytics\Services\DatabaseTrafficAnalytics;
 use Nafiur\WebAnalytics\Services\GeoIpService;
 use Nafiur\WebAnalytics\Services\PruneService;
@@ -25,7 +28,7 @@ class WebAnalyticsController extends Controller
     protected DatabaseTrafficAnalytics $dbAnalytics;
     protected WebAnalyticsLogParser $logParser;
 
-    public function __construct()
+    public function __construct(protected ErrorTrackingService $errors)
     {
         $this->dbAnalytics = new DatabaseTrafficAnalytics();
         $this->logParser = new WebAnalyticsLogParser();
@@ -196,6 +199,13 @@ class WebAnalyticsController extends Controller
         $source = $request->input('source', 'database'); // 'database' or 'file'
         $tenantId = $this->resolveDashboardTenant($request);
 
+        $errorGroups = null;
+        if (config('laravel-web-analytics.observability.enabled', false)
+            && Schema::hasTable('lwa_error_groups')
+            && Gate::allows((string) config('laravel-web-analytics.observability.gate', 'viewLwaObservability'))) {
+            $errorGroups = $this->errors->summarize($activeWebsiteId, $tenantId, 'open');
+        }
+
         if ($source === 'file') {
             $analytics = $this->logParser->getDashboardData($timeRange, $customStart, $customEnd);
             $logPath = $this->logParser->getLogPath();
@@ -279,6 +289,7 @@ class WebAnalyticsController extends Controller
         return view('web-analytics::pages.' . $section, compact(
             'analytics',
             'comparison',
+            'errorGroups',
             'timeRange',
             'customStart',
             'customEnd',

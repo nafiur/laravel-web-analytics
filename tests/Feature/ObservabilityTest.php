@@ -126,6 +126,20 @@ class ObservabilityTest extends TestCase
         $this->postError($this->report(['event_id' => 'err_qa_3']))->assertNotFound();
     }
 
+    public function test_overview_shows_open_error_groups_when_observability_is_allowed(): void
+    {
+        $this->postError($this->report())->assertStatus(202);
+
+        $this->get(route('lwa_dashboard'))
+            ->assertOk()
+            ->assertSee('Error tracking')
+            ->assertSee('RuntimeException')
+            ->assertSee('Open observability');
+
+        Gate::define('viewLwaObservability', fn ($user = null) => false);
+        $this->get(route('lwa_dashboard'))->assertDontSee('Error tracking');
+    }
+
     public function test_observability_is_scoped_to_website_and_tenant(): void
     {
         $this->postError($this->report())->assertStatus(202);

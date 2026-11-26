@@ -59,6 +59,30 @@
                         @endforeach
                     </div>
 
+                    @if($errorGroups !== null)
+                        <div class="lwa-card p-4">
+                            <div class="flex items-center justify-between gap-3 mb-2">
+                                <div class="lwa-card-title">Error tracking</div>
+                                @can(config('laravel-web-analytics.observability.gate', 'viewLwaObservability'))
+                                    <a href="{{ route('lwa_observability') }}" class="lwa-btn-ghost">Open observability</a>
+                                @endcan
+                            </div>
+                            @if(empty($errorGroups))
+                                <div class="lwa-subtitle">No open exception groups recorded.</div>
+                            @else
+                                <div class="space-y-1">
+                                    @foreach(array_slice($errorGroups, 0, 5) as $group)
+                                        <div class="flex items-center justify-between gap-3 text-xs border-b lwa-border py-1">
+                                            <span class="truncate font-mono">{{ $group['type'] }}</span>
+                                            <span class="truncate" style="color: var(--lwa-muted)">{{ $group['message'] }}</span>
+                                            <span>{{ number_format($group['occurrences']) }}×</span>
+                                        </div>
+                                    @endforeach
+                                </div>
+                            @endif
+                        </div>
+                    @endif
+
                     <!-- Reports pinned from card menus (stored in localStorage) -->
                     <div id="lwaPinnedReports" class="space-y-3 hidden">
                         <div class="lwa-section-label">Pinned reports</div>
