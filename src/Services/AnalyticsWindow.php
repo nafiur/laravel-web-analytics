@@ -55,4 +55,39 @@ final class AnalyticsWindow
 
         return [$from->toIso8601String(), $now->toIso8601String(), $range];
     }
+
+    /**
+     * Equal-length window immediately before the resolved one. Used by the
+     * compare-to-previous-period UI; `all` has no meaningful prior window.
+     *
+     * @param array<string, mixed> $filters
+     * @return array{0: ?string, 1: ?string}
+     */
+    public static function previous(array $filters): array
+    {
+        [$from, $to, $range] = self::resolve($filters);
+        if ($range === 'all' || $from === null || $to === null) {
+            return [null, null];
+        }
+
+        $tz = (string) config('app.timezone', 'UTC');
+        $start = CarbonImmutable::parse($from, $tz);
+        $end = CarbonImmutable::parse($to, $tz);
+
+        if ($range === 'custom') {
+            $days = max(1, (int) $start->startOfDay()->diffInDays($end->startOfDay()) + 1);
+
+            return [
+                $start->subDays($days)->toIso8601String(),
+                $start->toIso8601String(),
+            ];
+        }
+
+        $length = max(1, (int) $start->diffInSeconds($end));
+
+        return [
+            $start->subSeconds($length)->toIso8601String(),
+            $start->toIso8601String(),
+        ];
+    }
 }

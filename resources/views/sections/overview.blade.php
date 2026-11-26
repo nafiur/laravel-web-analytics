@@ -22,16 +22,16 @@
                     <div class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 2xl:grid-cols-7 gap-3">
                         @php
                             $kpis = [
-                                ['Total Visitors', 'total_visitors_fmt', 'Distinct IP addresses in the selected range', 'users-round'],
-                                ['Unique Visitors', 'unique_visitors_fmt', 'Distinct visitor sessions (session ID or IP fallback)', 'user-check'],
-                                ['Pageviews', 'pageviews_fmt', 'GET requests to non-API paths', 'eye'],
-                                ['Sessions', 'sessions_fmt', 'Distinct visitor session identifiers', 'layers'],
-                                ['Bounce Rate', 'bounce_rate', 'Sessions with only one recorded request', 'corner-down-right'],
-                                ['Avg Engagement', 'avg_engagement_fmt', 'Average time between first and last request per session', 'timer'],
-                                ['Live Now', 'live_visitors_fmt', 'Active visitors in the configured live window', 'radio'],
+                                ['Total Visitors', 'total_visitors_fmt', 'total_visitors', 'Distinct IP addresses in the selected range', 'users-round'],
+                                ['Unique Visitors', 'unique_visitors_fmt', 'unique_visitors', 'Distinct visitor sessions (session ID or IP fallback)', 'user-check'],
+                                ['Pageviews', 'pageviews_fmt', 'pageviews', 'GET requests to non-API paths', 'eye'],
+                                ['Sessions', 'sessions_fmt', 'sessions', 'Distinct visitor session identifiers', 'layers'],
+                                ['Bounce Rate', 'bounce_rate', 'bounce_rate', 'Sessions with only one recorded request', 'corner-down-right'],
+                                ['Avg Engagement', 'avg_engagement_fmt', 'avg_engagement_time', 'Average time between first and last request per session', 'timer'],
+                                ['Live Now', 'live_visitors_fmt', 'live_visitors', 'Active visitors in the configured live window', 'radio'],
                             ];
                         @endphp
-                        @foreach($kpis as [$label, $key, $definition, $icon])
+                        @foreach($kpis as [$label, $key, $rawKey, $definition, $icon])
                             <div class="lwa-card lwa-kpi" title="{{ $definition }}">
                                 <div class="lwa-kpi-top">
                                     <span class="lwa-kpi-label">{{ $label }}</span>
@@ -42,6 +42,19 @@
                                 <div class="lwa-kpi-value">
                                     {{ $analytics['summary'][$key] ?? 0 }}@if(in_array($key, ['bounce_rate'], true))%@endif
                                 </div>
+                                @if(!empty($comparison[$rawKey]) && $comparison[$rawKey]['available'])
+                                    @php
+                                        $delta = $comparison[$rawKey];
+                                    @endphp
+                                    <div class="mt-1 text-[10px]" title="{{ $delta['definition'] }}" style="color: {{ $delta['direction'] === 'up' ? 'var(--lwa-danger)' : ($delta['direction'] === 'down' ? 'var(--lwa-success)' : 'var(--lwa-muted)') }}">
+                                        @if($delta['is_new'])
+                                            new vs prior
+                                        @else
+                                            {{ $delta['direction'] === 'up' ? '↑' : ($delta['direction'] === 'down' ? '↓' : '→') }}
+                                            {{ number_format(abs((float) $delta['change']), 2) }}{{ $delta['unit'] === 'points' ? ' pp' : '%' }} vs prior
+                                        @endif
+                                    </div>
+                                @endif
                             </div>
                         @endforeach
                     </div>

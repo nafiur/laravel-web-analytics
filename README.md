@@ -44,6 +44,7 @@ A modern, fast, and self-hosted Web Traffic & Visitor Analytics Dashboard for La
 - 🐞 **Error tracking (v3.6, opt-in)**: Project-key error ingest with sanitised, bounded stacks, grouped exceptions behind an application gate and safe summaries mirrored into `lwa_events`.
 - 📈 **Web Vitals (opt-in)**: LCP, CLS and INP p75 values and rating buckets from recorded SDK events, with path filtering and published thresholds.
 - 🩺 **Installation Health (opt-in)**: Read-only Blade view of every `lwa:doctor` check with pass/warn/fail counts and a recommended next step.
+- 🆚 **Compare to prior period**: Toggle KPI deltas against the immediately preceding equal-length window, with explicit percent / percentage-point rules.
 
 ---
 
@@ -241,6 +242,10 @@ Enable with `WEB_ANALYTICS_WEB_VITALS_ENABLED=true` and turn on the SDK's `web_v
 ### Installation Health (opt-in)
 
 Enable with `WEB_ANALYTICS_HEALTH_ENABLED=true` to expose `/web-analytics/health`, a read-only view of the same isolated checks used by `php artisan lwa:doctor`: PHP/Laravel versions, extensions, database connection, legacy and advanced tables, config cache, schema flag, collector/queue mode, cache and storage drivers, published views and upgrade checkpoint state. The page shows pass/warn/fail counts and the recommended next step; it never changes configuration or data. Use the CLI with `--json` for CI and `--repair` for missing advanced tables.
+
+### Compare to previous period
+
+The **Compare prior** control in the subheader adds `compare=1` to the current dashboard URL. KPI cards then show deltas against the immediately preceding window of equal length (including custom ranges). Count metrics use relative percent change; rate metrics such as Bounce Rate use percentage points; a zero baseline with new activity is labelled `new vs prior` instead of producing an infinite percentage. The same `comparison` object is returned by `/web-analytics/data`, so polling and manual refresh keep the deltas. File-log data source keeps its own semantics and does not compute comparison deltas.
 
 ## 🎨 Design System
 

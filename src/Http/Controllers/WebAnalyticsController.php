@@ -9,6 +9,8 @@ use Nafiur\WebAnalytics\Models\Analytics\AnalyticEvent;
 use Nafiur\WebAnalytics\Models\Analytics\Website;
 use Nafiur\WebAnalytics\Models\LwaLogs;
 use Nafiur\WebAnalytics\Services\AlertService;
+use Nafiur\WebAnalytics\Services\AnalyticsWindow;
+use Nafiur\WebAnalytics\Services\ComparisonService;
 use Nafiur\WebAnalytics\Services\CountryFlag;
 use Nafiur\WebAnalytics\Services\DatabaseReadiness;
 use Nafiur\WebAnalytics\Services\DatabaseTrafficAnalytics;
@@ -69,6 +71,33 @@ class WebAnalyticsController extends Controller
         }
 
         return $trusted;
+    }
+
+    /**
+     * Compare the current summary with the immediately preceding window of
+     * equal length. Only the database source supports this; file logs keep
+     * their own time semantics and are left alone.
+     *
+     * @param array<string, mixed> $analytics
+     * @return array<string, array<string, mixed>>|null
+     */
+    protected function comparison(Request $request, array $analytics, string $source, ?string $tenantId): ?array
+    {
+        if (! $request->boolean('compare') || $source !== 'database') {
+            return null;
+        }
+
+        [$from, $to] = AnalyticsWindow::previous($request->only(['range', 'start_date', 'end_date']));
+        if ($from === null || $to === null) {
+            return null;
+        }
+
+        $previous = $this->dbAnalytics->getDashboardData('custom', $from, $to, $tenantId, true);
+
+        return app(ComparisonService::class)->deltas(
+            $analytics['summary'] ?? [],
+            $previous['summary'] ?? [],
+        );
     }
 
     /**
@@ -231,6 +260,8 @@ class WebAnalyticsController extends Controller
             $logRows = $logQuery->latest('id')->paginate(25)->withQueryString();
         }
 
+        $comparison = $this->comparison($request, $analytics, $source, $tenantId);
+
         $tableStats = [
             'rows'      => $totalCount ?? 0,
             'oldest'    => LwaLogs::forTenant($tenantId)->min('created_at'),
@@ -247,6 +278,7 @@ class WebAnalyticsController extends Controller
 
         return view('web-analytics::pages.' . $section, compact(
             'analytics',
+            'comparison',
             'timeRange',
             'customStart',
             'customEnd',
@@ -298,8 +330,9 @@ class WebAnalyticsController extends Controller
         }
 
         return response()->json([
-            'success'   => true,
-            'analytics' => $analytics,
+            'success'    => true,
+            'analytics'  => $analytics,
+            'comparison' => $this->comparison($request, $analytics, $source, $tenantId),
         ]);
     }
 

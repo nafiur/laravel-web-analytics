@@ -27,6 +27,16 @@
                                 file</option>
                         </select>
 
+                        @php
+                            $compareQuery = request()->query();
+                            $compareQuery['compare'] = request()->boolean('compare') ? '0' : '1';
+                        @endphp
+                        <a href="{{ request()->url() . '?' . http_build_query($compareQuery) }}"
+                           class="lwa-btn {{ request()->boolean('compare') ? 'font-semibold' : '' }}"
+                           title="Compare KPIs with the immediately preceding window of equal length">
+                            <i data-lucide="git-compare-arrows" class="text-sm"></i> Compare prior
+                        </a>
+
                         <!-- Add Filter Button -->
                         <button type="button"
                             onclick="document.getElementById('quickFilterInput').classList.toggle('hidden'); document.getElementById('quickFilterInput').focus();"
