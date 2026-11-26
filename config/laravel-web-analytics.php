@@ -318,6 +318,8 @@ return [
         'enabled'        => env('WEB_ANALYTICS_OBSERVABILITY_ENABLED', false),
         'gate'           => env('WEB_ANALYTICS_OBSERVABILITY_GATE', 'viewLwaObservability'),
         'endpoint'       => env('WEB_ANALYTICS_OBSERVABILITY_ENDPOINT', '/web-analytics/api/v1/observability/errors'),
+        'spans_endpoint' => env('WEB_ANALYTICS_OBSERVABILITY_SPANS_ENDPOINT', '/web-analytics/api/v1/observability/spans'),
+        'max_spans'      => (int) env('WEB_ANALYTICS_OBSERVABILITY_MAX_SPANS', 100),
         'max_stack_bytes' => (int) env('WEB_ANALYTICS_OBSERVABILITY_MAX_STACK', 20000),
         'retention_days' => (int) env('WEB_ANALYTICS_OBSERVABILITY_RETENTION_DAYS', 30),
     ],

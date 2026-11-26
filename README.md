@@ -237,7 +237,7 @@ Gate host markup with `@feature('key') ... @endfeature` or print the assigned va
 
 ### Error tracking (v3.6, opt-in)
 
-Enable with `WEB_ANALYTICS_OBSERVABILITY_ENABLED=true`, define the `viewLwaObservability` gate in your app, and post reports to `POST /web-analytics/api/v1/observability/errors` using the website's public project key (or a write bearer token). Messages, stack traces and context are sanitised and size-bounded; query strings and sensitive `key=value` pairs are stripped before storage. Errors are fingerprinted into website/tenant-scoped groups, de-duplicated by `event_id`, and reopened automatically if a resolved group recurs. A safe summary is also written to `lwa_events` as `error`, so exposure is analyzable with Trends. `/web-analytics/observability` lists groups and opens stack-bearing detail views behind the gate, with open/resolved/ignored status changes. When enabled and the gate allows it, Overview also shows a compact **Error tracking** card with the top five open groups and occurrence counts — stack traces stay on the gated pages. Performance spans and distributed tracing remain open.
+Enable with `WEB_ANALYTICS_OBSERVABILITY_ENABLED=true`, define the `viewLwaObservability` gate in your app, and post reports to `POST /web-analytics/api/v1/observability/errors` using the website's public project key (or a write bearer token). Messages, stack traces and context are sanitised and size-bounded; query strings and sensitive `key=value` pairs are stripped before storage. Errors are fingerprinted into website/tenant-scoped groups, de-duplicated by `event_id`, and reopened automatically if a resolved group recurs. A safe summary is also written to `lwa_events` as `error`, so exposure is analyzable with Trends. `/web-analytics/observability` lists groups and opens stack-bearing detail views behind the gate, with open/resolved/ignored status changes. When enabled and the gate allows it, Overview also shows a compact **Error tracking** card with the top five open groups and occurrence counts — stack traces stay on the gated pages. The gated `/web-analytics/performance-traces` page reads `lwa_performance_spans` for span counts, trace counts, error rate, slow operations and per-trace timing tables.
 
 ### Web Vitals (opt-in)
 
@@ -834,6 +834,8 @@ return [
         'enabled'        => env('WEB_ANALYTICS_OBSERVABILITY_ENABLED', false),
         'gate'           => env('WEB_ANALYTICS_OBSERVABILITY_GATE', 'viewLwaObservability'),
         'endpoint'       => env('WEB_ANALYTICS_OBSERVABILITY_ENDPOINT', '/web-analytics/api/v1/observability/errors'),
+        'spans_endpoint' => env('WEB_ANALYTICS_OBSERVABILITY_SPANS_ENDPOINT', '/web-analytics/api/v1/observability/spans'),
+        'max_spans'      => (int) env('WEB_ANALYTICS_OBSERVABILITY_MAX_SPANS', 100),
         'max_stack_bytes' => (int) env('WEB_ANALYTICS_OBSERVABILITY_MAX_STACK', 20000),
         'retention_days' => (int) env('WEB_ANALYTICS_OBSERVABILITY_RETENTION_DAYS', 30),
     ],

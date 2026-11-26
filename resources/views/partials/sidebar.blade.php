@@ -152,6 +152,10 @@
                            class="sidebar-link {{ $current === 'observability' ? 'active' : '' }}">
                             <i data-lucide="bug" class="text-sm"></i> <span class="sidebar-label">Observability</span>
                         </a>
+                        <a href="{{ route('lwa_performance_traces') }}"
+                           class="sidebar-link {{ $current === 'performance-traces' ? 'active' : '' }}">
+                            <i data-lucide="activity" class="text-sm"></i> <span class="sidebar-label">Traces</span>
+                        </a>
                     @endif
 
                     <a href="{{ route('lwa_errors') }}"

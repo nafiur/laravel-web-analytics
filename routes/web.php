@@ -12,6 +12,7 @@ use Nafiur\WebAnalytics\Http\Controllers\HeatmapsController;
 use Nafiur\WebAnalytics\Http\Controllers\ObservabilityController;
 use Nafiur\WebAnalytics\Http\Controllers\PageReportsController;
 use Nafiur\WebAnalytics\Http\Controllers\PathsController;
+use Nafiur\WebAnalytics\Http\Controllers\PerformanceController;
 use Nafiur\WebAnalytics\Http\Controllers\ReplayBundleController;
 use Nafiur\WebAnalytics\Http\Controllers\ReplayController;
 use Nafiur\WebAnalytics\Http\Controllers\ReplayPlayerBundleController;
@@ -91,6 +92,9 @@ Route::get('/observability/{errorGroup}', [ObservabilityController::class, 'show
 Route::post('/observability/{errorGroup}/status', [ObservabilityController::class, 'status'])
     ->middleware($observabilityGate)
     ->name('lwa_observability_status');
+Route::get('/performance-traces', [PerformanceController::class, 'index'])
+    ->middleware($observabilityGate)
+    ->name('lwa_performance_traces');
 Route::get('/web-vitals', [WebVitalsController::class, 'index'])->name('lwa_web_vitals');
 Route::get('/health', [HealthController::class, 'index'])->name('lwa_health');
 Route::get('/page-reports', [PageReportsController::class, 'index'])->name('lwa_page_reports');

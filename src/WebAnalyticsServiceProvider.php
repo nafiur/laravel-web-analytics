@@ -15,6 +15,7 @@ use Nafiur\WebAnalytics\Services\AnalyticsCollector;
 use Nafiur\WebAnalytics\Services\EloquentEventStore;
 use Nafiur\WebAnalytics\Services\EloquentStorageDriver;
 use Nafiur\WebAnalytics\Services\ErrorTrackingService;
+use Nafiur\WebAnalytics\Services\PerformanceService;
 use Nafiur\WebAnalytics\Services\FeatureFlagService;
 use Nafiur\WebAnalytics\Services\ReplayEmbed;
 use Nafiur\WebAnalytics\Services\ReplaySigner;
@@ -41,6 +42,7 @@ class WebAnalyticsServiceProvider extends ServiceProvider
         $this->app->singleton(ReplayEmbed::class);
         $this->app->singleton(FeatureFlagService::class);
         $this->app->singleton(ErrorTrackingService::class);
+        $this->app->singleton(PerformanceService::class);
         $this->app->singleton(TestAccountFilter::class);
         $this->app->singleton(SurveyService::class);
         $this->app->singleton(SurveyEmbed::class);
