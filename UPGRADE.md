@@ -270,6 +270,10 @@ This deletes only `lwa_logs` rows already imported (tracked by the checkpoint). 
 | `WEB_ANALYTICS_WEB_VITALS_ENABLED` | `false` | Enable LCP/CLS/INP report |
 | `WEB_ANALYTICS_HEALTH_ENABLED` | `false` | Enable read-only Installation Health page |
 | `WEB_ANALYTICS_PAGE_REPORTS_ENABLED` | `false` | Enable per-path Page Reports |
+| `WEB_ANALYTICS_FILTER_TEST_ACCOUNTS` | `false` | Enable Filter test accounts toggle |
+| `WEB_ANALYTICS_TEST_ACCOUNT_KEYS` | — | Comma-separated internal user keys |
+| `WEB_ANALYTICS_TEST_ACCOUNT_IPS` | — | Comma-separated internal IPs |
+| `WEB_ANALYTICS_TEST_ACCOUNT_SESSIONS` | — | Comma-separated internal session ids |
 
 Keep secrets in `.env` and run `php artisan optimize:clear` after any config change.
 

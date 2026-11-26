@@ -129,6 +129,10 @@ return [
             'email', 'phone', 'card', 'card_number', 'cvv', 'ssn',
         ],
         'mask_referrer'          => env('WEB_ANALYTICS_MASK_REFERRER', true),
+        'filter_test_accounts'   => env('WEB_ANALYTICS_FILTER_TEST_ACCOUNTS', false),
+        'test_account_keys'      => array_values(array_filter(array_map('trim', explode(',', (string) env('WEB_ANALYTICS_TEST_ACCOUNT_KEYS', ''))))),
+        'test_account_ips'       => array_values(array_filter(array_map('trim', explode(',', (string) env('WEB_ANALYTICS_TEST_ACCOUNT_IPS', ''))))),
+        'test_account_sessions'  => array_values(array_filter(array_map('trim', explode(',', (string) env('WEB_ANALYTICS_TEST_ACCOUNT_SESSIONS', ''))))),
     ],
 
     /*

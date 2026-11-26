@@ -52,6 +52,22 @@ class EloquentEventStore implements EventStore
         $builder = AnalyticEvent::query()
             ->where('website_id', $query->websiteId);
 
+        if (TestAccountFilter::activeFromRequest()) {
+            $hashes = app(TestAccountFilter::class)->visitorHashes();
+            $visitorIds = $hashes === []
+                ? []
+                : Visitor::withoutGlobalScope(WebsiteScope::class)
+                    ->where('website_id', $query->websiteId)
+                    ->whereIn('visitor_hash', $hashes)
+                    ->pluck('id')
+                    ->all();
+            if ($visitorIds === []) {
+                $builder->whereRaw('1 = 0');
+            } else {
+                $builder->whereIn('visitor_id', $visitorIds);
+            }
+        }
+
         $names = array_values(array_filter($query->names ?? [], fn ($value): bool => is_string($value) && $value !== ''));
         if ($names !== []) {
             $builder->whereIn('name', $names);

@@ -37,6 +37,18 @@
                             <i data-lucide="git-compare-arrows" class="text-sm"></i> Compare prior
                         </a>
 
+                        @if(app(\Nafiur\WebAnalytics\Services\TestAccountFilter::class)->enabled())
+                            @php
+                                $testQuery = request()->query();
+                                $testQuery['exclude_test'] = request()->boolean('exclude_test') ? '0' : '1';
+                            @endphp
+                            <a href="{{ request()->url() . '?' . http_build_query($testQuery) }}"
+                               class="lwa-btn {{ request()->boolean('exclude_test') ? 'font-semibold' : '' }}"
+                               title="Exclude configured internal and test accounts from recorded reports">
+                                <i data-lucide="user-x" class="text-sm"></i> Filter test accounts
+                            </a>
+                        @endif
+
                         <!-- Add Filter Button -->
                         <button type="button"
                             onclick="document.getElementById('quickFilterInput').classList.toggle('hidden'); document.getElementById('quickFilterInput').focus();"

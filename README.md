@@ -26,6 +26,7 @@ A modern, fast, and self-hosted Web Traffic & Visitor Analytics Dashboard for La
 - ⚡ **Post-Response Telemetry**: Tracking runs in Laravel's `terminate()` hook, after the HTTP response is sent. Optional GeoIP lookups and webhook alerts still occupy the worker for up to their configured timeouts (1s / 3s by default); keep alerts disabled unless needed.
 - 🗄️ **Lightweight & Decoupled Storage**: Stores telemetry in the `lwa_logs` table without coupling to any specific User model, with GDPR-compliant IP anonymization options.
 - 🔐 **Privacy-First Tracking**: Do Not Track support and an optional cookieless, daily-salted visitor fingerprint — no cookie banner required.
+- 🧪 **Internal/Test Account Filter**: Configure test user keys, IPs and session ids, then use the subheader toggle to exclude them from recorded reports without changing raw data.
 - 🎯 **UTM Campaigns**: `utm_source`, `utm_medium` and `utm_campaign` are captured automatically and shown on the dedicated Campaigns page.
 - 🏳️ **Country Flags**: IP breakdowns and the live traffic feed show emoji flags resolved from the recorded country; the Settings language picker shows the active language flag.
 - 🏢 **Multi-Tenancy Ready**: Native support for single-database multi-tenant applications (`stancl/tenancy`, `spatie/laravel-multitenancy`, or custom resolvers) with tenant-scoped dashboards and streams.
@@ -46,6 +47,7 @@ A modern, fast, and self-hosted Web Traffic & Visitor Analytics Dashboard for La
 - 🩺 **Installation Health (opt-in)**: Read-only Blade view of every `lwa:doctor` check with pass/warn/fail counts and a recommended next step.
 - 🆚 **Compare to prior period**: Toggle KPI deltas against the immediately preceding equal-length window, with explicit percent / percentage-point rules.
 - 📄 **Page reports (opt-in)**: Per-path visitors, views, bounce, entry/exit rates and next/previous paths from bounded request logs.
+- 🧪 **Filter test accounts (opt-in)**: Exclude configured internal users, IPs and sessions from request dashboards and all `EventStore`-backed reports.
 
 ---
 
@@ -251,6 +253,10 @@ The **Compare prior** control in the subheader adds `compare=1` to the current d
 ### Page reports (opt-in)
 
 Enable with `WEB_ANALYTICS_PAGE_REPORTS_ENABLED=true` to expose `/web-analytics/page-reports`. It reads at most 20,000 recent `lwa_logs` rows in the selected window and shows a top-path table (visitors, views, bounce rate). Opening a path adds entry/exit counts and rates, next/previous paths within the same session, and optional previous-period deltas using the same comparison rules. Bounce means a session that started at that path and had exactly one request in the window; every definition and the sample cap are printed on the page. When replay is enabled, top-path rows and Page Reports also offer **View recordings**, opening the replay list pre-filtered to that path.
+
+### Filter test accounts (opt-in)
+
+Enable with `WEB_ANALYTICS_FILTER_TEST_ACCOUNTS=true` and list internal identities in `WEB_ANALYTICS_TEST_ACCOUNT_KEYS`, `WEB_ANALYTICS_TEST_ACCOUNT_IPS` and `WEB_ANALYTICS_TEST_ACCOUNT_SESSIONS` (comma separated). The **Filter test accounts** subheader toggle adds `exclude_test=1`: request-log dashboards exclude those session ids/IPs, and every `EventStore`-backed report excludes matching visitor hashes (raw key, `u_<id>` and sha256 forms). The identifiers are read only from configuration — a request cannot nominate accounts to hide. Raw `lwa_logs` / `lwa_events` rows are never modified.
 
 ## 🎨 Design System
 
@@ -696,6 +702,10 @@ return [
         'fingerprint_salt'       => env('WEB_ANALYTICS_FINGERPRINT_SALT', ''),
         'masked_query_parameters'=> ['token', 'password', 'secret', 'api_key', 'email', 'card', 'cvv', /* ... */],
         'mask_referrer'          => env('WEB_ANALYTICS_MASK_REFERRER', true),
+        'filter_test_accounts'   => env('WEB_ANALYTICS_FILTER_TEST_ACCOUNTS', false),
+        'test_account_keys'      => array_filter(explode(',', (string) env('WEB_ANALYTICS_TEST_ACCOUNT_KEYS', ''))),
+        'test_account_ips'       => array_filter(explode(',', (string) env('WEB_ANALYTICS_TEST_ACCOUNT_IPS', ''))),
+        'test_account_sessions'  => array_filter(explode(',', (string) env('WEB_ANALYTICS_TEST_ACCOUNT_SESSIONS', ''))),
     ],
 
     /*

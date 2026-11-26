@@ -18,6 +18,7 @@ use Nafiur\WebAnalytics\Services\ErrorTrackingService;
 use Nafiur\WebAnalytics\Services\FeatureFlagService;
 use Nafiur\WebAnalytics\Services\ReplayEmbed;
 use Nafiur\WebAnalytics\Services\ReplaySigner;
+use Nafiur\WebAnalytics\Services\TestAccountFilter;
 
 class WebAnalyticsServiceProvider extends ServiceProvider
 {
@@ -38,6 +39,7 @@ class WebAnalyticsServiceProvider extends ServiceProvider
         $this->app->singleton(ReplayEmbed::class);
         $this->app->singleton(FeatureFlagService::class);
         $this->app->singleton(ErrorTrackingService::class);
+        $this->app->singleton(TestAccountFilter::class);
     }
 
     /**

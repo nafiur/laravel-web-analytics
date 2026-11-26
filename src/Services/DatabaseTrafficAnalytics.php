@@ -29,6 +29,17 @@ class DatabaseTrafficAnalytics
         if ($tenantId !== null && $tenantId !== '') {
             $baseQuery->where('tenant_id', $tenantId);
         }
+        if (TestAccountFilter::activeFromRequest()) {
+            $filter = app(TestAccountFilter::class);
+            $sessions = $filter->sessions();
+            $ips = $filter->ips();
+            if ($sessions !== []) {
+                $baseQuery->whereNotIn('session_id', $sessions);
+            }
+            if ($ips !== []) {
+                $baseQuery->whereNotIn('ip_address', $ips);
+            }
+        }
         if ($start) {
             $baseQuery->where('created_at', '>=', $start);
         }
