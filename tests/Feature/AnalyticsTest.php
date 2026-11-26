@@ -254,7 +254,9 @@ class AnalyticsTest extends TestCase
         $this->get('/web-analytics/sdk.js')
             ->assertOk()
             ->assertSee('"web_vitals":true', false)
-            ->assertSee('"autocapture":true', false);
+            ->assertSee('"autocapture":true', false)
+            ->assertSee('web-vitals 6.2.3', false)
+            ->assertSee('onLCP', false);
     }
 
     public function test_overview_exposes_honest_engagement_metrics(): void

@@ -211,11 +211,13 @@
 
     /**
      * Web Vitals are opt-in: they emit numeric values only, never form data.
-     * Uses the browser PerformanceObserver API when available.
+     * Uses the vendored Google web-vitals library when present, with a small
+     * PerformanceObserver fallback for browsers where it cannot load.
      */
     function bindWebVitals() {
-        if (!config.web_vitals || !global.PerformanceObserver) { return; }
+        if (!config.web_vitals) { return; }
 
+        var reported = {};
         var report = function (name, value) {
             if (typeof value === 'number' && isFinite(value)) {
                 track('web_vital', {
@@ -223,8 +225,25 @@
                     value: Math.round(value * 1000) / 1000,
                     path: global.location ? global.location.pathname : '/'
                 }, null);
+                reported[name] = true;
             }
         };
+
+        if (global.webVitals && typeof global.webVitals.onLCP === 'function') {
+            var watching = [
+                ['onLCP', 'lcp'], ['onCLS', 'cls'], ['onINP', 'inp'],
+                ['onFCP', 'fcp'], ['onTTFB', 'ttfb']
+            ];
+            watching.forEach(function (pair) {
+                var fn = global.webVitals[pair[0]];
+                if (typeof fn === 'function') {
+                    fn(function (metric) { report(pair[1], metric.value); });
+                }
+            });
+            return;
+        }
+
+        if (!global.PerformanceObserver) { return; }
 
         try {
             var lcp = new global.PerformanceObserver(function (list) {

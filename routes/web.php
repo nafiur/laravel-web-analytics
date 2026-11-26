@@ -19,6 +19,7 @@ use Nafiur\WebAnalytics\Http\Controllers\ReplayPlayerController;
 use Nafiur\WebAnalytics\Http\Controllers\RetentionController;
 use Nafiur\WebAnalytics\Http\Controllers\SdkController;
 use Nafiur\WebAnalytics\Http\Controllers\TrendsController;
+use Nafiur\WebAnalytics\Http\Controllers\VendorAssetController;
 use Nafiur\WebAnalytics\Http\Controllers\WebAnalyticsController;
 use Nafiur\WebAnalytics\Http\Controllers\WebVitalsController;
 
@@ -31,6 +32,9 @@ Route::get('/data', [WebAnalyticsController::class, 'data'])->name('lwa_data');
 Route::get('/stream', [WebAnalyticsController::class, 'stream'])->name('lwa_stream');
 Route::get('/export', [WebAnalyticsController::class, 'export'])->name('lwa_export');
 Route::get('/sdk.js', [SdkController::class, '__invoke'])->name('lwa_sdk');
+Route::get('/vendor/rrweb.js', [VendorAssetController::class, 'rrwebJs'])->name('lwa_vendor_rrweb_js');
+Route::get('/vendor/rrweb.css', [VendorAssetController::class, 'rrwebCss'])->name('lwa_vendor_rrweb_css');
+Route::get('/vendor/web-vitals.js', [VendorAssetController::class, 'webVitalsJs'])->name('lwa_vendor_web_vitals_js');
 Route::get('/replay.js', [ReplayBundleController::class, '__invoke'])->name('lwa_replay_bundle');
 Route::get('/replay-player.js', [ReplayPlayerBundleController::class, '__invoke'])
     ->middleware($replayGate)

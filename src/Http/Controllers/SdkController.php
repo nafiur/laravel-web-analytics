@@ -38,8 +38,16 @@ class SdkController extends Controller
             JSON_HEX_TAG | JSON_HEX_AMP | JSON_HEX_APOS | JSON_HEX_QUOT | JSON_UNESCAPED_SLASHES,
         ) . ';' . PHP_EOL;
 
+        $vendor = '';
+        $vendorPath = __DIR__ . '/../../../resources/js/vendor/web-vitals.iife.js';
+        if (! empty($defaults['web_vitals']) && is_file($vendorPath)) {
+            $vendor = '/* web-vitals 6.2.3 — Apache-2.0 — https://github.com/GoogleChrome/web-vitals */' . PHP_EOL
+                . str_replace('//# sourceMappingURL=web-vitals.iife.js.map', '', (string) file_get_contents($vendorPath))
+                . PHP_EOL;
+        }
+
         return Response::make(
-            $bootstrap . (string) file_get_contents($path),
+            $bootstrap . $vendor . (string) file_get_contents($path),
             SymfonyResponse::HTTP_OK,
             [
                 'Content-Type'  => 'application/javascript; charset=utf-8',
