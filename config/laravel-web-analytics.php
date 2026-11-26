@@ -300,6 +300,25 @@ return [
 
     /*
     |--------------------------------------------------------------------------
+    | Developer Observability (v3.6 foundation)
+    |--------------------------------------------------------------------------
+    |
+    | Error ingestion is opt-in. Raw stack traces stay on your own database,
+    | are bounded in size, and are visible only behind an application-defined
+    | gate. Every error is also logged as an lwa_events `error` event so it can
+    | be analyzed with the same bounded reporting engine.
+    |
+    */
+    'observability'         => [
+        'enabled'        => env('WEB_ANALYTICS_OBSERVABILITY_ENABLED', false),
+        'gate'           => env('WEB_ANALYTICS_OBSERVABILITY_GATE', 'viewLwaObservability'),
+        'endpoint'       => env('WEB_ANALYTICS_OBSERVABILITY_ENDPOINT', '/web-analytics/api/v1/observability/errors'),
+        'max_stack_bytes' => (int) env('WEB_ANALYTICS_OBSERVABILITY_MAX_STACK', 20000),
+        'retention_days' => (int) env('WEB_ANALYTICS_OBSERVABILITY_RETENTION_DAYS', 30),
+    ],
+
+    /*
+    |--------------------------------------------------------------------------
     | Settings Page
     |--------------------------------------------------------------------------
     |

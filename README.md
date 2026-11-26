@@ -15,7 +15,7 @@ A modern, fast, and self-hosted Web Traffic & Visitor Analytics Dashboard for La
 ## ⚡ Highlights & Key Features
 
 - 🚀 **Real-Time Live Stream (SSE)**: Live active visitor count and instant real-time traffic feed without WebSockets, Node.js, or Pusher. Each stream response is short-lived and paced by EventSource, so no PHP worker is held open while waiting for new traffic.
-- 🧭 **Sidebar Navigation**: 20 sidebar links — Overview, Real-time, Logs, Dashboards, Visitors, Traffic Sources, Pages & Screens, Geography, Devices & Browsers, Campaigns, Funnels, Retention, User Paths, Trends, Event Explorer, Events & Goals, Conversions, Performance, Error Monitoring and Settings. Three optional replay links — Session Replay, Heatmaps and Forms — appear only when replay is enabled and the configured gate allows them. Separate optional Feature Flags and Experiments links appear when flags are enabled. Each has its own bookmarkable route and Blade page; the Settings screen has no analytics tab bar.
+- 🧭 **Sidebar Navigation**: 20 sidebar links — Overview, Real-time, Logs, Dashboards, Visitors, Traffic Sources, Pages & Screens, Geography, Devices & Browsers, Campaigns, Funnels, Retention, User Paths, Trends, Event Explorer, Events & Goals, Conversions, Performance, Error Monitoring and Settings. Three optional replay links — Session Replay, Heatmaps and Forms — appear only when replay is enabled and the configured gate allows them. Separate optional Feature Flags and Experiments links appear when flags are enabled, plus an optional Observability link when error tracking is enabled and its gate allows it. Each has its own bookmarkable route and Blade page; the Settings screen has no analytics tab bar.
 - 🎨 **Tailwind CSS UI with Dark Mode**: Modern, responsive dashboard powered by Tailwind CSS Play CDN (zero build step / zero npm dependencies). Uses CSS design tokens (`--lwa-*`, `[data-theme="dark"]`), Lucide outline icons, visible focus states, skeleton loaders, explicit empty/error states, and a 1-click persistent Dark/Light/System preference.
 - 📊 **Comprehensive Metrics**: Total Requests, Unique Visitors, Bandwidth (Data Transferred in GB/MB), Avg Response Time, Error Rate.
 - 🧪 **Built-In Live Traffic Simulator**: Easily generate realistic live traffic every second with `php artisan lwa:live` to demo and test live streaming.
@@ -41,6 +41,7 @@ A modern, fast, and self-hosted Web Traffic & Visitor Analytics Dashboard for La
 - 📝 **Form analytics (v3.4)**: Masked field focus/change, submit and validation-error markers become per-form and per-field funnel counts — without recording a single field value.
 - 🚩 **Feature flags (v3.5, opt-in)**: Website/tenant-scoped boolean and multivariate flags with deterministic rollout, overrides and targeting; evaluations are logged to `lwa_events` with a hashed subject.
 - 🧪 **A/B experiments (v3.5)**: Link a flag to a recorded goal event and read per-variant counts, rates, lift, p-values and honest significance gates from `lwa_events` only.
+- 🐞 **Error tracking (v3.6, opt-in)**: Project-key error ingest with sanitised, bounded stacks, grouped exceptions behind an application gate and safe summaries mirrored into `lwa_events`.
 
 ---
 
@@ -227,6 +228,10 @@ Gate host markup with `@feature('key') ... @endfeature` or print the assigned va
 
 `/web-analytics/experiments` links a flag to a goal event. Results come only from `lwa_events`: exposures from `feature_flag_evaluated` and conversions from the goal event's configured variant property (default `variant`). For each variant the page reports exposures, goal events, conversion rate, lift versus control, a two-proportion z-test p-value and a significance flag that only becomes `Yes` with at least 30 exposures and 5 conversions in both groups. Reads are bounded to 20,000 events per name, every definition is printed on the page, and a goal without the variant property is never counted as a conversion.
 
+### Error tracking (v3.6, opt-in)
+
+Enable with `WEB_ANALYTICS_OBSERVABILITY_ENABLED=true`, define the `viewLwaObservability` gate in your app, and post reports to `POST /web-analytics/api/v1/observability/errors` using the website's public project key (or a write bearer token). Messages, stack traces and context are sanitised and size-bounded; query strings and sensitive `key=value` pairs are stripped before storage. Errors are fingerprinted into website/tenant-scoped groups, de-duplicated by `event_id`, and reopened automatically if a resolved group recurs. A safe summary is also written to `lwa_events` as `error`, so exposure is analyzable with Trends. `/web-analytics/observability` lists groups and opens stack-bearing detail views behind the gate, with open/resolved/ignored status changes. Performance spans and distributed tracing remain open.
+
 ## 🎨 Design System
 
 | Topic | Choice |
@@ -376,6 +381,9 @@ The package defines routes with the `lwa_` prefix to avoid conflicts with your a
 | `GET /web-analytics/api/v1/flags/evaluate` | `lwa_api_flags_evaluate` | Deterministic flag evaluation (bearer token, `read`) |
 | `GET /web-analytics/experiments` | `lwa_experiments` | A/B experiment list and results |
 | `GET /web-analytics/experiments/{id}/edit` | `lwa_experiments_edit` | Edit an existing experiment |
+| `GET /web-analytics/observability` | `lwa_observability` | Gated exception group list |
+| `GET /web-analytics/observability/{id}` | `lwa_observability_show` | Gated error detail with sanitised stack |
+| `POST /web-analytics/api/v1/observability/errors` | `lwa_api_observability_errors` | Error ingest (project key or bearer token, `write`) |
 | `GET /web-analytics/api/v1/summary` | `lwa_api_summary` | JSON summary (bearer token, `read`) |
 | `GET /web-analytics/api/v1/timeseries` | `lwa_api_timeseries` | JSON time series (bearer token, `read`) |
 | `POST /web-analytics/api/v1/events` | `lwa_api_event` | Track a custom event (bearer token, `write`) |
@@ -411,7 +419,7 @@ Every sidebar section also has its own bookmarkable URL:
 | `/web-analytics/paths` | `lwa_paths` | | |
 | `/web-analytics/replay` | `lwa_replay` | `/web-analytics/heatmaps` | `lwa_heatmaps` |
 | `/web-analytics/forms` | `lwa_forms` | `/web-analytics/flags` | `lwa_flags` |
-| `/web-analytics/experiments` | `lwa_experiments` | | |
+| `/web-analytics/experiments` | `lwa_experiments` | `/web-analytics/observability` | `lwa_observability` |
 
 The legacy `/web-analytics` (`lwa_dashboard`) URL still works and shows the Overview pane. The Events and Conversions URLs render an explicit “not available yet” pane rather than fabricated numbers.
 
@@ -466,7 +474,8 @@ resources/views/
 │   ├── dashboards.blade.php       ├── dashboard-view.blade.php├── replay.blade.php
 │   ├── replay-show.blade.php      ├── heatmaps.blade.php
 │   ├── forms.blade.php            ├── flags.blade.php
-│   ├── experiments.blade.php      └── settings.blade.php
+│   ├── experiments.blade.php      ├── observability.blade.php
+│   ├── observability-show.blade.php └── settings.blade.php
 ├── sections/                      # content-only partials included by the pages
 └── partials/                      # header, sidebar, subheader, scripts, breakdown-list,
                                    # breakdown-card, breakdown-trend-list, card-menu,
@@ -477,7 +486,7 @@ The legacy `dashboard.blade.php` simply extends the shared layout and renders th
 
 ## 🧭 Dashboard Navigation
 
-The sidebar exposes 20 sections by default, plus three optional replay sections when replay is enabled and the gate allows them, and optional Feature Flags and Experiments sections when flags are enabled. Each is rendered by its own route and Blade page:
+The sidebar exposes 20 sections by default, plus three optional replay sections when replay is enabled and the gate allows them, optional Feature Flags and Experiments sections when flags are enabled, and an optional Observability section when error tracking is enabled and its gate allows it. Each is rendered by its own route and Blade page:
 
 | Menu item | Shows |
 |-----------|-------|
@@ -501,6 +510,7 @@ The sidebar exposes 20 sections by default, plus three optional replay sections 
 | **Forms** *(optional)* | Gated per-form starts, submits, errors and per-field engagement, without field values |
 | **Feature Flags** *(optional)* | Boolean/multivariate flags with deterministic rollout, overrides and targeting |
 | **Experiments** *(optional)* | Per-variant counts, rates, lift and p-values from recorded flag exposures and goal events |
+| **Observability** *(optional)* | Gated exception groups, sanitised stacks and status workflow |
 | **Events & Goals** | Recent custom events captured through the facade/API (name, properties, value) |
 | **Conversions** | Recorded goal/purchase events — arrange them into a documented, ordered funnel; no inferred conversions |
 | **Performance** | Latency, response times, bandwidth by path |
@@ -769,6 +779,17 @@ return [
     'flags' => [
         'enabled'  => env('WEB_ANALYTICS_FLAGS_ENABLED', false),
         'endpoint' => env('WEB_ANALYTICS_FLAGS_ENDPOINT', '/web-analytics/api/v1/flags/evaluate'),
+    ],
+
+    /*
+     * Error tracking (v3.6 foundation). Opt-in, bounded and gated.
+     */
+    'observability' => [
+        'enabled'        => env('WEB_ANALYTICS_OBSERVABILITY_ENABLED', false),
+        'gate'           => env('WEB_ANALYTICS_OBSERVABILITY_GATE', 'viewLwaObservability'),
+        'endpoint'       => env('WEB_ANALYTICS_OBSERVABILITY_ENDPOINT', '/web-analytics/api/v1/observability/errors'),
+        'max_stack_bytes' => (int) env('WEB_ANALYTICS_OBSERVABILITY_MAX_STACK', 20000),
+        'retention_days' => (int) env('WEB_ANALYTICS_OBSERVABILITY_RETENTION_DAYS', 30),
     ],
 
     'settings' => [

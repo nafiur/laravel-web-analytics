@@ -42,6 +42,12 @@
 - `@feature('key') ... @endfeature` / `@featureVariant('key')` gate host markup, and `GET /api/v1/flags/evaluate` (read token) serves scripts. Each distinct key+subject evaluation is logged to `lwa_events` as `feature_flag_evaluated` with a hashed subject.
 - `ExperimentService` reads bounded `lwa_events` rows: exposures from `feature_flag_evaluated` and conversions from the configured goal event's variant property. Results include per-variant rates, lift versus control, a two-proportion z-test p-value and a significance gate requiring at least 30 exposures and 5 conversions in both groups.
 
+### Unreleased v3.6 error tracking (`dev`)
+
+- `POST /api/v1/observability/errors` ingests project-key-authenticated reports. Messages, context and stack traces are sanitised and size-bounded before storage in `lwa_error_groups` / `lwa_error_events`.
+- Fingerprints normalise digits in messages; reports are de-duplicated by event id, grouped by website/tenant, and a recurrence reopens a resolved group. A safe summary is mirrored to `lwa_events` as `error`.
+- `/web-analytics/observability` and its detail/status routes re-check the configured `viewLwaObservability` gate and session scope on every request. Performance spans and tracing remain open.
+
 No paid tier, activation server, feature lock or mandatory third-party service exists.
 
 ---

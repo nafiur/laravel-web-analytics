@@ -126,6 +126,13 @@
                         <i data-lucide="gauge" class="text-sm"></i> <span class="sidebar-label" data-i18n="performance">Performance</span>
                     </a>
 
+                    @if(config('laravel-web-analytics.observability.enabled') && app(\Illuminate\Contracts\Auth\Access\Gate::class)->allows(config('laravel-web-analytics.observability.gate')))
+                        <a href="{{ route('lwa_observability') }}"
+                           class="sidebar-link {{ $current === 'observability' ? 'active' : '' }}">
+                            <i data-lucide="bug" class="text-sm"></i> <span class="sidebar-label">Observability</span>
+                        </a>
+                    @endif
+
                     <a href="{{ route('lwa_errors') }}"
                        class="sidebar-link {{ $current === 'errors' ? 'active' : '' }}">
                         <i data-lucide="shield-alert" class="text-sm"></i> <span class="sidebar-label" data-i18n="errors">Error Monitoring</span>

@@ -8,6 +8,7 @@ use Nafiur\WebAnalytics\Http\Controllers\FeatureFlagsController;
 use Nafiur\WebAnalytics\Http\Controllers\FunnelsController;
 use Nafiur\WebAnalytics\Http\Controllers\FormsController;
 use Nafiur\WebAnalytics\Http\Controllers\HeatmapsController;
+use Nafiur\WebAnalytics\Http\Controllers\ObservabilityController;
 use Nafiur\WebAnalytics\Http\Controllers\PathsController;
 use Nafiur\WebAnalytics\Http\Controllers\ReplayBundleController;
 use Nafiur\WebAnalytics\Http\Controllers\ReplayController;
@@ -19,6 +20,7 @@ use Nafiur\WebAnalytics\Http\Controllers\TrendsController;
 use Nafiur\WebAnalytics\Http\Controllers\WebAnalyticsController;
 
 $replayGate = 'can:' . config('laravel-web-analytics.replay.gate', 'viewLwaReplay');
+$observabilityGate = 'can:' . config('laravel-web-analytics.observability.gate', 'viewLwaObservability');
 
 Route::get('/', [WebAnalyticsController::class, 'index'])->name('lwa_dashboard');
 Route::get('/index', [WebAnalyticsController::class, 'index'])->name('lwa_index');
@@ -71,6 +73,15 @@ Route::get('/experiments/{experiment}/edit', [ExperimentsController::class, 'ind
 Route::post('/experiments', [ExperimentsController::class, 'store'])->name('lwa_experiments_store');
 Route::put('/experiments/{experiment}', [ExperimentsController::class, 'update'])->name('lwa_experiments_update');
 Route::delete('/experiments/{experiment}', [ExperimentsController::class, 'destroy'])->name('lwa_experiments_destroy');
+Route::get('/observability', [ObservabilityController::class, 'index'])
+    ->middleware($observabilityGate)
+    ->name('lwa_observability');
+Route::get('/observability/{errorGroup}', [ObservabilityController::class, 'show'])
+    ->middleware($observabilityGate)
+    ->name('lwa_observability_show');
+Route::post('/observability/{errorGroup}/status', [ObservabilityController::class, 'status'])
+    ->middleware($observabilityGate)
+    ->name('lwa_observability_status');
 Route::post('/settings/prune', [WebAnalyticsController::class, 'prune'])->name('lwa_settings_prune');
 Route::post('/settings/empty', [WebAnalyticsController::class, 'emptyTable'])->name('lwa_settings_empty');
 Route::post('/settings/test-alert', [WebAnalyticsController::class, 'testAlert'])->name('lwa_settings_test_alert');

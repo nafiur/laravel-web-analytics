@@ -39,6 +39,11 @@ v3.4 is preview quality: full-fidelity DOM patching is not implemented.
 - Evaluations are logged to `lwa_events` as `feature_flag_evaluated` with a hashed subject.
 - A/B experiments link a flag to a recorded goal event and report per-variant rates, lift, p-values and significance gates from `lwa_events` only.
 
+### v3.6 (unreleased on `dev`)
+
+- Opt-in error tracking: project-key ingest to `POST /web-analytics/api/v1/observability/errors`, bounded/sanitised stacks, fingerprinted groups and a gated `/web-analytics/observability` viewer.
+- Safe error summaries are mirrored into `lwa_events`; performance spans and distributed tracing remain open.
+
 ---
 
 ## 1. Update the package
@@ -258,6 +263,10 @@ This deletes only `lwa_logs` rows already imported (tracked by the checkpoint). 
 | `WEB_ANALYTICS_REPLAY_DISK` | — | Laravel disk for replay chunks |
 | `WEB_ANALYTICS_FLAGS_ENABLED` | `false` | Enable feature flag UI and evaluation endpoint |
 | `WEB_ANALYTICS_FLAGS_ENDPOINT` | `/web-analytics/api/v1/flags/evaluate` | Evaluation route prefix |
+| `WEB_ANALYTICS_OBSERVABILITY_ENABLED` | `false` | Enable error ingest and gated viewer |
+| `WEB_ANALYTICS_OBSERVABILITY_GATE` | `viewLwaObservability` | Gate required for stack traces |
+| `WEB_ANALYTICS_OBSERVABILITY_MAX_STACK` | `20000` | Max stored stack characters |
+| `WEB_ANALYTICS_OBSERVABILITY_RETENTION_DAYS` | `30` | Error retention window |
 
 Keep secrets in `.env` and run `php artisan optimize:clear` after any config change.
 
@@ -279,6 +288,9 @@ Keep secrets in `.env` and run `php artisan optimize:clear` after any config cha
 | `/web-analytics/flags` returns 404 | `WEB_ANALYTICS_FLAGS_ENABLED=false` |
 | Flag evaluates as `missing` | Key not found in the active website/tenant scope, or flags are disabled |
 | Flag evaluation returns `rollout` | Deterministic bucket is outside the configured rollout percentage |
+| `/web-analytics/observability` returns 403 | Define the gate named by `WEB_ANALYTICS_OBSERVABILITY_GATE`; stack traces fail closed |
+| Error ingest returns 404 | `WEB_ANALYTICS_OBSERVABILITY_ENABLED=false` |
+| Error ingest returns 401 | Missing/invalid project key or write bearer token |
 | Packagist “Upstream re-tag blocked” | A released tag was moved; restore the original reference or publish a new version |
 
 ---
