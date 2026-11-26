@@ -15,7 +15,7 @@ A modern, fast, and self-hosted Web Traffic & Visitor Analytics Dashboard for La
 ## ⚡ Highlights & Key Features
 
 - 🚀 **Real-Time Live Stream (SSE)**: Live active visitor count and instant real-time traffic feed without WebSockets, Node.js, or Pusher. Each stream response is short-lived and paced by EventSource, so no PHP worker is held open while waiting for new traffic.
-- 🧭 **Sidebar Navigation**: 20 sidebar links — Overview, Real-time, Logs, Dashboards, Visitors, Traffic Sources, Pages & Screens, Geography, Devices & Browsers, Campaigns, Funnels, Retention, User Paths, Trends, Event Explorer, Events & Goals, Conversions, Performance, Error Monitoring and Settings. Three optional replay links — Session Replay, Heatmaps and Forms — appear only when replay is enabled and the configured gate allows them. A separate optional Feature Flags link appears when flags are enabled. Each has its own bookmarkable route and Blade page; the Settings screen has no analytics tab bar.
+- 🧭 **Sidebar Navigation**: 20 sidebar links — Overview, Real-time, Logs, Dashboards, Visitors, Traffic Sources, Pages & Screens, Geography, Devices & Browsers, Campaigns, Funnels, Retention, User Paths, Trends, Event Explorer, Events & Goals, Conversions, Performance, Error Monitoring and Settings. Three optional replay links — Session Replay, Heatmaps and Forms — appear only when replay is enabled and the configured gate allows them. Separate optional Feature Flags and Experiments links appear when flags are enabled. Each has its own bookmarkable route and Blade page; the Settings screen has no analytics tab bar.
 - 🎨 **Tailwind CSS UI with Dark Mode**: Modern, responsive dashboard powered by Tailwind CSS Play CDN (zero build step / zero npm dependencies). Uses CSS design tokens (`--lwa-*`, `[data-theme="dark"]`), Lucide outline icons, visible focus states, skeleton loaders, explicit empty/error states, and a 1-click persistent Dark/Light/System preference.
 - 📊 **Comprehensive Metrics**: Total Requests, Unique Visitors, Bandwidth (Data Transferred in GB/MB), Avg Response Time, Error Rate.
 - 🧪 **Built-In Live Traffic Simulator**: Easily generate realistic live traffic every second with `php artisan lwa:live` to demo and test live streaming.
@@ -40,6 +40,7 @@ A modern, fast, and self-hosted Web Traffic & Visitor Analytics Dashboard for La
 - 🔥 **Heatmaps (v3.4)**: Gated click/scroll heatmaps with path and time filters, bounded aggregation, top targets and explicit rage/dead-click signals derived from recorded replay markers.
 - 📝 **Form analytics (v3.4)**: Masked field focus/change, submit and validation-error markers become per-form and per-field funnel counts — without recording a single field value.
 - 🚩 **Feature flags (v3.5, opt-in)**: Website/tenant-scoped boolean and multivariate flags with deterministic rollout, overrides and targeting; evaluations are logged to `lwa_events` with a hashed subject.
+- 🧪 **A/B experiments (v3.5)**: Link a flag to a recorded goal event and read per-variant counts, rates, lift, p-values and honest significance gates from `lwa_events` only.
 
 ---
 
@@ -220,7 +221,11 @@ Chunks are uploaded to `POST /web-analytics/api/v1/replay/chunks` with the signe
 
 Enable flags with `WEB_ANALYTICS_FLAGS_ENABLED=true` and manage boolean or multivariate flags at `/web-analytics/flags`. Flags are scoped to the active website and trusted tenant. Evaluation order is: per-subject override (`off` disables), then all targeting rules (AND), then `enabled` and a deterministic `sha256(key:subject) % 100` rollout bucket. Multivariate variants use the same bucket with declared weights.
 
-Gate host markup with `@feature('key') ... @endfeature` or print the assigned variant with `@featureVariant('key')`. Scripts can call `GET /web-analytics/api/v1/flags/evaluate?key=...&subject=...` with a `read` token. Each distinct flag key + subject evaluation is logged to `lwa_events` as `feature_flag_evaluated` with a hashed subject (never a raw user id), so exposure is measurable with the same Trends engine. A/B result statistics and flag-driven experiments are not part of this foundation.
+Gate host markup with `@feature('key') ... @endfeature` or print the assigned variant with `@featureVariant('key')`. Scripts can call `GET /web-analytics/api/v1/flags/evaluate?key=...&subject=...` with a `read` token. Each distinct flag key + subject evaluation is logged to `lwa_events` as `feature_flag_evaluated` with a hashed subject (never a raw user id), so exposure is measurable with the same Trends engine.
+
+### A/B experiments (v3.5)
+
+`/web-analytics/experiments` links a flag to a goal event. Results come only from `lwa_events`: exposures from `feature_flag_evaluated` and conversions from the goal event's configured variant property (default `variant`). For each variant the page reports exposures, goal events, conversion rate, lift versus control, a two-proportion z-test p-value and a significance flag that only becomes `Yes` with at least 30 exposures and 5 conversions in both groups. Reads are bounded to 20,000 events per name, every definition is printed on the page, and a goal without the variant property is never counted as a conversion.
 
 ## 🎨 Design System
 
@@ -369,6 +374,8 @@ The package defines routes with the `lwa_` prefix to avoid conflicts with your a
 | `GET /web-analytics/flags` | `lwa_flags` | Feature flag list and editor |
 | `GET /web-analytics/flags/{id}/edit` | `lwa_flags_edit` | Edit an existing flag |
 | `GET /web-analytics/api/v1/flags/evaluate` | `lwa_api_flags_evaluate` | Deterministic flag evaluation (bearer token, `read`) |
+| `GET /web-analytics/experiments` | `lwa_experiments` | A/B experiment list and results |
+| `GET /web-analytics/experiments/{id}/edit` | `lwa_experiments_edit` | Edit an existing experiment |
 | `GET /web-analytics/api/v1/summary` | `lwa_api_summary` | JSON summary (bearer token, `read`) |
 | `GET /web-analytics/api/v1/timeseries` | `lwa_api_timeseries` | JSON time series (bearer token, `read`) |
 | `POST /web-analytics/api/v1/events` | `lwa_api_event` | Track a custom event (bearer token, `write`) |
@@ -404,6 +411,7 @@ Every sidebar section also has its own bookmarkable URL:
 | `/web-analytics/paths` | `lwa_paths` | | |
 | `/web-analytics/replay` | `lwa_replay` | `/web-analytics/heatmaps` | `lwa_heatmaps` |
 | `/web-analytics/forms` | `lwa_forms` | `/web-analytics/flags` | `lwa_flags` |
+| `/web-analytics/experiments` | `lwa_experiments` | | |
 
 The legacy `/web-analytics` (`lwa_dashboard`) URL still works and shows the Overview pane. The Events and Conversions URLs render an explicit “not available yet” pane rather than fabricated numbers.
 
@@ -458,7 +466,7 @@ resources/views/
 │   ├── dashboards.blade.php       ├── dashboard-view.blade.php├── replay.blade.php
 │   ├── replay-show.blade.php      ├── heatmaps.blade.php
 │   ├── forms.blade.php            ├── flags.blade.php
-│   └── settings.blade.php
+│   ├── experiments.blade.php      └── settings.blade.php
 ├── sections/                      # content-only partials included by the pages
 └── partials/                      # header, sidebar, subheader, scripts, breakdown-list,
                                    # breakdown-card, breakdown-trend-list, card-menu,
@@ -469,7 +477,7 @@ The legacy `dashboard.blade.php` simply extends the shared layout and renders th
 
 ## 🧭 Dashboard Navigation
 
-The sidebar exposes 20 sections by default, plus three optional replay sections when replay is enabled and the gate allows them, and an optional Feature Flags section when flags are enabled. Each is rendered by its own route and Blade page:
+The sidebar exposes 20 sections by default, plus three optional replay sections when replay is enabled and the gate allows them, and optional Feature Flags and Experiments sections when flags are enabled. Each is rendered by its own route and Blade page:
 
 | Menu item | Shows |
 |-----------|-------|
@@ -492,6 +500,7 @@ The sidebar exposes 20 sections by default, plus three optional replay sections 
 | **Heatmaps** *(optional)* | Gated click/scroll concentration, top targets and rage/dead-click signals |
 | **Forms** *(optional)* | Gated per-form starts, submits, errors and per-field engagement, without field values |
 | **Feature Flags** *(optional)* | Boolean/multivariate flags with deterministic rollout, overrides and targeting |
+| **Experiments** *(optional)* | Per-variant counts, rates, lift and p-values from recorded flag exposures and goal events |
 | **Events & Goals** | Recent custom events captured through the facade/API (name, properties, value) |
 | **Conversions** | Recorded goal/purchase events — arrange them into a documented, ordered funnel; no inferred conversions |
 | **Performance** | Latency, response times, bandwidth by path |

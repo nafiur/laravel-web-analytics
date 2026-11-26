@@ -103,6 +103,10 @@
                            class="sidebar-link {{ $current === 'flags' ? 'active' : '' }}">
                             <i data-lucide="toggle-right" class="text-sm"></i> <span class="sidebar-label">Feature Flags</span>
                         </a>
+                        <a href="{{ route('lwa_experiments') }}"
+                           class="sidebar-link {{ $current === 'experiments' ? 'active' : '' }}">
+                            <i data-lucide="flask-conical" class="text-sm"></i> <span class="sidebar-label">Experiments</span>
+                        </a>
                     @endif
 
                     <a href="{{ route('lwa_events') }}"

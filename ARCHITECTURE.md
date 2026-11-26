@@ -40,7 +40,7 @@
 
 - `lwa_feature_flags` and `lwa_flag_overrides` are website/tenant scoped. Boolean and multivariate flags use a deterministic `sha256(key:subject) % 100` bucket; overrides win first, then all targeting rules (AND), then `enabled` and rollout.
 - `@feature('key') ... @endfeature` / `@featureVariant('key')` gate host markup, and `GET /api/v1/flags/evaluate` (read token) serves scripts. Each distinct key+subject evaluation is logged to `lwa_events` as `feature_flag_evaluated` with a hashed subject.
-- A/B result statistics and automatic experiment analysis remain open.
+- `ExperimentService` reads bounded `lwa_events` rows: exposures from `feature_flag_evaluated` and conversions from the configured goal event's variant property. Results include per-variant rates, lift versus control, a two-proportion z-test p-value and a significance gate requiring at least 30 exposures and 5 conversions in both groups.
 
 No paid tier, activation server, feature lock or mandatory third-party service exists.
 

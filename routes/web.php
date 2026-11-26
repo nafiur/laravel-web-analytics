@@ -3,6 +3,7 @@
 use Illuminate\Support\Facades\Route;
 use Nafiur\WebAnalytics\Http\Controllers\DashboardController;
 use Nafiur\WebAnalytics\Http\Controllers\EventExplorerController;
+use Nafiur\WebAnalytics\Http\Controllers\ExperimentsController;
 use Nafiur\WebAnalytics\Http\Controllers\FeatureFlagsController;
 use Nafiur\WebAnalytics\Http\Controllers\FunnelsController;
 use Nafiur\WebAnalytics\Http\Controllers\FormsController;
@@ -65,6 +66,11 @@ Route::get('/flags/{featureFlag}/edit', [FeatureFlagsController::class, 'index']
 Route::post('/flags', [FeatureFlagsController::class, 'store'])->name('lwa_flags_store');
 Route::put('/flags/{featureFlag}', [FeatureFlagsController::class, 'update'])->name('lwa_flags_update');
 Route::delete('/flags/{featureFlag}', [FeatureFlagsController::class, 'destroy'])->name('lwa_flags_destroy');
+Route::get('/experiments', [ExperimentsController::class, 'index'])->name('lwa_experiments');
+Route::get('/experiments/{experiment}/edit', [ExperimentsController::class, 'index'])->name('lwa_experiments_edit');
+Route::post('/experiments', [ExperimentsController::class, 'store'])->name('lwa_experiments_store');
+Route::put('/experiments/{experiment}', [ExperimentsController::class, 'update'])->name('lwa_experiments_update');
+Route::delete('/experiments/{experiment}', [ExperimentsController::class, 'destroy'])->name('lwa_experiments_destroy');
 Route::post('/settings/prune', [WebAnalyticsController::class, 'prune'])->name('lwa_settings_prune');
 Route::post('/settings/empty', [WebAnalyticsController::class, 'emptyTable'])->name('lwa_settings_empty');
 Route::post('/settings/test-alert', [WebAnalyticsController::class, 'testAlert'])->name('lwa_settings_test_alert');

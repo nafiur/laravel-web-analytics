@@ -36,7 +36,8 @@ v3.4 is preview quality: full-fidelity DOM patching is not implemented.
 
 - Opt-in feature flags at `/web-analytics/flags` with boolean/multivariate variants, deterministic rollout, per-subject overrides and targeting rules.
 - `@feature('key') ... @endfeature`, `@featureVariant('key')` and `GET /api/v1/flags/evaluate` (read token).
-- Evaluations are logged to `lwa_events` as `feature_flag_evaluated` with a hashed subject. A/B result statistics and experiments are not part of this foundation.
+- Evaluations are logged to `lwa_events` as `feature_flag_evaluated` with a hashed subject.
+- A/B experiments link a flag to a recorded goal event and report per-variant rates, lift, p-values and significance gates from `lwa_events` only.
 
 ---
 
@@ -303,4 +304,4 @@ No v2 config keys were removed, so a config rollback is not strictly required.
 - Multi-website isolation is session/config based; API tokens are bound to one website at issue time.
 - `queue` collector mode requires a worker; without one use `sync`.
 - v3.4 replay is minimal: sanitized snapshots, bounded markers, dashboard-style heatmaps and form funnel counts, not full-fidelity DOM patching. Only structural form metadata is recorded — never field values.
-- v3.5 flags provide deterministic evaluation and exposure events, not A/B result statistics or automatic experiment analysis.
+- v3.5 experiments require the goal event to carry the configured variant property; no conversion is inferred from navigation, and significance is only reported with sufficient samples.
