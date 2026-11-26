@@ -227,7 +227,7 @@ php artisan lwa:doctor
 php artisan lwa:benchmark --range=24h
 ```
 
-Check Overview, Visitors, Geography, Real-time, Trends, Funnels, Retention, Paths and Dashboards. With replay enabled and the gate defined, also check `/web-analytics/replay`, `/web-analytics/heatmaps` and `/web-analytics/forms`.
+Check Overview, Visitors, Geography, Real-time, Trends, Funnels, Retention, Paths and Dashboards. With replay enabled and the gate defined, also check `/web-analytics/replay`, `/web-analytics/heatmaps` and `/web-analytics/forms`. With flags/vitals/observability enabled, also check `/web-analytics/flags`, `/web-analytics/experiments`, `/web-analytics/observability` and `/web-analytics/web-vitals`.
 
 ---
 
@@ -267,6 +267,7 @@ This deletes only `lwa_logs` rows already imported (tracked by the checkpoint). 
 | `WEB_ANALYTICS_OBSERVABILITY_GATE` | `viewLwaObservability` | Gate required for stack traces |
 | `WEB_ANALYTICS_OBSERVABILITY_MAX_STACK` | `20000` | Max stored stack characters |
 | `WEB_ANALYTICS_OBSERVABILITY_RETENTION_DAYS` | `30` | Error retention window |
+| `WEB_ANALYTICS_WEB_VITALS_ENABLED` | `false` | Enable LCP/CLS/INP report |
 
 Keep secrets in `.env` and run `php artisan optimize:clear` after any config change.
 

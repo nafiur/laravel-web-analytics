@@ -15,7 +15,7 @@ A modern, fast, and self-hosted Web Traffic & Visitor Analytics Dashboard for La
 ## ⚡ Highlights & Key Features
 
 - 🚀 **Real-Time Live Stream (SSE)**: Live active visitor count and instant real-time traffic feed without WebSockets, Node.js, or Pusher. Each stream response is short-lived and paced by EventSource, so no PHP worker is held open while waiting for new traffic.
-- 🧭 **Sidebar Navigation**: 20 sidebar links — Overview, Real-time, Logs, Dashboards, Visitors, Traffic Sources, Pages & Screens, Geography, Devices & Browsers, Campaigns, Funnels, Retention, User Paths, Trends, Event Explorer, Events & Goals, Conversions, Performance, Error Monitoring and Settings. Three optional replay links — Session Replay, Heatmaps and Forms — appear only when replay is enabled and the configured gate allows them. Separate optional Feature Flags and Experiments links appear when flags are enabled, plus an optional Observability link when error tracking is enabled and its gate allows it. Each has its own bookmarkable route and Blade page; the Settings screen has no analytics tab bar.
+- 🧭 **Sidebar Navigation**: 20 sidebar links — Overview, Real-time, Logs, Dashboards, Visitors, Traffic Sources, Pages & Screens, Geography, Devices & Browsers, Campaigns, Funnels, Retention, User Paths, Trends, Event Explorer, Events & Goals, Conversions, Performance, Error Monitoring and Settings. Three optional replay links — Session Replay, Heatmaps and Forms — appear only when replay is enabled and the configured gate allows them. Separate optional Feature Flags and Experiments links appear when flags are enabled, plus optional Observability and Web Vitals links when those features are enabled (Observability also requires its gate). Each has its own bookmarkable route and Blade page; the Settings screen has no analytics tab bar.
 - 🎨 **Tailwind CSS UI with Dark Mode**: Modern, responsive dashboard powered by Tailwind CSS Play CDN (zero build step / zero npm dependencies). Uses CSS design tokens (`--lwa-*`, `[data-theme="dark"]`), Lucide outline icons, visible focus states, skeleton loaders, explicit empty/error states, and a 1-click persistent Dark/Light/System preference.
 - 📊 **Comprehensive Metrics**: Total Requests, Unique Visitors, Bandwidth (Data Transferred in GB/MB), Avg Response Time, Error Rate.
 - 🧪 **Built-In Live Traffic Simulator**: Easily generate realistic live traffic every second with `php artisan lwa:live` to demo and test live streaming.
@@ -42,6 +42,7 @@ A modern, fast, and self-hosted Web Traffic & Visitor Analytics Dashboard for La
 - 🚩 **Feature flags (v3.5, opt-in)**: Website/tenant-scoped boolean and multivariate flags with deterministic rollout, overrides and targeting; evaluations are logged to `lwa_events` with a hashed subject.
 - 🧪 **A/B experiments (v3.5)**: Link a flag to a recorded goal event and read per-variant counts, rates, lift, p-values and honest significance gates from `lwa_events` only.
 - 🐞 **Error tracking (v3.6, opt-in)**: Project-key error ingest with sanitised, bounded stacks, grouped exceptions behind an application gate and safe summaries mirrored into `lwa_events`.
+- 📈 **Web Vitals (opt-in)**: LCP, CLS and INP p75 values and rating buckets from recorded SDK events, with path filtering and published thresholds.
 
 ---
 
@@ -144,7 +145,7 @@ The package now ships a dependency-free browser tracker and a unified event pipe
 @endif
 ```
 
-Enable bundle serving with `WEB_ANALYTICS_SDK_ENABLED=true`. Config defaults (`sdk.autocapture`, `sdk.web_vitals`, `sdk.consent`, `sdk.endpoint`, `sdk.max_*`) are injected into the served bundle; values passed to `LwaWebAnalytics.init({...})` override them per page. The SDK batches events into `POST /web-analytics/api/v1/events/batch` using `sendBeacon` (with `fetch` fallback) and authenticates with the public project key — no secret token is shipped to the browser. Server-to-server callers can still use a `write` bearer token on the same endpoint. Payloads are validated, sanitised and deduplicated on `uuid`, so retries are safe.
+Enable bundle serving with `WEB_ANALYTICS_SDK_ENABLED=true`. Config defaults (`sdk.autocapture`, `sdk.web_vitals`, `sdk.consent`, `sdk.endpoint`, `sdk.max_*`) are injected into the served bundle; values passed to `LwaWebAnalytics.init({...})` override them per page. With `web_vitals: true` the SDK records LCP, CLS and INP as numeric `web_vital` events with the current path for the optional Web Vitals report. The SDK batches events into `POST /web-analytics/api/v1/events/batch` using `sendBeacon` (with `fetch` fallback) and authenticates with the public project key — no secret token is shipped to the browser. Server-to-server callers can still use a `write` bearer token on the same endpoint. Payloads are validated, sanitised and deduplicated on `uuid`, so retries are safe.
 
 `identify` aliases the current anonymous id to a known `u_<id>` profile, merges traits, and keeps pre-sign-in events in the same timeline. Browse the result at `/web-analytics/explorer`, or through the read-scoped REST endpoints `GET /users` and `GET /users/{distinctId}`.
 
@@ -231,6 +232,10 @@ Gate host markup with `@feature('key') ... @endfeature` or print the assigned va
 ### Error tracking (v3.6, opt-in)
 
 Enable with `WEB_ANALYTICS_OBSERVABILITY_ENABLED=true`, define the `viewLwaObservability` gate in your app, and post reports to `POST /web-analytics/api/v1/observability/errors` using the website's public project key (or a write bearer token). Messages, stack traces and context are sanitised and size-bounded; query strings and sensitive `key=value` pairs are stripped before storage. Errors are fingerprinted into website/tenant-scoped groups, de-duplicated by `event_id`, and reopened automatically if a resolved group recurs. A safe summary is also written to `lwa_events` as `error`, so exposure is analyzable with Trends. `/web-analytics/observability` lists groups and opens stack-bearing detail views behind the gate, with open/resolved/ignored status changes. Performance spans and distributed tracing remain open.
+
+### Web Vitals (opt-in)
+
+Enable with `WEB_ANALYTICS_WEB_VITALS_ENABLED=true` and turn on the SDK's `web_vitals` option. The SDK reports LCP, CLS and the new INP metric as `web_vital` events with a path property. `/web-analytics/web-vitals` reads at most 20,000 of those events from `lwa_events` and shows p50/p75/max plus good / needs-work / poor buckets using published thresholds (LCP ≤ 2.5s, CLS ≤ 0.1, INP ≤ 200ms for good). A path filter narrows the report; no metric is inferred from server response times.
 
 ## 🎨 Design System
 
@@ -384,6 +389,7 @@ The package defines routes with the `lwa_` prefix to avoid conflicts with your a
 | `GET /web-analytics/observability` | `lwa_observability` | Gated exception group list |
 | `GET /web-analytics/observability/{id}` | `lwa_observability_show` | Gated error detail with sanitised stack |
 | `POST /web-analytics/api/v1/observability/errors` | `lwa_api_observability_errors` | Error ingest (project key or bearer token, `write`) |
+| `GET /web-analytics/web-vitals` | `lwa_web_vitals` | LCP/CLS/INP report from recorded SDK events |
 | `GET /web-analytics/api/v1/summary` | `lwa_api_summary` | JSON summary (bearer token, `read`) |
 | `GET /web-analytics/api/v1/timeseries` | `lwa_api_timeseries` | JSON time series (bearer token, `read`) |
 | `POST /web-analytics/api/v1/events` | `lwa_api_event` | Track a custom event (bearer token, `write`) |
@@ -420,6 +426,7 @@ Every sidebar section also has its own bookmarkable URL:
 | `/web-analytics/replay` | `lwa_replay` | `/web-analytics/heatmaps` | `lwa_heatmaps` |
 | `/web-analytics/forms` | `lwa_forms` | `/web-analytics/flags` | `lwa_flags` |
 | `/web-analytics/experiments` | `lwa_experiments` | `/web-analytics/observability` | `lwa_observability` |
+| `/web-analytics/web-vitals` | `lwa_web_vitals` | | |
 
 The legacy `/web-analytics` (`lwa_dashboard`) URL still works and shows the Overview pane. The Events and Conversions URLs render an explicit “not available yet” pane rather than fabricated numbers.
 
@@ -475,7 +482,8 @@ resources/views/
 │   ├── replay-show.blade.php      ├── heatmaps.blade.php
 │   ├── forms.blade.php            ├── flags.blade.php
 │   ├── experiments.blade.php      ├── observability.blade.php
-│   ├── observability-show.blade.php └── settings.blade.php
+│   ├── observability-show.blade.php├── web-vitals.blade.php
+│   └── settings.blade.php
 ├── sections/                      # content-only partials included by the pages
 └── partials/                      # header, sidebar, subheader, scripts, breakdown-list,
                                    # breakdown-card, breakdown-trend-list, card-menu,
@@ -486,7 +494,7 @@ The legacy `dashboard.blade.php` simply extends the shared layout and renders th
 
 ## 🧭 Dashboard Navigation
 
-The sidebar exposes 20 sections by default, plus three optional replay sections when replay is enabled and the gate allows them, optional Feature Flags and Experiments sections when flags are enabled, and an optional Observability section when error tracking is enabled and its gate allows it. Each is rendered by its own route and Blade page:
+The sidebar exposes 20 sections by default, plus three optional replay sections when replay is enabled and the gate allows them, optional Feature Flags and Experiments sections when flags are enabled, and optional Observability and Web Vitals sections when those features are enabled (Observability also requires its gate). Each is rendered by its own route and Blade page:
 
 | Menu item | Shows |
 |-----------|-------|
@@ -511,6 +519,7 @@ The sidebar exposes 20 sections by default, plus three optional replay sections 
 | **Feature Flags** *(optional)* | Boolean/multivariate flags with deterministic rollout, overrides and targeting |
 | **Experiments** *(optional)* | Per-variant counts, rates, lift and p-values from recorded flag exposures and goal events |
 | **Observability** *(optional)* | Gated exception groups, sanitised stacks and status workflow |
+| **Web Vitals** *(optional)* | LCP/CLS/INP p75 values and rating buckets from recorded SDK events |
 | **Events & Goals** | Recent custom events captured through the facade/API (name, properties, value) |
 | **Conversions** | Recorded goal/purchase events — arrange them into a documented, ordered funnel; no inferred conversions |
 | **Performance** | Latency, response times, bandwidth by path |
@@ -790,6 +799,11 @@ return [
         'endpoint'       => env('WEB_ANALYTICS_OBSERVABILITY_ENDPOINT', '/web-analytics/api/v1/observability/errors'),
         'max_stack_bytes' => (int) env('WEB_ANALYTICS_OBSERVABILITY_MAX_STACK', 20000),
         'retention_days' => (int) env('WEB_ANALYTICS_OBSERVABILITY_RETENTION_DAYS', 30),
+    ],
+
+    /* Web Vitals report from lwa_events. */
+    'web_vitals' => [
+        'enabled' => env('WEB_ANALYTICS_WEB_VITALS_ENABLED', false),
     ],
 
     'settings' => [

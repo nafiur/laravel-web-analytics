@@ -18,6 +18,7 @@ use Nafiur\WebAnalytics\Http\Controllers\RetentionController;
 use Nafiur\WebAnalytics\Http\Controllers\SdkController;
 use Nafiur\WebAnalytics\Http\Controllers\TrendsController;
 use Nafiur\WebAnalytics\Http\Controllers\WebAnalyticsController;
+use Nafiur\WebAnalytics\Http\Controllers\WebVitalsController;
 
 $replayGate = 'can:' . config('laravel-web-analytics.replay.gate', 'viewLwaReplay');
 $observabilityGate = 'can:' . config('laravel-web-analytics.observability.gate', 'viewLwaObservability');
@@ -82,6 +83,7 @@ Route::get('/observability/{errorGroup}', [ObservabilityController::class, 'show
 Route::post('/observability/{errorGroup}/status', [ObservabilityController::class, 'status'])
     ->middleware($observabilityGate)
     ->name('lwa_observability_status');
+Route::get('/web-vitals', [WebVitalsController::class, 'index'])->name('lwa_web_vitals');
 Route::post('/settings/prune', [WebAnalyticsController::class, 'prune'])->name('lwa_settings_prune');
 Route::post('/settings/empty', [WebAnalyticsController::class, 'emptyTable'])->name('lwa_settings_empty');
 Route::post('/settings/test-alert', [WebAnalyticsController::class, 'testAlert'])->name('lwa_settings_test_alert');

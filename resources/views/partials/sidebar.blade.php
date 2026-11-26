@@ -121,6 +121,13 @@
                         <i data-lucide="badge-check" class="text-sm"></i> <span class="sidebar-label" data-i18n="conversions">Conversions</span>
                     </a>
 
+                    @if(config('laravel-web-analytics.web_vitals.enabled'))
+                        <a href="{{ route('lwa_web_vitals') }}"
+                           class="sidebar-link {{ $current === 'web-vitals' ? 'active' : '' }}">
+                            <i data-lucide="gauge-circle" class="text-sm"></i> <span class="sidebar-label">Web Vitals</span>
+                        </a>
+                    @endif
+
                     <a href="{{ route('lwa_performance') }}"
                        class="sidebar-link {{ $current === 'performance' ? 'active' : '' }}">
                         <i data-lucide="gauge" class="text-sm"></i> <span class="sidebar-label" data-i18n="performance">Performance</span>

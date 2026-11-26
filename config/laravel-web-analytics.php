@@ -319,6 +319,19 @@ return [
 
     /*
     |--------------------------------------------------------------------------
+    | Web Vitals Report (v3.6.x UI parity)
+    |--------------------------------------------------------------------------
+    |
+    | Reads `web_vital` events from lwa_events. Opt-in so the extra sidebar
+    | link only appears when a site has opted into reporting.
+    |
+    */
+    'web_vitals'            => [
+        'enabled' => env('WEB_ANALYTICS_WEB_VITALS_ENABLED', false),
+    ],
+
+    /*
+    |--------------------------------------------------------------------------
     | Settings Page
     |--------------------------------------------------------------------------
     |

@@ -218,7 +218,11 @@
 
         var report = function (name, value) {
             if (typeof value === 'number' && isFinite(value)) {
-                track('web_vital', { metric: name, value: Math.round(value * 1000) / 1000 }, null);
+                track('web_vital', {
+                    metric: name,
+                    value: Math.round(value * 1000) / 1000,
+                    path: global.location ? global.location.pathname : '/'
+                }, null);
             }
         };
 
@@ -237,6 +241,17 @@
                 report('cls', total);
             });
             cls.observe({ type: 'layout-shift', buffered: true });
+
+            var worstInteraction = 0;
+            var inp = new global.PerformanceObserver(function (list) {
+                list.getEntries().forEach(function (entry) {
+                    if (entry.interactionId && entry.duration > worstInteraction) {
+                        worstInteraction = entry.duration;
+                        report('inp', entry.duration);
+                    }
+                });
+            });
+            inp.observe({ type: 'event', durationThreshold: 16, buffered: true });
         } catch (e) { /* browser without support — metrics stay disabled */ }
     }
 
